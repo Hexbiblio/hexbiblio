@@ -11,6 +11,8 @@ const FIELDS = [
   "Philosophy", "Literature", "History", "Sociology", "Education", "Other",
 ];
 
+const DEGREE_FILTERS = ["All Degrees", "Bachelor", "Master", "PhD", "Other"];
+
 interface ThesisWithRating {
   id: string;
   title: string;
@@ -18,13 +20,18 @@ interface ThesisWithRating {
   field: string;
   abstract: string;
   created_at: string;
+  degree_type?: string | null;
+  graduation_year?: number | null;
+  keywords?: string[] | null;
   avgRating?: number;
+  avgAccuracy?: number;
 }
 
 const Database = () => {
   const [theses, setTheses] = useState<ThesisWithRating[]>([]);
   const [search, setSearch] = useState("");
   const [fieldFilter, setFieldFilter] = useState("All Fields");
+  const [degreeFilter, setDegreeFilter] = useState("All Degrees");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,23 +39,41 @@ const Database = () => {
       setLoading(true);
       let query = supabase.from("theses").select("*").order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
+      if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
       if (search.trim()) query = query.or(`title.ilike.%${search}%,author_name.ilike.%${search}%,abstract.ilike.%${search}%`);
-      
+
       const { data } = await query;
       if (!data) { setLoading(false); return; }
 
-      // Fetch avg ratings
-      const thesesWithRatings: ThesisWithRating[] = [];
-      for (const thesis of data) {
-        const { data: ratingData } = await supabase.from("ratings").select("score").eq("thesis_id", thesis.id);
-        const avg = ratingData?.length ? ratingData.reduce((s, r) => s + r.score, 0) / ratingData.length : 0;
-        thesesWithRatings.push({ ...thesis, avgRating: avg });
-      }
-      setTheses(thesesWithRatings);
+      // Fetch ratings + accuracy in parallel
+      const ids = data.map(t => t.id);
+      const [{ data: ratings }, { data: accRatings }] = await Promise.all([
+        supabase.from("ratings").select("thesis_id, score").in("thesis_id", ids),
+        supabase.from("accuracy_ratings").select("thesis_id, score").in("thesis_id", ids),
+      ]);
+
+      const avgMap = (arr: any[] | null) => {
+        const map: Record<string, { total: number; count: number }> = {};
+        for (const r of arr || []) {
+          if (!map[r.thesis_id]) map[r.thesis_id] = { total: 0, count: 0 };
+          map[r.thesis_id].total += r.score;
+          map[r.thesis_id].count += 1;
+        }
+        return map;
+      };
+
+      const rMap = avgMap(ratings);
+      const aMap = avgMap(accRatings);
+
+      setTheses(data.map(t => ({
+        ...t,
+        avgRating: rMap[t.id] ? rMap[t.id].total / rMap[t.id].count : 0,
+        avgAccuracy: aMap[t.id] ? aMap[t.id].total / aMap[t.id].count : 0,
+      })));
       setLoading(false);
     };
     fetchTheses();
-  }, [search, fieldFilter]);
+  }, [search, fieldFilter, degreeFilter]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -60,17 +85,18 @@ const Database = () => {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, author, or keyword..."
-            className="pl-9"
-          />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title, author, or keyword..." className="pl-9" />
         </div>
         <Select value={fieldFilter} onValueChange={setFieldFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {FIELDS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={degreeFilter} onValueChange={setDegreeFilter}>
+          <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {DEGREE_FILTERS.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
