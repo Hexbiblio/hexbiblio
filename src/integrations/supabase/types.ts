@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      accuracy_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          score: number
+          thesis_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          score: number
+          thesis_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          score?: number
+          thesis_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accuracy_ratings_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookmarks: {
         Row: {
           collection_name: string | null
@@ -139,9 +171,12 @@ export type Database = {
           abstract: string
           author_name: string
           created_at: string
+          degree_type: string | null
           field: string
           file_url: string | null
+          graduation_year: number | null
           id: string
+          keywords: string[] | null
           title: string
           updated_at: string
           user_id: string
@@ -150,9 +185,12 @@ export type Database = {
           abstract: string
           author_name: string
           created_at?: string
+          degree_type?: string | null
           field: string
           file_url?: string | null
+          graduation_year?: number | null
           id?: string
+          keywords?: string[] | null
           title: string
           updated_at?: string
           user_id: string
@@ -161,9 +199,12 @@ export type Database = {
           abstract?: string
           author_name?: string
           created_at?: string
+          degree_type?: string | null
           field?: string
           file_url?: string | null
+          graduation_year?: number | null
           id?: string
+          keywords?: string[] | null
           title?: string
           updated_at?: string
           user_id?: string
@@ -175,6 +216,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_thesis_accuracy: { Args: { thesis_uuid: string }; Returns: number }
       get_thesis_avg_rating: { Args: { thesis_uuid: string }; Returns: number }
     }
     Enums: {
