@@ -84,32 +84,35 @@ serve(async (req) => {
 
       const { data: theses } = await supabase
         .from("theses")
-        .select("id, title, author_name, field, abstract, file_url, created_at")
+        .select("id, title, author_name, field, abstract, file_url, created_at, keywords, degree_type, graduation_year")
         .or(searchConditions)
         .order("created_at", { ascending: false })
         .limit(10);
 
       if (theses && theses.length > 0) {
-        // Fetch average ratings for matched theses
         const thesisIds = theses.map((t: any) => t.id);
-        const { data: ratings } = await supabase
-          .from("ratings")
-          .select("thesis_id, score")
-          .in("thesis_id", thesisIds);
+        const [{ data: ratings }, { data: accRatings }] = await Promise.all([
+          supabase.from("ratings").select("thesis_id, score").in("thesis_id", thesisIds),
+          supabase.from("accuracy_ratings").select("thesis_id, score").in("thesis_id", thesisIds),
+        ]);
 
-        const ratingMap: Record<string, { total: number; count: number }> = {};
-        if (ratings) {
-          for (const r of ratings) {
-            if (!ratingMap[r.thesis_id]) ratingMap[r.thesis_id] = { total: 0, count: 0 };
-            ratingMap[r.thesis_id].total += r.score;
-            ratingMap[r.thesis_id].count += 1;
+        const buildMap = (arr: any[] | null) => {
+          const map: Record<string, { total: number; count: number }> = {};
+          for (const r of arr || []) {
+            if (!map[r.thesis_id]) map[r.thesis_id] = { total: 0, count: 0 };
+            map[r.thesis_id].total += r.score;
+            map[r.thesis_id].count += 1;
           }
-        }
+          return map;
+        };
+        const ratingMap = buildMap(ratings);
+        const accuracyMap = buildMap(accRatings);
 
-        databaseContext = `\n\n---\n## MATCHING THESES FROM THE THESISHUB DATABASE\nThe following theses from our community database match the student's research question. Present these as recommended sources:\n\n`;
+        databaseContext = `\n\n---\n## MATCHING THESES FROM THE THESISHUB DATABASE\nThe following theses from our community database match the student's research question. Present these as recommended sources. Highlight the accuracy score — it reflects how precise and useful other students found each thesis:\n\n`;
         for (const t of theses) {
-          const avg = ratingMap[t.id] ? (ratingMap[t.id].total / ratingMap[t.id].count).toFixed(1) : "No ratings";
-          databaseContext += `### "${t.title}"\n- **Author**: ${t.author_name}\n- **Field**: ${t.field}\n- **Rating**: ${avg}\n- **Date**: ${new Date(t.created_at).toLocaleDateString()}\n- **Has PDF**: ${t.file_url ? "Yes (available for download)" : "No"}\n- **Abstract**: ${t.abstract.slice(0, 300)}${t.abstract.length > 300 ? "..." : ""}\n\n`;
+          const avgRating = ratingMap[t.id] ? (ratingMap[t.id].total / ratingMap[t.id].count).toFixed(1) : "No ratings";
+          const avgAccuracy = accuracyMap[t.id] ? (accuracyMap[t.id].total / accuracyMap[t.id].count).toFixed(1) : "Not yet rated";
+          databaseContext += `### "${t.title}"\n- **Author**: ${t.author_name}\n- **Field**: ${t.field}\n- **Degree**: ${t.degree_type || "Not specified"}${t.graduation_year ? ` (${t.graduation_year})` : ""}\n- **Keywords**: ${t.keywords?.length ? t.keywords.join(", ") : "None"}\n- **Quality Rating**: ${avgRating}\n- **Accuracy Score**: ${avgAccuracy}\n- **Date**: ${new Date(t.created_at).toLocaleDateString()}\n- **Has PDF**: ${t.file_url ? "Yes (available for download)" : "No"}\n- **Abstract**: ${t.abstract.slice(0, 300)}${t.abstract.length > 300 ? "..." : ""}\n\n`;
         }
       } else {
         databaseContext = "\n\n---\n## DATABASE SEARCH RESULTS\nNo matching theses were found in the ThesisHub database for this query. Let the student know the database is growing and encourage them to check back, or suggest they explore related topics in the database.\n";
