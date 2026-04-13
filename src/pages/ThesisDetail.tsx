@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
-import { ArrowLeft, Download, Calendar, User } from "lucide-react";
+import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag } from "lucide-react";
 
 const ThesisDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +17,9 @@ const ThesisDetail = () => {
   const [userRating, setUserRating] = useState<number | undefined>();
   const [avgRating, setAvgRating] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
+  const [userAccuracy, setUserAccuracy] = useState<number | undefined>();
+  const [avgAccuracy, setAvgAccuracy] = useState(0);
+  const [totalAccuracy, setTotalAccuracy] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchThesis = async () => {
@@ -32,16 +35,24 @@ const ThesisDetail = () => {
     if (data) {
       setTotalRatings(data.length);
       setAvgRating(data.length ? data.reduce((s, r) => s + r.score, 0) / data.length : 0);
-      if (user) {
-        const mine = data.find((r) => r.user_id === user.id);
-        setUserRating(mine?.score);
-      }
+      if (user) setUserRating(data.find((r) => r.user_id === user.id)?.score);
+    }
+  };
+
+  const fetchAccuracy = async () => {
+    if (!id) return;
+    const { data } = await supabase.from("accuracy_ratings").select("*").eq("thesis_id", id);
+    if (data) {
+      setTotalAccuracy(data.length);
+      setAvgAccuracy(data.length ? data.reduce((s, r) => s + r.score, 0) / data.length : 0);
+      if (user) setUserAccuracy(data.find((r) => r.user_id === user.id)?.score);
     }
   };
 
   useEffect(() => {
     fetchThesis();
     fetchRatings();
+    fetchAccuracy();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
@@ -72,7 +83,11 @@ const ThesisDetail = () => {
         <CardContent className="p-6 space-y-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <Badge variant="secondary">{thesis.field}</Badge>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant="secondary">{thesis.field}</Badge>
+                {thesis.degree_type && <Badge variant="outline">{thesis.degree_type}</Badge>}
+                {thesis.graduation_year && <Badge variant="outline">{thesis.graduation_year}</Badge>}
+              </div>
               <h1 className="text-2xl font-bold leading-tight">{thesis.title}</h1>
             </div>
             <BookmarkButton thesisId={thesis.id} />
@@ -81,9 +96,31 @@ const ThesisDetail = () => {
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             <span className="flex items-center gap-1"><User className="h-4 w-4" />{thesis.author_name}</span>
             <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(thesis.created_at).toLocaleDateString()}</span>
+            {thesis.degree_type && (
+              <span className="flex items-center gap-1"><GraduationCap className="h-4 w-4" />{thesis.degree_type}{thesis.graduation_year ? ` (${thesis.graduation_year})` : ""}</span>
+            )}
           </div>
 
-          <RatingWidget thesisId={thesis.id} currentRating={userRating} avgRating={avgRating} totalRatings={totalRatings} onRated={fetchRatings} />
+          {thesis.keywords && thesis.keywords.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              <Tag className="h-4 w-4 text-muted-foreground mt-0.5" />
+              {thesis.keywords.map((kw: string) => (
+                <Badge key={kw} variant="secondary" className="text-xs">{kw}</Badge>
+              ))}
+            </div>
+          )}
+
+          <RatingWidget
+            thesisId={thesis.id}
+            currentRating={userRating}
+            avgRating={avgRating}
+            totalRatings={totalRatings}
+            onRated={fetchRatings}
+            currentAccuracy={userAccuracy}
+            avgAccuracy={avgAccuracy}
+            totalAccuracy={totalAccuracy}
+            onAccuracyRated={fetchAccuracy}
+          />
 
           <div>
             <h2 className="mb-2 text-lg font-semibold">Abstract</h2>
