@@ -24,13 +24,22 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
   const fetchComments = async () => {
     const { data } = await supabase
       .from("comments")
-      .select("*, profiles(username)")
+      .select("*")
       .eq("thesis_id", thesisId)
       .order("created_at", { ascending: false });
-    if (data) setComments(data);
+    if (!data) return;
+    // Fetch profiles for comment authors
+    const userIds = [...new Set(data.map(c => c.user_id))];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, username")
+      .in("user_id", userIds);
+    const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+    setComments(data.map(c => ({ ...c, profiles: profileMap.get(c.user_id) || null })));
   };
 
-  useEffect(() => { fetchComments(); }, [thesisId]);
+  useEffect(() => { fetchComments(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thesisId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
