@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -10,12 +11,20 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/thesis-chat`;
 
-const SUGGESTED_QUESTIONS = [
-  "How does social media usage affect academic performance among university students?",
-  "What is the impact of artificial intelligence on healthcare diagnostics?",
-  "How do microplastics in ocean ecosystems affect marine biodiversity?",
-  "What role does emotional intelligence play in leadership effectiveness?",
-];
+const SUGGESTED_QUESTIONS = {
+  en: [
+    "How does social media usage affect academic performance among university students?",
+    "What is the impact of artificial intelligence on healthcare diagnostics?",
+    "How do microplastics in ocean ecosystems affect marine biodiversity?",
+    "What role does emotional intelligence play in leadership effectiveness?",
+  ],
+  fr: [
+    "Comment l'utilisation des réseaux sociaux affecte-t-elle les performances académiques des étudiants ?",
+    "Quel est l'impact de l'intelligence artificielle sur le diagnostic médical ?",
+    "Comment les microplastiques dans les écosystèmes océaniques affectent-ils la biodiversité marine ?",
+    "Quel rôle joue l'intelligence émotionnelle dans l'efficacité du leadership ?",
+  ],
+};
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -23,6 +32,7 @@ const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { language, t } = useLanguage();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -35,7 +45,7 @@ const ChatInterface = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages }),
+      body: JSON.stringify({ messages: allMessages, language }),
     });
 
     if (!resp.ok) {
@@ -98,7 +108,7 @@ const ChatInterface = () => {
     try {
       await streamChat([...messages, userMsg]);
     } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -111,9 +121,10 @@ const ChatInterface = () => {
     }
   };
 
+  const questions = SUGGESTED_QUESTIONS[language];
+
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
-      {/* Messages area */}
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
           {messages.length === 0 && (
@@ -122,14 +133,11 @@ const ChatInterface = () => {
                 <Bot className="h-8 w-8 text-primary" />
               </div>
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold">Research Question Analyzer</h2>
-                <p className="text-muted-foreground max-w-md">
-                  Submit your research question and I'll identify the discipline, key themes, 
-                  and guide you through developing your thesis.
-                </p>
+                <h2 className="text-2xl font-bold">{t("chat.title")}</h2>
+                <p className="text-muted-foreground max-w-md">{t("chat.subtitle")}</p>
               </div>
               <div className="grid gap-2 sm:grid-cols-2 w-full max-w-xl">
-                {SUGGESTED_QUESTIONS.map((q) => (
+                {questions.map((q) => (
                   <button
                     key={q}
                     onClick={() => handleSend(q)}
@@ -187,7 +195,6 @@ const ChatInterface = () => {
         </div>
       </div>
 
-      {/* Input area */}
       <div className="border-t bg-card/80 backdrop-blur-sm">
         <div className="mx-auto max-w-3xl px-4 py-3">
           <div className="flex items-end gap-2">
@@ -195,7 +202,7 @@ const ChatInterface = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Enter your research question..."
+              placeholder={t("chat.placeholder")}
               className="min-h-[44px] max-h-[120px] resize-none"
               rows={1}
             />
@@ -209,7 +216,7 @@ const ChatInterface = () => {
             </Button>
           </div>
           <p className="mt-1.5 text-center text-xs text-muted-foreground">
-            Powered by AI · Identifies disciplines, themes & guides your research
+            {t("chat.poweredBy")}
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const fetchComments = async () => {
     const { data } = await supabase
@@ -28,7 +30,6 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
       .eq("thesis_id", thesisId)
       .order("created_at", { ascending: false });
     if (!data) return;
-    // Fetch profiles for comment authors
     const userIds = [...new Set(data.map(c => c.user_id))];
     const { data: profiles } = await supabase
       .from("profiles")
@@ -38,8 +39,7 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
     setComments(data.map(c => ({ ...c, profiles: profileMap.get(c.user_id) || null })));
   };
 
-  useEffect(() => { fetchComments(); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [thesisId]);
+  useEffect(() => { fetchComments(); }, [thesisId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +51,7 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
       content: newComment.trim(),
     });
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
       setNewComment("");
       fetchComments();
@@ -68,18 +68,18 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
     <div className="space-y-4">
       <h3 className="flex items-center gap-2 text-lg font-semibold">
         <MessageSquare className="h-5 w-5" />
-        Comments ({comments.length})
+        {t("comments.title")} ({comments.length})
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-2">
         <Textarea
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Share your thoughts..."
+          placeholder={t("comments.placeholder")}
           className="min-h-[80px]"
         />
         <Button type="submit" size="sm" disabled={loading || !newComment.trim()}>
-          Post Comment
+          {t("comments.post")}
         </Button>
       </form>
 
@@ -88,7 +88,7 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
           <div key={comment.id} className="rounded-lg border bg-muted/30 p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
-                <span className="font-medium">{comment.profiles?.username || "Anonymous"}</span>
+                <span className="font-medium">{comment.profiles?.username || t("comments.anonymous")}</span>
                 <span className="text-muted-foreground">·</span>
                 <span className="text-muted-foreground">{new Date(comment.created_at).toLocaleDateString()}</span>
               </div>

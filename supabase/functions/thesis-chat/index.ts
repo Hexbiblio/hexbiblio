@@ -47,7 +47,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, language = "en" } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -119,8 +119,11 @@ serve(async (req) => {
       }
     }
 
-    // Combine system prompt with database context
-    const fullSystemPrompt = SYSTEM_PROMPT + databaseContext;
+    // Combine system prompt with database context and language instruction
+    const langInstruction = language === "fr"
+      ? "\n\n## LANGUAGE\nYou MUST respond entirely in French. All headers, explanations, and suggestions must be in French."
+      : "";
+    const fullSystemPrompt = SYSTEM_PROMPT + databaseContext + langInstruction;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

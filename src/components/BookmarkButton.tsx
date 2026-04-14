@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { Bookmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 
 const BookmarkButton = ({ thesisId }: { thesisId: string }) => {
   const [bookmarked, setBookmarked] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!user) return;
@@ -27,11 +29,11 @@ const BookmarkButton = ({ thesisId }: { thesisId: string }) => {
     if (bookmarked) {
       await supabase.from("bookmarks").delete().eq("user_id", user.id).eq("thesis_id", thesisId);
       setBookmarked(false);
-      toast({ title: "Removed from bookmarks" });
+      toast({ title: t("bookmark.removed") });
     } else {
       await supabase.from("bookmarks").insert({ user_id: user.id, thesis_id: thesisId });
       setBookmarked(true);
-      toast({ title: "Bookmarked!" });
+      toast({ title: t("bookmark.added") });
     }
   };
 

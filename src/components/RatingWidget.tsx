@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Star, Target } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
 
 interface RatingWidgetProps {
@@ -10,7 +11,6 @@ interface RatingWidgetProps {
   avgRating: number;
   totalRatings: number;
   onRated: () => void;
-  // Accuracy props
   currentAccuracy?: number;
   avgAccuracy: number;
   totalAccuracy: number;
@@ -25,6 +25,7 @@ const StarRow = ({
   total,
   onRate,
   colorClass,
+  noRatingsLabel,
 }: {
   label: string;
   icon: React.ElementType;
@@ -33,6 +34,7 @@ const StarRow = ({
   total: number;
   onRate: (score: number) => void;
   colorClass: string;
+  noRatingsLabel: string;
 }) => {
   const [hovered, setHovered] = useState(0);
 
@@ -58,7 +60,7 @@ const StarRow = ({
         ))}
       </div>
       <span className="text-xs text-muted-foreground">
-        {avg > 0 ? `${avg.toFixed(1)} (${total})` : "No ratings"}
+        {avg > 0 ? `${avg.toFixed(1)} (${total})` : noRatingsLabel}
       </span>
     </div>
   );
@@ -77,6 +79,7 @@ const RatingWidget = ({
 }: RatingWidgetProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const handleRate = async (score: number) => {
     if (!user) return;
@@ -84,8 +87,8 @@ const RatingWidget = ({
       { thesis_id: thesisId, user_id: user.id, score },
       { onConflict: "thesis_id,user_id" }
     );
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Rated!" }); onRated(); }
+    if (error) toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    else { toast({ title: t("rating.rated") }); onRated(); }
   };
 
   const handleAccuracy = async (score: number) => {
@@ -94,14 +97,14 @@ const RatingWidget = ({
       { thesis_id: thesisId, user_id: user.id, score },
       { onConflict: "thesis_id,user_id" }
     );
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Accuracy rated!" }); onAccuracyRated(); }
+    if (error) toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    else { toast({ title: t("rating.accuracyRated") }); onAccuracyRated(); }
   };
 
   return (
     <div className="space-y-2">
-      <StarRow label="Quality" icon={Star} current={currentRating} avg={avgRating} total={totalRatings} onRate={handleRate} colorClass="text-accent" />
-      <StarRow label="Accuracy" icon={Target} current={currentAccuracy} avg={avgAccuracy} total={totalAccuracy} onRate={handleAccuracy} colorClass="text-primary" />
+      <StarRow label={t("rating.quality")} icon={Star} current={currentRating} avg={avgRating} total={totalRatings} onRate={handleRate} colorClass="text-accent" noRatingsLabel={t("rating.noRatings")} />
+      <StarRow label={t("rating.accuracy")} icon={Target} current={currentAccuracy} avg={avgAccuracy} total={totalAccuracy} onRate={handleAccuracy} colorClass="text-primary" noRatingsLabel={t("rating.noRatings")} />
     </div>
   );
 };
