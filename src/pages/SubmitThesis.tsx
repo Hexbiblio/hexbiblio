@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +38,7 @@ const SubmitThesis = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const addKeyword = () => {
     const kw = keywordInput.trim().toLowerCase();
@@ -77,10 +79,10 @@ const SubmitThesis = () => {
       });
 
       if (error) throw error;
-      toast({ title: "Thesis submitted!", description: "Your thesis has been added to the database." });
+      toast({ title: t("submit.success"), description: t("submit.successDesc") });
       navigate("/database");
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -90,33 +92,33 @@ const SubmitThesis = () => {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Submit Your Thesis</CardTitle>
-          <CardDescription>Share your research with the community</CardDescription>
+          <CardTitle className="text-2xl">{t("submit.title")}</CardTitle>
+          <CardDescription>{t("submit.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="title">Title *</Label>
-              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Your thesis title" required maxLength={500} />
+              <Label htmlFor="title">{t("submit.titleLabel")} *</Label>
+              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("submit.titlePlaceholder")} required maxLength={500} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="author">Author Name *</Label>
-              <Input id="author" value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder="Full name" required maxLength={200} />
+              <Label htmlFor="author">{t("submit.authorLabel")} *</Label>
+              <Input id="author" value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder={t("submit.authorPlaceholder")} required maxLength={200} />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Field / Discipline *</Label>
+                <Label>{t("submit.fieldLabel")} *</Label>
                 <Select value={field} onValueChange={setField}>
-                  <SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("submit.selectField")} /></SelectTrigger>
                   <SelectContent>
                     {FIELDS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Degree Type</Label>
+                <Label>{t("submit.degreeLabel")}</Label>
                 <Select value={degreeType} onValueChange={setDegreeType}>
-                  <SelectTrigger><SelectValue placeholder="Select degree" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t("submit.selectDegree")} /></SelectTrigger>
                   <SelectContent>
                     {DEGREE_TYPES.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
                   </SelectContent>
@@ -124,25 +126,25 @@ const SubmitThesis = () => {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Graduation Year</Label>
+              <Label>{t("submit.yearLabel")}</Label>
               <Select value={graduationYear} onValueChange={setGraduationYear}>
-                <SelectTrigger><SelectValue placeholder="Select year" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t("submit.selectYear")} /></SelectTrigger>
                 <SelectContent>
                   {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Keywords / Tags</Label>
+              <Label>{t("submit.keywordsLabel")}</Label>
               <div className="flex gap-2">
                 <Input
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
-                  placeholder="Add a keyword..."
+                  placeholder={t("submit.addKeyword")}
                   maxLength={50}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addKeyword(); } }}
                 />
-                <Button type="button" variant="outline" onClick={addKeyword} disabled={keywords.length >= 10}>Add</Button>
+                <Button type="button" variant="outline" onClick={addKeyword} disabled={keywords.length >= 10}>{t("submit.add")}</Button>
               </div>
               {keywords.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mt-2">
@@ -156,20 +158,20 @@ const SubmitThesis = () => {
                   ))}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">Up to 10 keywords for better discoverability</p>
+              <p className="text-xs text-muted-foreground">{t("submit.keywordsHint")}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="abstract">Abstract *</Label>
-              <Textarea id="abstract" value={abstract} onChange={(e) => setAbstract(e.target.value)} placeholder="Summarize your research..." className="min-h-[150px]" required maxLength={5000} />
+              <Label htmlFor="abstract">{t("submit.abstractLabel")} *</Label>
+              <Textarea id="abstract" value={abstract} onChange={(e) => setAbstract(e.target.value)} placeholder={t("submit.abstractPlaceholder")} className="min-h-[150px]" required maxLength={5000} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="file">PDF File (optional)</Label>
+              <Label htmlFor="file">{t("submit.pdfLabel")}</Label>
               <Input id="file" type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-              <p className="text-xs text-muted-foreground">Max 20MB</p>
+              <p className="text-xs text-muted-foreground">{t("submit.maxSize")}</p>
             </div>
             <Button type="submit" className="w-full gap-2" disabled={loading || !field}>
               <Upload className="h-4 w-4" />
-              {loading ? "Submitting..." : "Submit Thesis"}
+              {loading ? t("submit.submitting") : t("submit.submitBtn")}
             </Button>
           </form>
         </CardContent>

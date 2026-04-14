@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ const MyCollections = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const fetchBookmarks = async () => {
     if (!user) return;
@@ -39,7 +41,6 @@ const MyCollections = () => {
       .eq("user_id", user.id);
     if (!data) { setLoading(false); return; }
 
-    // Fetch thesis details for each bookmark
     const thesisIds = data.map(b => b.thesis_id);
     const { data: thesesData } = await supabase
       .from("theses")
@@ -52,17 +53,16 @@ const MyCollections = () => {
       .map(b => ({ ...b, thesis: thesisMap.get(b.thesis_id)! }));
     
     setBookmarks(withThesis);
-    const cols = [...new Set(withThesis.map(b => b.collection_name || "Unsorted"))];
+    const cols = [...new Set(withThesis.map(b => b.collection_name || t("collections.unsorted")))];
     setCollections(cols);
     setLoading(false);
   };
 
-  useEffect(() => { fetchBookmarks(); // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  useEffect(() => { fetchBookmarks(); }, [user]);
 
   const filtered = activeCollection === "All"
     ? bookmarks
-    : bookmarks.filter(b => (b.collection_name || "Unsorted") === activeCollection);
+    : bookmarks.filter(b => (b.collection_name || t("collections.unsorted")) === activeCollection);
 
   const handleAddCollection = () => {
     if (!newCollection.trim()) return;
@@ -74,7 +74,7 @@ const MyCollections = () => {
 
   const handleRemoveBookmark = async (bookmarkId: string) => {
     await supabase.from("bookmarks").delete().eq("id", bookmarkId);
-    toast({ title: "Bookmark removed" });
+    toast({ title: t("collections.removed") });
     fetchBookmarks();
   };
 
@@ -82,22 +82,22 @@ const MyCollections = () => {
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold flex items-center gap-2">
-          <Bookmark className="h-7 w-7" /> My Collections
+          <Bookmark className="h-7 w-7" /> {t("collections.title")}
         </h1>
-        <p className="text-muted-foreground mt-1">Your saved theses organized by collection</p>
+        <p className="text-muted-foreground mt-1">{t("collections.subtitle")}</p>
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <Button variant={activeCollection === "All" ? "default" : "outline"} size="sm" onClick={() => setActiveCollection("All")}>
-          All ({bookmarks.length})
+          {t("collections.all")} ({bookmarks.length})
         </Button>
         {collections.map(col => (
           <Button key={col} variant={activeCollection === col ? "default" : "outline"} size="sm" onClick={() => setActiveCollection(col)}>
-            {col} ({bookmarks.filter(b => (b.collection_name || "Unsorted") === col).length})
+            {col} ({bookmarks.filter(b => (b.collection_name || t("collections.unsorted")) === col).length})
           </Button>
         ))}
         <div className="flex items-center gap-1">
-          <Input value={newCollection} onChange={(e) => setNewCollection(e.target.value)} placeholder="New collection" className="h-8 w-36 text-sm" onKeyDown={(e) => e.key === "Enter" && handleAddCollection()} />
+          <Input value={newCollection} onChange={(e) => setNewCollection(e.target.value)} placeholder={t("collections.newPlaceholder")} className="h-8 w-36 text-sm" onKeyDown={(e) => e.key === "Enter" && handleAddCollection()} />
           <Button size="sm" variant="ghost" onClick={handleAddCollection}><Plus className="h-4 w-4" /></Button>
         </div>
       </div>
@@ -108,8 +108,8 @@ const MyCollections = () => {
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">
-          <p className="text-lg">No bookmarks yet</p>
-          <p className="text-sm">Browse the database and bookmark theses you find interesting!</p>
+          <p className="text-lg">{t("collections.noBookmarks")}</p>
+          <p className="text-sm">{t("collections.browseHint")}</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

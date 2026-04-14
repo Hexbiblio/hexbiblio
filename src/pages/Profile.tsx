@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +16,11 @@ const Profile = () => {
   const [myTheses, setMyTheses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!user) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
       if (profile) setUsername(profile.username || "");
 
@@ -26,14 +28,14 @@ const Profile = () => {
       setMyTheses(theses || []);
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [user]);
 
   const handleUpdateProfile = async () => {
     if (!user) return;
     const { error } = await supabase.from("profiles").update({ username: username.trim() }).eq("user_id", user.id);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else toast({ title: "Profile updated!" });
+    if (error) toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    else toast({ title: t("profile.updated") });
   };
 
   if (loading) {
@@ -48,24 +50,24 @@ const Profile = () => {
     <div className="mx-auto max-w-3xl px-4 py-8 space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> Profile</CardTitle>
+          <CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> {t("profile.title")}</CardTitle>
           <CardDescription>{user?.email}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Username</Label>
+            <Label>{t("profile.username")}</Label>
             <div className="flex gap-2">
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Your username" />
-              <Button onClick={handleUpdateProfile}>Save</Button>
+              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t("profile.yourUsername")} />
+              <Button onClick={handleUpdateProfile}>{t("profile.save")}</Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <div>
-        <h2 className="text-xl font-bold mb-4">My Theses ({myTheses.length})</h2>
+        <h2 className="text-xl font-bold mb-4">{t("profile.myTheses")} ({myTheses.length})</h2>
         {myTheses.length === 0 ? (
-          <p className="text-muted-foreground">You haven't submitted any theses yet.</p>
+          <p className="text-muted-foreground">{t("profile.noTheses")}</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {myTheses.map(thesis => <ThesisCard key={thesis.id} {...thesis} />)}
