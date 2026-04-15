@@ -22,30 +22,51 @@ const Navbar = () => {
   const toggleLanguage = () => setLanguage(language === "en" ? "fr" : "en");
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md supports-[backdrop-filter]:bg-card/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2 font-semibold text-primary">
-          <BookOpen className="h-5 w-5" />
-          <span className="hidden sm:inline" style={{ fontFamily: "'Libre Baskerville', serif" }}>ThesisHub</span>
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
+            <BookOpen className="h-4 w-4" />
+          </div>
+          <span className="hidden sm:inline font-bold text-foreground tracking-tight" style={{ fontFamily: "'Libre Baskerville', serif" }}>
+            ThesisHub
+          </span>
         </Link>
 
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="sm" onClick={toggleLanguage} className="gap-1 text-xs font-medium">
-            <Globe className="h-4 w-4" />
-            <span>{language === "en" ? "FR" : "EN"}</span>
+        <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleLanguage}
+            className="gap-1 text-xs font-medium rounded-full h-8 w-8 p-0 sm:w-auto sm:px-3 sm:gap-1.5"
+          >
+            <Globe className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{language === "en" ? "FR" : "EN"}</span>
           </Button>
 
           {user && (
             <>
               {links.map(({ to, label, icon: Icon }) => (
                 <Link key={to} to={to}>
-                  <Button variant={isActive(to) ? "secondary" : "ghost"} size="sm" className="gap-1.5 text-xs sm:text-sm">
+                  <Button
+                    variant={isActive(to) ? "default" : "ghost"}
+                    size="sm"
+                    className={`gap-1.5 text-xs sm:text-sm rounded-full transition-all ${
+                      isActive(to) ? "shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
                     <Icon className="h-4 w-4" />
                     <span className="hidden md:inline">{label}</span>
                   </Button>
                 </Link>
               ))}
-              <Button variant="ghost" size="sm" onClick={signOut} className="gap-1.5 text-xs text-muted-foreground">
+              <div className="ml-1 h-5 w-px bg-border" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+                className="gap-1.5 text-xs text-muted-foreground hover:text-destructive rounded-full"
+              >
                 <LogOut className="h-4 w-4" />
               </Button>
             </>
@@ -53,7 +74,7 @@ const Navbar = () => {
 
           {!user && (
             <Link to="/auth">
-              <Button size="sm">{t("nav.signIn")}</Button>
+              <Button size="sm" className="rounded-full px-5 shadow-sm">{t("nav.signIn")}</Button>
             </Link>
           )}
         </div>
