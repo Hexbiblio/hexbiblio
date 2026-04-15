@@ -29,7 +29,7 @@ const Navbar = () => {
             <BookOpen className="h-4 w-4" />
           </div>
           <span className="hidden sm:inline font-bold text-foreground tracking-tight" style={{ fontFamily: "'Libre Baskerville', serif" }}>
-            ThesisHub
+            HexBiblio
           </span>
         </Link>
 

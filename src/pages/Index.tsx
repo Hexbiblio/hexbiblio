@@ -42,7 +42,7 @@ const Index = () => {
 
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
               <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-                ThesisHub
+                HexBiblio
               </span>
             </h1>
 
