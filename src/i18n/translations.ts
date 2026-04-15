@@ -27,7 +27,7 @@ export const translations = {
   "auth.checkEmail": { en: "Check your email to confirm your account.", fr: "Vérifiez votre e-mail pour confirmer votre compte." },
 
   // Index / Landing
-  "landing.title": { en: "ThesisHub", fr: "ThesisHub" },
+  "landing.title": { en: "HexBiblio", fr: "HexBiblio" },
   "landing.subtitle": {
     en: "Submit your research question and our AI instantly recognizes your discipline, extracts key themes, and guides you through every stage of your thesis — from refining the question to choosing methodology.",
     fr: "Soumettez votre question de recherche et notre IA identifie instantanément votre discipline, extrait les thèmes clés et vous guide à chaque étape de votre mémoire — du raffinement de la question au choix de la méthodologie.",

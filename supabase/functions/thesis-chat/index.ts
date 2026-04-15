@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are ThesisHub — an expert academic research advisor that helps students develop their thesis AND guides them to relevant sources from our community thesis database.
+const SYSTEM_PROMPT = `You are HexBiblio — an expert academic research advisor that helps students develop their thesis AND guides them to relevant sources from our community thesis database.
 
 ## Your Core Mission
 When a student submits a research question or topic, you MUST:
@@ -15,7 +15,7 @@ When a student submits a research question or topic, you MUST:
 1. **Identify the Discipline(s)**: Determine which academic field(s) the question belongs to.
 2. **Extract Key Themes**: Identify the main research themes, concepts, and keywords.
 3. **Assess the Question**: Evaluate specificity, scope, and formulation quality.
-4. **Search the Database**: You will be given matching theses from the ThesisHub community database. You MUST present these as recommended sources.
+4. **Search the Database**: You will be given matching theses from the HexBiblio community database. You MUST present these as recommended sources.
 5. **Provide Structured Guidance**.
 
 ## Response Format
@@ -23,7 +23,7 @@ Always respond with:
 - 📚 **Discipline(s)**: The recognized academic field(s)
 - 🏷️ **Key Themes**: Main themes and concepts identified
 - 📊 **Assessment**: Your evaluation of the research question
-- 📖 **Sources from ThesisHub Database**: Present each matching thesis with its title, author, field, and a brief note on how it relates to the student's question. If a thesis has a PDF, mention it's available for download. If no matching theses are found, say so and suggest the student check back later as the database grows.
+- 📖 **Sources from HexBiblio Database**: Present each matching thesis with its title, author, field, and a brief note on how it relates to the student's question. If a thesis has a PDF, mention it's available for download. If no matching theses are found, say so and suggest the student check back later as the database grows.
 - 💡 **Suggestions**: How to refine or improve the question
 - 📖 **Recommended Methodology**: Suitable research approaches
 - 🔍 **Next Steps**: Guide them on what to explore next — both in the database and in external literature
@@ -108,14 +108,14 @@ serve(async (req) => {
         const ratingMap = buildMap(ratings);
         const accuracyMap = buildMap(accRatings);
 
-        databaseContext = `\n\n---\n## MATCHING THESES FROM THE THESISHUB DATABASE\nThe following theses from our community database match the student's research question. Present these as recommended sources. Highlight the accuracy score — it reflects how precise and useful other students found each thesis:\n\n`;
+        databaseContext = `\n\n---\n## MATCHING THESES FROM THE HEXBIBLIO DATABASE\nThe following theses from our community database match the student's research question. Present these as recommended sources. Highlight the accuracy score — it reflects how precise and useful other students found each thesis:\n\n`;
         for (const t of theses) {
           const avgRating = ratingMap[t.id] ? (ratingMap[t.id].total / ratingMap[t.id].count).toFixed(1) : "No ratings";
           const avgAccuracy = accuracyMap[t.id] ? (accuracyMap[t.id].total / accuracyMap[t.id].count).toFixed(1) : "Not yet rated";
           databaseContext += `### "${t.title}"\n- **Author**: ${t.author_name}\n- **Field**: ${t.field}\n- **Degree**: ${t.degree_type || "Not specified"}${t.graduation_year ? ` (${t.graduation_year})` : ""}\n- **Keywords**: ${t.keywords?.length ? t.keywords.join(", ") : "None"}\n- **Quality Rating**: ${avgRating}\n- **Accuracy Score**: ${avgAccuracy}\n- **Date**: ${new Date(t.created_at).toLocaleDateString()}\n- **Has PDF**: ${t.file_url ? "Yes (available for download)" : "No"}\n- **Abstract**: ${t.abstract.slice(0, 300)}${t.abstract.length > 300 ? "..." : ""}\n\n`;
         }
       } else {
-        databaseContext = "\n\n---\n## DATABASE SEARCH RESULTS\nNo matching theses were found in the ThesisHub database for this query. Let the student know the database is growing and encourage them to check back, or suggest they explore related topics in the database.\n";
+        databaseContext = "\n\n---\n## DATABASE SEARCH RESULTS\nNo matching theses were found in the HexBiblio database for this query. Let the student know the database is growing and encourage them to check back, or suggest they explore related topics in the database.\n";
       }
     }
 
