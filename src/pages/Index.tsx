@@ -2,17 +2,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles } from "lucide-react";
-import ChatInterface from "@/components/ChatInterface";
+import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Index = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
-
-  if (user) {
-    return <ChatInterface />;
-  }
 
   const features = [
     { icon: BookOpen, title: t("landing.disciplineTitle"), desc: t("landing.disciplineDesc"), color: "from-primary/20 to-primary/5" },

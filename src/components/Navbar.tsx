@@ -10,7 +10,7 @@ const Navbar = () => {
   const { language, setLanguage, t } = useLanguage();
 
   const links = [
-    { to: "/", label: t("nav.chatbot"), icon: MessageSquare },
+    { to: "/chat", label: t("nav.chatbot"), icon: MessageSquare },
     { to: "/database", label: t("nav.database"), icon: Search },
     { to: "/submit", label: t("nav.submit"), icon: Upload },
     { to: "/my-collections", label: t("nav.collections"), icon: Bookmark },
