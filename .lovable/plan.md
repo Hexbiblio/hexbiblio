@@ -1,32 +1,33 @@
 
 
-## Plan: Allow Guest Browsing Without Forcing Login
+## Plan: Guest Browsing Without Forcing Login
 
-**Goal**: Let unauthenticated users browse the app freely, only requiring login for actions that need it (submitting, bookmarking, commenting, rating).
+Allow users to explore the landing page freely. Database, Chat, Submit, Collections, and Profile remain login-required.
 
 ### Changes
 
-1. **Remove `ProtectedRoute` wrapper** from `/database` and `/database/:id` routes in `App.tsx` — these become public pages anyone can view.
+1. **`Index.tsx`** — Show the landing page to all users. For logged-in users, add a prominent "Chat with AI" button/link instead of replacing the entire page with ChatInterface.
 
-2. **Keep `ProtectedRoute`** on `/submit`, `/my-collections`, and `/profile` — these require authentication.
+2. **`App.tsx`** — Add a `/chat` protected route for `ChatInterface`. All other protected routes stay as-is (including `/database`).
 
-3. **Update `Index.tsx`** — show the landing page to everyone (remove the redirect to ChatInterface for logged-in users). Instead, add a visible "Chat with AI" button/link for logged-in users, or integrate the chatbot as a separate route.
+3. **`Navbar.tsx`** — Show the Database link to all users in the nav, but it still requires login (ProtectedRoute handles redirect). Alternatively, show Database link only to logged-in users to avoid confusion. Add a "Chat" nav link for logged-in users.
 
-4. **Add a `/chat` route** — move the `ChatInterface` to its own protected route so logged-in users can access it from the navbar, rather than hijacking the landing page.
+4. **Landing page CTA** — The "Browse Database" button on the landing page links to `/database`, which will redirect to `/auth` if not logged in (existing ProtectedRoute behavior). This is a natural flow.
 
-5. **Update `Navbar.tsx`** — show Database link to all users (not just authenticated ones). Keep Submit, Collections, Profile, and Chat as auth-only links.
-
-6. **Guard interactive features** in `ThesisDetail.tsx` — show bookmark, comment, and rating widgets only when logged in, with a "Sign in to interact" prompt for guests.
-
-### Summary of Access
+### Route Access Summary
 
 | Page | Guest | Logged In |
 |------|-------|-----------|
-| Landing `/` | ✓ | ✓ |
-| Database `/database` | ✓ | ✓ |
-| Thesis Detail `/database/:id` | ✓ (read-only) | ✓ (full) |
+| Landing `/` | ✓ (hero page) | ✓ (hero page + chat link) |
 | Chat `/chat` | ✗ | ✓ |
+| Database `/database` | ✗ | ✓ |
+| Thesis Detail `/database/:id` | ✗ | ✓ |
 | Submit `/submit` | ✗ | ✓ |
 | Collections `/my-collections` | ✗ | ✓ |
 | Profile `/profile` | ✗ | ✓ |
+
+### Files to modify
+- `src/App.tsx` — add `/chat` route
+- `src/pages/Index.tsx` — always show landing, remove ChatInterface redirect for logged-in users
+- `src/components/Navbar.tsx` — add Chat nav link for authenticated users
 
