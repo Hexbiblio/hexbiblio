@@ -2,17 +2,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles } from "lucide-react";
-import ChatInterface from "@/components/ChatInterface";
+import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles, MessageSquare } from "lucide-react";
 import { motion } from "framer-motion";
 
 const Index = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
-
-  if (user) {
-    return <ChatInterface />;
-  }
 
   const features = [
     { icon: BookOpen, title: t("landing.disciplineTitle"), desc: t("landing.disciplineDesc"), color: "from-primary/20 to-primary/5" },
@@ -51,17 +46,35 @@ const Index = () => {
             </p>
 
             <div className="flex items-center justify-center gap-3 pt-2">
-              <Link to="/auth">
-                <Button size="lg" className="gap-2 rounded-full px-8 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
-                  {t("landing.getStarted")}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link to="/database">
-                <Button variant="outline" size="lg" className="rounded-full px-8">
-                  {t("db.title")}
-                </Button>
-              </Link>
+              {user ? (
+                <>
+                  <Link to="/chat">
+                    <Button size="lg" className="gap-2 rounded-full px-8 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
+                      <MessageSquare className="h-4 w-4" />
+                      {t("nav.chatbot")}
+                    </Button>
+                  </Link>
+                  <Link to="/database">
+                    <Button variant="outline" size="lg" className="rounded-full px-8">
+                      {t("db.title")}
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/auth">
+                    <Button size="lg" className="gap-2 rounded-full px-8 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
+                      {t("landing.getStarted")}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link to="/database">
+                    <Button variant="outline" size="lg" className="rounded-full px-8">
+                      {t("db.title")}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         </div>
