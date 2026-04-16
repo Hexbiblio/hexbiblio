@@ -32,6 +32,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/database" element={<ProtectedRoute><Database /></ProtectedRoute>} />
               <Route path="/database/:id" element={<ProtectedRoute><ThesisDetail /></ProtectedRoute>} />
+              <Route path="/chat" element={<ProtectedRoute><ChatInterface /></ProtectedRoute>} />
               <Route path="/submit" element={<ProtectedRoute><SubmitThesis /></ProtectedRoute>} />
               <Route path="/my-collections" element={<ProtectedRoute><MyCollections /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
