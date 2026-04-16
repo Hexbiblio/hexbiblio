@@ -2,7 +2,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles, MessageSquare } from "lucide-react";
+import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles } from "lucide-react";
+import ChatInterface from "@/components/ChatInterface";
 import { motion } from "framer-motion";
 
 const Index = () => {
@@ -19,8 +20,7 @@ const Index = () => {
   return (
     <div className="min-h-[calc(100vh-3.5rem)] flex flex-col">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] px-4 py-20 md:py-32">
-        {/* Decorative blobs */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary/[0.06] via-background to-accent/[0.04] px-4 py-16 md:py-20">
         <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/[0.07] blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-accent/[0.08] blur-3xl" />
 
@@ -29,7 +29,7 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="space-y-6"
+            className="space-y-4"
           >
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
               <Sparkles className="h-7 w-7 text-primary" />
@@ -44,40 +44,19 @@ const Index = () => {
             <p className="mx-auto max-w-2xl text-base text-muted-foreground sm:text-lg leading-relaxed">
               {t("landing.subtitle")}
             </p>
-
-            <div className="flex items-center justify-center gap-3 pt-2">
-              {user ? (
-                <>
-                  <Link to="/chat">
-                    <Button size="lg" className="gap-2 rounded-full px-8 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
-                      <MessageSquare className="h-4 w-4" />
-                      {t("nav.chatbot")}
-                    </Button>
-                  </Link>
-                  <Link to="/database">
-                    <Button variant="outline" size="lg" className="rounded-full px-8">
-                      {t("db.title")}
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link to="/auth">
-                    <Button size="lg" className="gap-2 rounded-full px-8 shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow">
-                      {t("landing.getStarted")}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link to="/database">
-                    <Button variant="outline" size="lg" className="rounded-full px-8">
-                      {t("db.title")}
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
           </motion.div>
         </div>
+      </section>
+
+      {/* Embedded Chat */}
+      <section className="mx-auto w-full max-w-4xl px-4 -mt-4 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+        >
+          <ChatInterface embedded />
+        </motion.div>
       </section>
 
       {/* Features */}

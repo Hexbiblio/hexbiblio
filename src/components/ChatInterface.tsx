@@ -5,11 +5,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Bot, User, Loader2 } from "lucide-react";
+import { Send, Bot, User, Loader2, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/thesis-chat`;
+const GUEST_MESSAGE_LIMIT = 3;
 
 const SUGGESTED_QUESTIONS = {
   en: [
@@ -26,13 +28,21 @@ const SUGGESTED_QUESTIONS = {
   ],
 };
 
-const ChatInterface = () => {
+interface ChatInterfaceProps {
+  embedded?: boolean;
+}
+
+const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { language, t } = useLanguage();
+  const { user } = useAuth();
+
+  const userMessageCount = messages.filter((m) => m.role === "user").length;
+  const isGuestLimitReached = !user && userMessageCount >= GUEST_MESSAGE_LIMIT;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -98,7 +108,7 @@ const ChatInterface = () => {
 
   const handleSend = async (text?: string) => {
     const messageText = (text || input).trim();
-    if (!messageText || isLoading) return;
+    if (!messageText || isLoading || isGuestLimitReached) return;
 
     const userMsg: Msg = { role: "user", content: messageText };
     setMessages((prev) => [...prev, userMsg]);
@@ -123,25 +133,29 @@ const ChatInterface = () => {
 
   const questions = SUGGESTED_QUESTIONS[language];
 
+  const containerClass = embedded
+    ? "flex flex-col h-[500px] rounded-2xl border bg-card/50 backdrop-blur-sm overflow-hidden"
+    : "flex h-[calc(100vh-3.5rem)] flex-col";
+
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+    <div className={containerClass}>
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
           {messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 space-y-6">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                <Bot className="h-8 w-8 text-primary" />
+            <div className="flex flex-col items-center justify-center py-8 space-y-5">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                <Bot className="h-7 w-7 text-primary" />
               </div>
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold">{t("chat.title")}</h2>
-                <p className="text-muted-foreground max-w-md">{t("chat.subtitle")}</p>
+                <h2 className="text-xl font-bold">{t("chat.title")}</h2>
+                <p className="text-muted-foreground text-sm max-w-md">{t("chat.subtitle")}</p>
               </div>
               <div className="grid gap-2 sm:grid-cols-2 w-full max-w-xl">
                 {questions.map((q) => (
                   <button
                     key={q}
                     onClick={() => handleSend(q)}
-                    className="rounded-lg border bg-card p-3 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    className="rounded-lg border bg-card p-3 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     "{q.slice(0, 60)}..."
                   </button>
@@ -197,27 +211,52 @@ const ChatInterface = () => {
 
       <div className="border-t bg-card/80 backdrop-blur-sm">
         <div className="mx-auto max-w-3xl px-4 py-3">
-          <div className="flex items-end gap-2">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t("chat.placeholder")}
-              className="min-h-[44px] max-h-[120px] resize-none"
-              rows={1}
-            />
-            <Button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isLoading}
-              size="icon"
-              className="shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-          <p className="mt-1.5 text-center text-xs text-muted-foreground">
-            {t("chat.poweredBy")}
-          </p>
+          {isGuestLimitReached ? (
+            <div className="flex flex-col items-center gap-3 py-2">
+              <p className="text-sm text-muted-foreground text-center">
+                {language === "fr"
+                  ? "Connectez-vous pour continuer la conversation et sauvegarder vos échanges."
+                  : "Sign in to continue chatting and save your conversations."}
+              </p>
+              <Link to="/auth">
+                <Button className="gap-2 rounded-full px-6">
+                  <LogIn className="h-4 w-4" />
+                  {t("nav.signIn")}
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-end gap-2">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={t("chat.placeholder")}
+                  className="min-h-[44px] max-h-[120px] resize-none"
+                  rows={1}
+                />
+                <Button
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || isLoading}
+                  size="icon"
+                  className="shrink-0"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              {!user && (
+                <p className="mt-1.5 text-center text-xs text-muted-foreground">
+                  {language === "fr"
+                    ? `${GUEST_MESSAGE_LIMIT - userMessageCount} message(s) gratuit(s) restant(s)`
+                    : `${GUEST_MESSAGE_LIMIT - userMessageCount} free message(s) remaining`}
+                </p>
+              )}
+              <p className="mt-1 text-center text-xs text-muted-foreground">
+                {t("chat.poweredBy")}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
