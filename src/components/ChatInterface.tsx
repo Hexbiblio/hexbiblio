@@ -42,8 +42,33 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
 
+  // Restore a pending guest conversation once (on mount, or right after login).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PENDING_CHAT_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Msg[];
+      if (Array.isArray(saved) && saved.length > 0) {
+        setMessages(saved);
+      }
+      // Once the user is logged in, consume the pending chat so it isn't restored again.
+      if (user) localStorage.removeItem(PENDING_CHAT_KEY);
+    } catch {
+      // ignore corrupted storage
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const userMessageCount = messages.filter((m) => m.role === "user").length;
   const isGuestLimitReached = !user && userMessageCount >= GUEST_MESSAGE_LIMIT;
+
+  const handleSignInRedirect = () => {
+    try {
+      localStorage.setItem(PENDING_CHAT_KEY, JSON.stringify(messages));
+    } catch {
+      // storage may be full or unavailable — proceed without persisting
+    }
+  };
 
   useEffect(() => {
     if (messages.length === 0) return;
