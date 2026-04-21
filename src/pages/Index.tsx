@@ -4,6 +4,9 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles } from "lucide-react";
 import ChatInterface from "@/components/ChatInterface";
+import ThesisQuests, { useQuestProgress, QuestId } from "@/components/ThesisQuests";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 const Index = () => {
