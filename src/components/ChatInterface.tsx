@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
+import BotMessage from "@/components/BotMessage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -209,16 +209,14 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
                 </div>
               )}
               <div
-                className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                className={
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
-                }`}
+                    ? "max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground"
+                    : "max-w-[92%] rounded-2xl px-4 py-3 bg-card border"
+                }
               >
                 {msg.role === "assistant" ? (
-                  <div className="prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
+                  <BotMessage content={msg.content} />
                 ) : (
                   <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                 )}
