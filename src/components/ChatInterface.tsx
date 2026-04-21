@@ -32,9 +32,10 @@ const SUGGESTED_QUESTIONS = {
 
 interface ChatInterfaceProps {
   embedded?: boolean;
+  onQuestProgress?: (ids: QuestId[]) => void;
 }
 
-const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
+const ChatInterface = ({ embedded = false, onQuestProgress }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
