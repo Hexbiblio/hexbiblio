@@ -11,7 +11,26 @@ import { motion } from "framer-motion";
 
 const Index = () => {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const { completed, complete, toggle } = useQuestProgress();
+  const { toast } = useToast();
+  const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
+
+  const handleQuestProgress = (ids: QuestId[]) => {
+    const added = complete(ids);
+    if (added.length > 0) {
+      const last = added[added.length - 1];
+      setJustCompleted(last);
+      toast({
+        title: language === "fr" ? "🎉 Quête accomplie !" : "🎉 Quest complete!",
+        description:
+          language === "fr"
+            ? `+${added.length} étape${added.length > 1 ? "s" : ""} validée${added.length > 1 ? "s" : ""}`
+            : `+${added.length} step${added.length > 1 ? "s" : ""} unlocked`,
+      });
+      setTimeout(() => setJustCompleted(null), 1500);
+    }
+  };
 
   const features = [
     { icon: BookOpen, title: t("landing.disciplineTitle"), desc: t("landing.disciplineDesc"), color: "from-primary/20 to-primary/5" },
