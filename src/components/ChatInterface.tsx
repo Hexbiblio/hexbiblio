@@ -45,7 +45,14 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
   const isGuestLimitReached = !user && userMessageCount >= GUEST_MESSAGE_LIMIT;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length === 0) return;
+    const end = messagesEndRef.current;
+    if (!end) return;
+    // Scroll only the chat's own scroll container — not the whole page.
+    const scrollParent = end.closest(".chat-scroll") as HTMLElement | null;
+    if (scrollParent) {
+      scrollParent.scrollTo({ top: scrollParent.scrollHeight, behavior: "smooth" });
+    }
   }, [messages]);
 
   const streamChat = async (allMessages: Msg[]) => {
