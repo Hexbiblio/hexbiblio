@@ -172,15 +172,162 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
     );
   }
 
-  const containerClass = embedded
-    ? "flex flex-col h-[520px] rounded-2xl border bg-card/50 backdrop-blur-sm overflow-hidden"
-    : "flex h-[calc(100vh-3.5rem)] flex-col";
+  // Render the input area (shared by both modes).
+  const renderInputArea = (variant: "embedded" | "full") => {
+    if (isGuestLimitReached) {
+      return (
+        <div className="flex flex-col items-center gap-3 py-2">
+          <p className="text-sm text-muted-foreground text-center">
+            {language === "fr"
+              ? "Connectez-vous pour continuer la conversation et sauvegarder vos échanges."
+              : "Sign in to continue chatting and save your conversations."}
+          </p>
+          <Link to="/auth">
+            <Button className="gap-2 rounded-full px-6">
+              <LogIn className="h-4 w-4" />
+              {t("nav.signIn")}
+            </Button>
+          </Link>
+        </div>
+      );
+    }
 
+    if (variant === "embedded") {
+      return (
+        <>
+          <div className="relative flex items-end gap-2 rounded-full border bg-card/90 backdrop-blur-md px-2 py-1.5 shadow-sm transition-shadow focus-within:shadow-md">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={t("chat.placeholder")}
+              className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 px-4 py-2.5"
+              rows={1}
+            />
+            <Button
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isLoading}
+              size="icon"
+              className="shrink-0 rounded-full h-10 w-10"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+          {!user && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              {language === "fr"
+                ? `${GUEST_MESSAGE_LIMIT - userMessageCount} message(s) gratuit(s) restant(s)`
+                : `${GUEST_MESSAGE_LIMIT - userMessageCount} free message(s) remaining`}
+            </p>
+          )}
+        </>
+      );
+    }
+
+    return (
+      <>
+        <div className="flex items-end gap-2">
+          <Textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t("chat.placeholder")}
+            className="min-h-[44px] max-h-[120px] resize-none"
+            rows={1}
+          />
+          <Button
+            onClick={() => handleSend()}
+            disabled={!input.trim() || isLoading}
+            size="icon"
+            className="shrink-0"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+        {!user && (
+          <p className="mt-1.5 text-center text-xs text-muted-foreground">
+            {language === "fr"
+              ? `${GUEST_MESSAGE_LIMIT - userMessageCount} message(s) gratuit(s) restant(s)`
+              : `${GUEST_MESSAGE_LIMIT - userMessageCount} free message(s) remaining`}
+          </p>
+        )}
+        <p className="mt-1 text-center text-xs text-muted-foreground">
+          {t("chat.poweredBy")}
+        </p>
+      </>
+    );
+  };
+
+  const renderMessages = () => (
+    <>
+      {messages.map((msg, i) => (
+        <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+          {msg.role === "assistant" && (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <Bot className="h-4 w-4 text-primary" />
+            </div>
+          )}
+          <div
+            className={
+              msg.role === "user"
+                ? "max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground"
+                : embedded
+                  ? "max-w-[92%] text-foreground"
+                  : "max-w-[92%] rounded-2xl px-4 py-3 bg-card border"
+            }
+          >
+            {msg.role === "assistant" ? (
+              <BotMessage content={msg.content} />
+            ) : (
+              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+            )}
+          </div>
+          {msg.role === "user" && (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
+              <User className="h-4 w-4" />
+            </div>
+          )}
+        </div>
+      ))}
+
+      {isLoading && messages[messages.length - 1]?.role === "user" && (
+        <div className="flex gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+            <Bot className="h-4 w-4 text-primary" />
+          </div>
+          <div className="px-1 py-3">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      )}
+
+      <div ref={messagesEndRef} />
+    </>
+  );
+
+  // EMBEDDED with messages: inline flow, no box, no inner scroll.
+  // Input becomes a sticky pill at the bottom of the viewport.
+  if (embedded) {
+    return (
+      <div className="w-full">
+        <div className="mx-auto max-w-3xl space-y-6 pb-32">
+          {renderMessages()}
+        </div>
+        <div className="sticky bottom-4 z-20 mt-6">
+          <div className="mx-auto max-w-2xl px-4">
+            {renderInputArea("embedded")}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // FULL page mode (e.g. /chat route): keep the bordered, scrollable layout.
   return (
-    <div className={containerClass}>
+    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
       <div className="chat-scroll flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
-          {isEmpty && !embedded && (
+          {isEmpty && (
             <div className="flex flex-col items-center justify-center py-8 space-y-5">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
                 <Bot className="h-7 w-7 text-primary" />
@@ -203,97 +350,13 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
             </div>
           )}
 
-          {messages.map((msg, i) => (
-            <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
-              {msg.role === "assistant" && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Bot className="h-4 w-4 text-primary" />
-                </div>
-              )}
-              <div
-                className={
-                  msg.role === "user"
-                    ? "max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground"
-                    : "max-w-[92%] rounded-2xl px-4 py-3 bg-card border"
-                }
-              >
-                {msg.role === "assistant" ? (
-                  <BotMessage content={msg.content} />
-                ) : (
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                )}
-              </div>
-              {msg.role === "user" && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
-                  <User className="h-4 w-4" />
-                </div>
-              )}
-            </div>
-          ))}
-
-          {isLoading && messages[messages.length - 1]?.role === "user" && (
-            <div className="flex gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Bot className="h-4 w-4 text-primary" />
-              </div>
-              <div className="rounded-2xl bg-muted px-4 py-3">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
+          {renderMessages()}
         </div>
       </div>
 
       <div className="border-t bg-card/80 backdrop-blur-sm">
         <div className="mx-auto max-w-3xl px-4 py-3">
-          {isGuestLimitReached ? (
-            <div className="flex flex-col items-center gap-3 py-2">
-              <p className="text-sm text-muted-foreground text-center">
-                {language === "fr"
-                  ? "Connectez-vous pour continuer la conversation et sauvegarder vos échanges."
-                  : "Sign in to continue chatting and save your conversations."}
-              </p>
-              <Link to="/auth">
-                <Button className="gap-2 rounded-full px-6">
-                  <LogIn className="h-4 w-4" />
-                  {t("nav.signIn")}
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-end gap-2">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={t("chat.placeholder")}
-                  className="min-h-[44px] max-h-[120px] resize-none"
-                  rows={1}
-                />
-                <Button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isLoading}
-                  size="icon"
-                  className="shrink-0"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-              {!user && (
-                <p className="mt-1.5 text-center text-xs text-muted-foreground">
-                  {language === "fr"
-                    ? `${GUEST_MESSAGE_LIMIT - userMessageCount} message(s) gratuit(s) restant(s)`
-                    : `${GUEST_MESSAGE_LIMIT - userMessageCount} free message(s) remaining`}
-                </p>
-              )}
-              <p className="mt-1 text-center text-xs text-muted-foreground">
-                {t("chat.poweredBy")}
-              </p>
-            </>
-          )}
+          {renderInputArea("full")}
         </div>
       </div>
     </div>
