@@ -154,6 +154,16 @@ const ChatInterface = ({ embedded = false, onQuestProgress }: ChatInterfaceProps
 
     try {
       await streamChat([...messages, userMsg]);
+      if (onQuestProgress) {
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant") {
+            const ids = detectCompletedQuests(last.content + " " + messageText);
+            if (ids.length) onQuestProgress(ids);
+          }
+          return prev;
+        });
+      }
     } catch (e: any) {
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     } finally {
