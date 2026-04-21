@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
+import BotMessage from "@/components/BotMessage";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
