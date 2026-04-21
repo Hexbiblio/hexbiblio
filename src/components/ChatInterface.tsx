@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import BotMessage from "@/components/BotMessage";
+import { detectCompletedQuests, QuestId } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
