@@ -176,7 +176,7 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
 
   return (
     <div className={containerClass}>
-      <div className="flex-1 overflow-y-auto">
+      <div className="chat-scroll flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
           {isEmpty && !embedded && (
             <div className="flex flex-col items-center justify-center py-8 space-y-5">
