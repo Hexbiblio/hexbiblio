@@ -53,6 +53,8 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
     if (scrollParent) {
       scrollParent.scrollTo({ top: scrollParent.scrollHeight, behavior: "smooth" });
     }
+    // In embedded mode we intentionally do NOT scroll the page —
+    // the conversation flows inline like ChatGPT/Claude.
   }, [messages]);
 
   const streamChat = async (allMessages: Msg[]) => {
