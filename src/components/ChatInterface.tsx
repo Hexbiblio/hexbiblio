@@ -11,7 +11,8 @@ import { Link } from "react-router-dom";
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/thesis-chat`;
-const GUEST_MESSAGE_LIMIT = 3;
+const GUEST_MESSAGE_LIMIT = 1;
+const PENDING_CHAT_KEY = "hexbiblio:pendingChat";
 
 const SUGGESTED_QUESTIONS = {
   en: [
@@ -41,8 +42,33 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
   const { language, t } = useLanguage();
   const { user } = useAuth();
 
+  // Restore a pending guest conversation once (on mount, or right after login).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PENDING_CHAT_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Msg[];
+      if (Array.isArray(saved) && saved.length > 0) {
+        setMessages(saved);
+      }
+      // Once the user is logged in, consume the pending chat so it isn't restored again.
+      if (user) localStorage.removeItem(PENDING_CHAT_KEY);
+    } catch {
+      // ignore corrupted storage
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   const userMessageCount = messages.filter((m) => m.role === "user").length;
   const isGuestLimitReached = !user && userMessageCount >= GUEST_MESSAGE_LIMIT;
+
+  const handleSignInRedirect = () => {
+    try {
+      localStorage.setItem(PENDING_CHAT_KEY, JSON.stringify(messages));
+    } catch {
+      // storage may be full or unavailable — proceed without persisting
+    }
+  };
 
   useEffect(() => {
     if (messages.length === 0) return;
@@ -176,13 +202,13 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
   const renderInputArea = (variant: "embedded" | "full") => {
     if (isGuestLimitReached) {
       return (
-        <div className="flex flex-col items-center gap-3 py-2">
-          <p className="text-sm text-muted-foreground text-center">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card/90 backdrop-blur-md px-5 py-4 shadow-sm">
+          <p className="text-sm text-foreground text-center max-w-md">
             {language === "fr"
-              ? "Connectez-vous pour continuer la conversation et sauvegarder vos échanges."
-              : "Sign in to continue chatting and save your conversations."}
+              ? "Connectez-vous pour continuer la conversation. Votre échange sera conservé."
+              : "Sign in to keep chatting — your conversation will be saved."}
           </p>
-          <Link to="/auth">
+          <Link to="/auth" onClick={handleSignInRedirect}>
             <Button className="gap-2 rounded-full px-6">
               <LogIn className="h-4 w-4" />
               {t("nav.signIn")}
@@ -213,13 +239,6 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          {!user && (
-            <p className="mt-2 text-center text-xs text-muted-foreground">
-              {language === "fr"
-                ? `${GUEST_MESSAGE_LIMIT - userMessageCount} message(s) gratuit(s) restant(s)`
-                : `${GUEST_MESSAGE_LIMIT - userMessageCount} free message(s) remaining`}
-            </p>
-          )}
         </>
       );
     }
@@ -244,13 +263,6 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        {!user && (
-          <p className="mt-1.5 text-center text-xs text-muted-foreground">
-            {language === "fr"
-              ? `${GUEST_MESSAGE_LIMIT - userMessageCount} message(s) gratuit(s) restant(s)`
-              : `${GUEST_MESSAGE_LIMIT - userMessageCount} free message(s) remaining`}
-          </p>
-        )}
         <p className="mt-1 text-center text-xs text-muted-foreground">
           {t("chat.poweredBy")}
         </p>
