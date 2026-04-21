@@ -70,14 +70,22 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Embedded Chat */}
-      <section className="mx-auto w-full max-w-4xl px-4 -mt-4 relative z-10">
+      {/* Embedded Chat + Quests */}
+      <section className="mx-auto w-full max-w-6xl px-4 -mt-4 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
+          className={user ? "grid gap-6 lg:grid-cols-[1fr_320px]" : ""}
         >
-          <ChatInterface embedded />
+          <div className="min-w-0">
+            <ChatInterface embedded onQuestProgress={user ? handleQuestProgress : undefined} />
+          </div>
+          {user && (
+            <aside className="lg:sticky lg:top-20 lg:self-start">
+              <ThesisQuests completed={completed} onToggle={toggle} justCompleted={justCompleted} />
+            </aside>
+          )}
         </motion.div>
       </section>
 
