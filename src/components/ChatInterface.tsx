@@ -263,13 +263,6 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
             <Send className="h-4 w-4" />
           </Button>
         </div>
-        {!user && (
-          <p className="mt-1.5 text-center text-xs text-muted-foreground">
-            {language === "fr"
-              ? `${GUEST_MESSAGE_LIMIT - userMessageCount} message(s) gratuit(s) restant(s)`
-              : `${GUEST_MESSAGE_LIMIT - userMessageCount} free message(s) remaining`}
-          </p>
-        )}
         <p className="mt-1 text-center text-xs text-muted-foreground">
           {t("chat.poweredBy")}
         </p>
