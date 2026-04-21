@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import BotMessage from "@/components/BotMessage";
+import { detectCompletedQuests, QuestId } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -31,9 +32,10 @@ const SUGGESTED_QUESTIONS = {
 
 interface ChatInterfaceProps {
   embedded?: boolean;
+  onQuestProgress?: (ids: QuestId[]) => void;
 }
 
-const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
+const ChatInterface = ({ embedded = false, onQuestProgress }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -152,6 +154,16 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
 
     try {
       await streamChat([...messages, userMsg]);
+      if (onQuestProgress) {
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant") {
+            const ids = detectCompletedQuests(last.content + " " + messageText);
+            if (ids.length) onQuestProgress(ids);
+          }
+          return prev;
+        });
+      }
     } catch (e: any) {
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     } finally {
