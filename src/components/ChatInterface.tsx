@@ -202,13 +202,13 @@ const ChatInterface = ({ embedded = false }: ChatInterfaceProps) => {
   const renderInputArea = (variant: "embedded" | "full") => {
     if (isGuestLimitReached) {
       return (
-        <div className="flex flex-col items-center gap-3 py-2">
-          <p className="text-sm text-muted-foreground text-center">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card/90 backdrop-blur-md px-5 py-4 shadow-sm">
+          <p className="text-sm text-foreground text-center max-w-md">
             {language === "fr"
-              ? "Connectez-vous pour continuer la conversation et sauvegarder vos échanges."
-              : "Sign in to continue chatting and save your conversations."}
+              ? "Connectez-vous pour continuer la conversation. Votre échange sera conservé."
+              : "Sign in to keep chatting — your conversation will be saved."}
           </p>
-          <Link to="/auth">
+          <Link to="/auth" onClick={handleSignInRedirect}>
             <Button className="gap-2 rounded-full px-6">
               <LogIn className="h-4 w-4" />
               {t("nav.signIn")}
