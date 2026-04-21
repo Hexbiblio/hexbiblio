@@ -11,7 +11,8 @@ import { Link } from "react-router-dom";
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/thesis-chat`;
-const GUEST_MESSAGE_LIMIT = 3;
+const GUEST_MESSAGE_LIMIT = 1;
+const PENDING_CHAT_KEY = "hexbiblio:pendingChat";
 
 const SUGGESTED_QUESTIONS = {
   en: [
