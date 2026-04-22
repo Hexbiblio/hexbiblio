@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 const Index = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const { completed, complete, toggle } = useQuestProgress();
+  const { completed, complete } = useQuestProgress();
   const { toast } = useToast();
   const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
 
@@ -83,7 +83,7 @@ const Index = () => {
           </div>
           {user && (
             <aside className="lg:sticky lg:top-20 lg:self-start">
-              <ThesisQuests completed={completed} onToggle={toggle} justCompleted={justCompleted} />
+              <ThesisQuests completed={completed} justCompleted={justCompleted} />
             </aside>
           )}
         </motion.div>
