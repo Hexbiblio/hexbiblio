@@ -3,17 +3,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuests } from "@/contexts/QuestContext";
 import { Button } from "@/components/ui/button";
-import { QUESTS } from "@/components/ThesisQuests";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import ThesisQuests, { QUESTS } from "@/components/ThesisQuests";
 import { BookOpen, Search, Upload, Bookmark, User, LogOut, MessageSquare, Globe, Trophy } from "lucide-react";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const { language, setLanguage, t } = useLanguage();
-  const { completed } = useQuests();
+  const { completed, justCompleted } = useQuests();
   const questDone = completed.size;
   const questTotal = QUESTS.length;
-  const onHome = location.pathname === "/";
 
   const links = [
     { to: "/chat", label: t("nav.chatbot"), icon: MessageSquare },
@@ -50,20 +50,25 @@ const Navbar = () => {
             <span className="hidden sm:inline">{language === "en" ? "FR" : "EN"}</span>
           </Button>
 
-          {user && !onHome && (
-            <Link to="/">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-xs sm:text-sm rounded-full text-muted-foreground hover:text-foreground"
-              >
-                <Trophy className="h-4 w-4" />
-                <span className="hidden md:inline">{language === "fr" ? "Mon mémoire" : "My Thesis"}</span>
-                <span className="ml-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                  {questDone}/{questTotal}
-                </span>
-              </Button>
-            </Link>
+          {user && (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-xs sm:text-sm rounded-full text-muted-foreground hover:text-foreground relative"
+                >
+                  <Trophy className="h-4 w-4" />
+                  <span className="hidden md:inline">{language === "fr" ? "Mon mémoire" : "My Thesis"}</span>
+                  <span className="ml-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                    {questDone}/{questTotal}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-[340px] p-0 border-0 bg-transparent shadow-none">
+                <ThesisQuests completed={completed} justCompleted={justCompleted} />
+              </PopoverContent>
+            </Popover>
           )}
 
           {user && (
