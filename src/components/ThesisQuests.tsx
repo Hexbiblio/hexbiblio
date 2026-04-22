@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Trophy, Sparkles, Target, BookOpen, FileSearch, Microscope, Library, Lightbulb } from "lucide-react";
+import { Check, Trophy, Sparkles, Target, BookOpen, FileSearch, Microscope, Library, Lightbulb, Bot, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
