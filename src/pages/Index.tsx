@@ -83,7 +83,7 @@ const Index = () => {
           </div>
           {user && (
             <aside className="lg:sticky lg:top-20 lg:self-start">
-              <ThesisQuests completed={completed} onToggle={toggle} justCompleted={justCompleted} />
+              <ThesisQuests completed={completed} justCompleted={justCompleted} />
             </aside>
           )}
         </motion.div>
