@@ -12,7 +12,7 @@ import { motion } from "framer-motion";
 const Index = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const { completed, complete, toggle } = useQuestProgress();
+  const { completed, complete } = useQuestProgress();
   const { toast } = useToast();
   const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
 
