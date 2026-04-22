@@ -1,36 +1,16 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useQuests } from "@/contexts/QuestContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles } from "lucide-react";
 import ChatInterface from "@/components/ChatInterface";
-import ThesisQuests, { useQuestProgress, QuestId } from "@/components/ThesisQuests";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
 const Index = () => {
   const { user } = useAuth();
-  const { t, language } = useLanguage();
-  const { completed, complete } = useQuestProgress();
-  const { toast } = useToast();
-  const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
-
-  const handleQuestProgress = (ids: QuestId[]) => {
-    const added = complete(ids);
-    if (added.length > 0) {
-      const last = added[added.length - 1];
-      setJustCompleted(last);
-      toast({
-        title: language === "fr" ? "🎉 Quête accomplie !" : "🎉 Quest complete!",
-        description:
-          language === "fr"
-            ? `+${added.length} étape${added.length > 1 ? "s" : ""} validée${added.length > 1 ? "s" : ""}`
-            : `+${added.length} step${added.length > 1 ? "s" : ""} unlocked`,
-      });
-      setTimeout(() => setJustCompleted(null), 1500);
-    }
-  };
+  const { t } = useLanguage();
+  const { handleQuestProgress } = useQuests();
 
   const features = [
     { icon: BookOpen, title: t("landing.disciplineTitle"), desc: t("landing.disciplineDesc"), color: "from-primary/20 to-primary/5" },
@@ -74,22 +54,16 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Embedded Chat + Quests */}
-      <section className="mx-auto w-full max-w-6xl px-4 -mt-4 relative z-10 flex-1">
+      {/* Embedded Chat */}
+      <section className="mx-auto w-full max-w-4xl px-4 -mt-4 relative z-10 flex-1">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className={user ? "grid gap-6 lg:grid-cols-[1fr_320px]" : ""}
         >
           <div className="min-w-0">
             <ChatInterface embedded onQuestProgress={user ? handleQuestProgress : undefined} />
           </div>
-          {user && (
-            <aside className="lg:sticky lg:top-20 lg:self-start">
-              <ThesisQuests completed={completed} justCompleted={justCompleted} />
-            </aside>
-          )}
         </motion.div>
       </section>
 
