@@ -124,11 +124,10 @@ export function useQuestProgress() {
 
 interface Props {
   completed: Set<QuestId>;
-  onToggle: (id: QuestId) => void;
   justCompleted?: QuestId | null;
 }
 
-const ThesisQuests = ({ completed, onToggle, justCompleted }: Props) => {
+const ThesisQuests = ({ completed, justCompleted }: Props) => {
   const { language } = useLanguage();
   const total = QUESTS.length;
   const done = completed.size;
@@ -165,7 +164,19 @@ const ThesisQuests = ({ completed, onToggle, justCompleted }: Props) => {
         </AnimatePresence>
       </div>
 
-      <Progress value={pct} className="mb-4 h-1.5" />
+      <Progress value={pct} className="mb-3 h-1.5" />
+
+      {/* Bot helper banner — makes it obvious quests are unlocked through chat */}
+      <div className="mb-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-2.5">
+        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15">
+          <Bot className="h-3.5 w-3.5 text-primary" />
+        </div>
+        <p className="text-xs leading-snug text-foreground/80">
+          {language === "fr"
+            ? "Votre assistant valide chaque étape au fil de la conversation. Discutez avec lui pour cocher les quêtes."
+            : "Your assistant unlocks each step as you chat. Talk with the bot to check off quests."}
+        </p>
+      </div>
 
       <ul className="space-y-2">
         {QUESTS.map((q) => {
@@ -174,14 +185,15 @@ const ThesisQuests = ({ completed, onToggle, justCompleted }: Props) => {
           const Icon = q.icon;
           return (
             <li key={q.id}>
-              <motion.button
-                onClick={() => onToggle(q.id)}
+              <motion.div
                 animate={isNew ? { scale: [1, 1.04, 1] } : {}}
                 transition={{ duration: 0.5 }}
-                className={`group flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-all ${
+                aria-disabled="true"
+                title={language === "fr" ? "Validé automatiquement par l'assistant" : "Auto-checked by the assistant"}
+                className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left cursor-default select-none ${
                   isDone
                     ? "border-primary/30 bg-primary/5"
-                    : "border-border hover:border-primary/30 hover:bg-muted/40"
+                    : "border-border bg-background"
                 }`}
               >
                 <div
@@ -191,17 +203,13 @@ const ThesisQuests = ({ completed, onToggle, justCompleted }: Props) => {
                       : "border-muted-foreground/30 bg-background"
                   }`}
                 >
-                  <AnimatePresence>
-                    {isDone && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                      >
-                        <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
+                  {isDone ? (
+                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}>
+                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
+                    </motion.span>
+                  ) : (
+                    <Lock className="h-2.5 w-2.5 text-muted-foreground/60" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
@@ -216,7 +224,7 @@ const ThesisQuests = ({ completed, onToggle, justCompleted }: Props) => {
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">{q.hint[language]}</p>
                 </div>
-              </motion.button>
+              </motion.div>
             </li>
           );
         })}
