@@ -47,7 +47,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, language = "en" } = await req.json();
+    const { messages, language = "en", profile = null } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
