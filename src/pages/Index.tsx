@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles } from "lucide-react";
 import ChatInterface from "@/components/ChatInterface";
-import ThesisQuests, { useQuestProgress, QuestId } from "@/components/ThesisQuests";
+import ThesisQuests, { useQuestProgress, QuestId, detectCompletedQuests } from "@/components/ThesisQuests";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -16,7 +16,9 @@ const Index = () => {
   const { toast } = useToast();
   const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
 
-  const handleQuestProgress = (ids: QuestId[]) => {
+  const handleUserMessage = (text: string) => {
+    const ids = detectCompletedQuests(text, completed);
+    if (!ids.length) return;
     const added = complete(ids);
     if (added.length > 0) {
       const last = added[added.length - 1];
@@ -83,7 +85,7 @@ const Index = () => {
           className={user ? "grid gap-6 lg:grid-cols-[1fr_320px]" : ""}
         >
           <div className="min-w-0">
-            <ChatInterface embedded onQuestProgress={user ? handleQuestProgress : undefined} />
+            <ChatInterface embedded onUserMessage={user ? handleUserMessage : undefined} />
           </div>
           {user && (
             <aside className="lg:sticky lg:top-20 lg:self-start">

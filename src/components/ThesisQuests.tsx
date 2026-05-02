@@ -59,22 +59,32 @@ export const QUESTS: Quest[] = [
   },
 ];
 
-const KEYWORDS: Record<QuestId, RegExp> = {
-  discipline: /\b(discipline|field of study|domaine|champ d['’]étude)\b/i,
-  theme: /\b(theme|topic|thématique|sujet)\b/i,
-  question: /\b(research question|problématique|question de recherche)\b/i,
-  thesis: /\b(thesis statement|thesis:|énoncé de thèse|hypothèse|hypothesis)\b/i,
-  method: /\b(methodology|method:|méthodologie|qualitative|quantitative|mixed[- ]methods?)\b/i,
-  sources: /\b(sources?|references?|bibliograph(?:y|ie)|littérature|literature review|revue de littérature)\b/i,
+// Strict cues that must appear in the USER's own message for a quest to count.
+// Generic chatter ("hello") must NOT trigger anything.
+const USER_CUES: Record<QuestId, RegExp> = {
+  discipline: /\b(sociology|psychology|biology|chemistry|physics|economics|history|philosophy|literature|engineering|computer science|medicine|law|anthropology|linguistics|education|political science|mathematics|sociologie|psychologie|biologie|chimie|physique|économie|histoire|philosophie|littérature|ingénierie|informatique|médecine|droit|anthropologie|linguistique|éducation|sciences? politiques?|mathématiques)\b/i,
+  theme: /\b(impact of|effect of|influence of|role of|relationship between|focus on|interested in|my topic|topic is|effet de|influence de|rôle de|relation entre|mon sujet|sujet est|intéress)\b/i,
+  question: /\?\s*$|\b(how|why|to what extent|in what ways|comment|pourquoi|dans quelle mesure|en quoi)\b.{5,}\?/i,
+  thesis: /\b(i argue|i claim|my hypothesis|my thesis is|i propose that|je soutiens|mon hypothèse|ma thèse est|je propose que)\b/i,
+  method: /\b(qualitative|quantitative|mixed[- ]methods?|survey|interview|case study|ethnograph|experiment|questionnaire|enquête|entretien|étude de cas|expérience|méthode mixte)\b/i,
+  sources: /\b(literature review|i (have read|found|read) .{0,40}(article|paper|book|thesis)|articles? (by|from) |bibliograph|revue de littérature|j'ai (lu|trouvé) .{0,40}(article|livre|thèse))\b/i,
 };
 
-/** Detect which quests are satisfied by a given assistant message. */
-export function detectCompletedQuests(content: string): QuestId[] {
-  const out: QuestId[] = [];
+/**
+ * Detect quests completed by the user's latest message.
+ * Returns AT MOST ONE new quest per exchange so progress feels earned.
+ */
+export function detectCompletedQuests(
+  userMessage: string,
+  completed?: Set<QuestId>
+): QuestId[] {
+  const text = (userMessage ?? "").trim();
+  if (text.length < 15) return [];
   for (const q of QUESTS) {
-    if (KEYWORDS[q.id].test(content)) out.push(q.id);
+    if (completed?.has(q.id)) continue;
+    if (USER_CUES[q.id].test(text)) return [q.id];
   }
-  return out;
+  return [];
 }
 
 const storageKey = (uid: string) => `hexbiblio:quests:${uid}`;
