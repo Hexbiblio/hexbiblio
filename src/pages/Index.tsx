@@ -16,7 +16,9 @@ const Index = () => {
   const { toast } = useToast();
   const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
 
-  const handleQuestProgress = (ids: QuestId[]) => {
+  const handleUserMessage = (text: string) => {
+    const ids = detectCompletedQuests(text, completed);
+    if (!ids.length) return;
     const added = complete(ids);
     if (added.length > 0) {
       const last = added[added.length - 1];
