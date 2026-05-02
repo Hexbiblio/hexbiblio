@@ -3,6 +3,7 @@ import BotMessage from "@/components/BotMessage";
 import { detectCompletedQuests, QuestId } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
