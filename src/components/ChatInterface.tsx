@@ -36,7 +36,7 @@ interface ChatInterfaceProps {
   onUserMessage?: (text: string) => void;
 }
 
-const ChatInterface = ({ embedded = false, onQuestProgress }: ChatInterfaceProps) => {
+const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
