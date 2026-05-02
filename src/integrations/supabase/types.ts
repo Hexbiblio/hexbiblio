@@ -112,23 +112,41 @@ export type Database = {
       }
       profiles: {
         Row: {
+          academic_level: string | null
           avatar_url: string | null
+          bio: string | null
+          country: string | null
           created_at: string
+          field_of_study: string | null
           id: string
+          research_interests: string[] | null
+          university: string | null
           user_id: string
           username: string | null
         }
         Insert: {
+          academic_level?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
           created_at?: string
+          field_of_study?: string | null
           id?: string
+          research_interests?: string[] | null
+          university?: string | null
           user_id: string
           username?: string | null
         }
         Update: {
+          academic_level?: string | null
           avatar_url?: string | null
+          bio?: string | null
+          country?: string | null
           created_at?: string
+          field_of_study?: string | null
           id?: string
+          research_interests?: string[] | null
+          university?: string | null
           user_id?: string
           username?: string | null
         }

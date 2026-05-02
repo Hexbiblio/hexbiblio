@@ -3,6 +3,7 @@ import BotMessage from "@/components/BotMessage";
 import { detectCompletedQuests, QuestId } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +44,17 @@ const ChatInterface = ({ embedded = false, onQuestProgress }: ChatInterfaceProps
   const { toast } = useToast();
   const { language, t } = useLanguage();
   const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user) { setProfile(null); return; }
+    supabase
+      .from("profiles")
+      .select("username, academic_level, country, university, field_of_study, research_interests, bio")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setProfile(data));
+  }, [user]);
 
   // Restore a pending guest conversation once (on mount, or right after login).
   useEffect(() => {
@@ -92,7 +104,7 @@ const ChatInterface = ({ embedded = false, onQuestProgress }: ChatInterfaceProps
         "Content-Type": "application/json",
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages, language }),
+      body: JSON.stringify({ messages: allMessages, language, profile }),
     });
 
     if (!resp.ok) {
