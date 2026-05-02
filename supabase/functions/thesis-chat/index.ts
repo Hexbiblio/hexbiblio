@@ -119,11 +119,24 @@ serve(async (req) => {
       }
     }
 
-    // Combine system prompt with database context and language instruction
+    // Combine system prompt with database context, profile, and language instruction
     const langInstruction = language === "fr"
       ? "\n\n## LANGUAGE\nYou MUST respond entirely in French. All headers, explanations, and suggestions must be in French."
       : "";
-    const fullSystemPrompt = SYSTEM_PROMPT + databaseContext + langInstruction;
+
+    let profileContext = "";
+    if (profile && (profile.academic_level || profile.field_of_study || profile.university || profile.country || profile.bio || (profile.research_interests?.length))) {
+      profileContext = `\n\n---\n## STUDENT PROFILE\nTailor your guidance, examples, and methodology suggestions to this student's background. Reference their level/field naturally when helpful, but do not over-mention it.\n`;
+      if (profile.username) profileContext += `- Name: ${profile.username}\n`;
+      if (profile.academic_level) profileContext += `- Academic level: ${profile.academic_level}\n`;
+      if (profile.field_of_study) profileContext += `- Field of study: ${profile.field_of_study}\n`;
+      if (profile.university) profileContext += `- University: ${profile.university}\n`;
+      if (profile.country) profileContext += `- Country: ${profile.country}\n`;
+      if (profile.research_interests?.length) profileContext += `- Research interests: ${profile.research_interests.join(", ")}\n`;
+      if (profile.bio) profileContext += `- Bio: ${profile.bio}\n`;
+    }
+
+    const fullSystemPrompt = SYSTEM_PROMPT + profileContext + databaseContext + langInstruction;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
