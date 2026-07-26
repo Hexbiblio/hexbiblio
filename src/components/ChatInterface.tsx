@@ -43,7 +43,7 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { language, t } = useLanguage();
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [profile, setProfile] = useState<any>(null);
 
   useEffect(() => {
