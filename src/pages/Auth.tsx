@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { BookOpen } from "lucide-react";
-import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 
 const Auth = () => {
@@ -42,15 +42,15 @@ const Auth = () => {
 
   const handleOAuth = async (provider: "google" | "apple") => {
     try {
-      const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: window.location.origin },
       });
-      if (result.error) {
-        toast({ title: t("common.error"), description: (result.error as Error).message, variant: "destructive" });
-        return;
+      if (error) {
+        toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       }
-      if (result.redirected) return;
-      navigate("/");
+      // On success, the browser is redirected to the provider's login page;
+      // no further code runs here until the user comes back.
     } catch (error: any) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     }
