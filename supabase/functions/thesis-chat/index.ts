@@ -43,11 +43,17 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, language = "en", profile = null } = await req.json();
+    const { messages, language = "en" } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
         JSON.stringify({ error: "messages array is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (messages.length > 40) {
+      return new Response(
+        JSON.stringify({ error: "Conversation too long" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -58,6 +64,57 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // ---- Identify the caller: real logged-in user vs anonymous guest ----
+    // The client sends either the user's own access token (if logged in) or
+    // the public anon key (guest). Never trust anything else in the request
+    // body to determine identity.
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    let userId: string | null = null;
+    if (token) {
+      const { data: userData } = await supabase.auth.getUser(token);
+      userId = userData?.user?.id ?? null;
+    }
+
+    // ---- Server-side rate limiting (this cannot be bypassed from the client) ----
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      "unknown";
+    const identifier = userId ?? `guest:${ip}`;
+    const limit = userId ? 40 : 3; // logged-in users vs anonymous guests, per 24h
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    const { count } = await supabase
+      .from("chat_logs")
+      .select("id", { count: "exact", head: true })
+      .eq("identifier", identifier)
+      .gte("created_at", since);
+
+    if ((count ?? 0) >= limit) {
+      return new Response(
+        JSON.stringify({
+          error: userId
+            ? "Daily message limit reached. Please try again tomorrow."
+            : "Guest limit reached. Please sign in to continue chatting.",
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    await supabase.from("chat_logs").insert({ identifier, user_id: userId });
+
+    // ---- Load the caller's own profile server-side (never trust a client-supplied profile) ----
+    let profile: any = null;
+    if (userId) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("username, academic_level, country, university, field_of_study, research_interests, bio")
+        .eq("user_id", userId)
+        .maybeSingle();
+      profile = data;
+    }
 
     // Extract the latest user message to search the database
     const lastUserMessage = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
