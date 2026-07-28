@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import BotMessage from "@/components/BotMessage";
-import { detectCompletedQuests, QuestId } from "@/components/ThesisQuests";
+import ThesisQuests, { detectCompletedQuests, QuestId, useQuestProgress } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Bot, User, Loader2, LogIn } from "lucide-react";
+import { Send, Bot, User, Loader2, LogIn, MessageSquare, Sparkles, Compass } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -45,6 +45,8 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
   const { language, t } = useLanguage();
   const { user, session } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const { completed, complete } = useQuestProgress();
+  const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
 
   useEffect(() => {
     if (!user) { setProfile(null); return; }
@@ -167,6 +169,25 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
     try {
       await streamChat([...messages, userMsg]);
       onUserMessage?.(messageText);
+
+      if (!embedded) {
+        const ids = detectCompletedQuests(messageText, completed);
+        if (ids.length > 0) {
+          const added = complete(ids);
+          if (added.length > 0) {
+            const last = added[added.length - 1];
+            setJustCompleted(last);
+            toast({
+              title: language === "fr" ? "🎉 Quête accomplie !" : "🎉 Quest complete!",
+              description:
+                language === "fr"
+                  ? `+${added.length} étape${added.length > 1 ? "s" : ""} validée${added.length > 1 ? "s" : ""}`
+                  : `+${added.length} step${added.length > 1 ? "s" : ""} unlocked`,
+            });
+            setTimeout(() => setJustCompleted(null), 1500);
+          }
+        }
+      }
     } catch (e: any) {
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     } finally {
@@ -182,6 +203,12 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
   };
 
   const questions = SUGGESTED_QUESTIONS[language];
+
+  const howItWorks = [
+    { icon: MessageSquare, title: t("chat.step1Title"), desc: t("chat.step1Desc") },
+    { icon: Sparkles, title: t("chat.step2Title"), desc: t("chat.step2Desc") },
+    { icon: Compass, title: t("chat.step3Title"), desc: t("chat.step3Desc") },
+  ];
 
   const isEmpty = messages.length === 0;
 
@@ -353,31 +380,63 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col">
       <div className="chat-scroll flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-6 space-y-6">
-          {isEmpty && (
-            <div className="flex flex-col items-center justify-center py-8 space-y-5">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                <Bot className="h-7 w-7 text-primary" />
-              </div>
-              <div className="text-center space-y-2">
-                <h2 className="text-xl font-bold">{t("chat.title")}</h2>
-                <p className="text-muted-foreground text-sm max-w-md">{t("chat.subtitle")}</p>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2 w-full max-w-xl">
-                {questions.map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => handleSend(q)}
-                    className="rounded-lg border bg-card p-3 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                  >
-                    "{q.slice(0, 60)}..."
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className={`mx-auto px-4 py-6 ${user ? "max-w-5xl lg:grid lg:grid-cols-[1fr_300px] lg:items-start lg:gap-6" : "max-w-3xl"}`}>
+          <div className="mx-auto max-w-3xl space-y-6 lg:mx-0 lg:max-w-none">
+            {isEmpty && (
+              <div className="flex flex-col items-center justify-center py-8 space-y-8">
+                <div className="flex flex-col items-center space-y-5">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                    <Bot className="h-7 w-7 text-primary" />
+                  </div>
+                  <div className="text-center space-y-2">
+                    <h2 className="text-xl font-bold">
+                      {profile?.username
+                        ? (language === "fr" ? `Bonjour ${profile.username} 👋` : `Hello ${profile.username} 👋`)
+                        : t("chat.title")}
+                    </h2>
+                    <p className="text-muted-foreground text-sm max-w-md">
+                      {profile?.field_of_study
+                        ? (language === "fr"
+                            ? `Prêt à explorer votre prochaine question de recherche en ${profile.field_of_study} ?`
+                            : `Ready to dig into your next research question in ${profile.field_of_study}?`)
+                        : t("chat.subtitle")}
+                    </p>
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-2 w-full max-w-xl">
+                    {questions.map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => handleSend(q)}
+                        className="rounded-lg border bg-card p-3 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      >
+                        "{q.slice(0, 60)}..."
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-          {renderMessages()}
+                <div className="grid gap-4 sm:grid-cols-3 w-full max-w-xl border-t pt-6">
+                  {howItWorks.map(({ icon: Icon, title, desc }) => (
+                    <div key={title} className="flex flex-col items-center gap-1.5 text-center">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <Icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <p className="text-xs font-semibold">{title}</p>
+                      <p className="text-[11px] leading-snug text-muted-foreground">{desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {renderMessages()}
+          </div>
+
+          {user && (
+            <aside className="hidden lg:block lg:sticky lg:top-6">
+              <ThesisQuests completed={completed} justCompleted={justCompleted} />
+            </aside>
+          )}
         </div>
       </div>
 
