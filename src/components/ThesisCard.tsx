@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, Calendar, Target, GraduationCap } from "lucide-react";
 import BookmarkButton from "./BookmarkButton";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { fieldLabel, degreeLabel } from "@/i18n/fields";
 
 interface ThesisCardProps {
   id: string;
@@ -19,6 +21,7 @@ interface ThesisCardProps {
 }
 
 const ThesisCard = ({ id, title, author_name, field, abstract, created_at, avgRating, avgAccuracy, degree_type, graduation_year, keywords }: ThesisCardProps) => {
+  const { language } = useLanguage();
   return (
     <Card className="group relative transition-shadow hover:shadow-lg">
       <div className="absolute right-3 top-3 z-10">
@@ -27,8 +30,8 @@ const ThesisCard = ({ id, title, author_name, field, abstract, created_at, avgRa
       <Link to={`/database/${id}`}>
         <CardHeader className="pb-2">
           <div className="flex flex-wrap gap-1.5">
-            <Badge variant="secondary" className="text-xs">{field}</Badge>
-            {degree_type && <Badge variant="outline" className="text-xs">{degree_type}</Badge>}
+            <Badge variant="secondary" className="text-xs">{fieldLabel(field, language)}</Badge>
+            {degree_type && <Badge variant="outline" className="text-xs">{degreeLabel(degree_type, language)}</Badge>}
             {graduation_year && <Badge variant="outline" className="text-xs">{graduation_year}</Badge>}
           </div>
           <CardTitle className="line-clamp-2 text-lg leading-snug group-hover:text-primary transition-colors">

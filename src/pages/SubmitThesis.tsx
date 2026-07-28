@@ -12,14 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Upload, X } from "lucide-react";
-
-const FIELDS = [
-  "Computer Science", "Mathematics", "Physics", "Biology", "Chemistry",
-  "Engineering", "Medicine", "Psychology", "Economics", "Law",
-  "Philosophy", "Literature", "History", "Sociology", "Education", "Other",
-];
-
-const DEGREE_TYPES = ["Bachelor", "Master", "PhD", "Other"];
+import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 30 }, (_, i) => currentYear - i);
@@ -39,7 +32,7 @@ const SubmitThesis = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const addKeyword = () => {
     const kw = keywordInput.trim().toLowerCase();
@@ -112,7 +105,7 @@ const SubmitThesis = () => {
                 <Select value={field} onValueChange={setField}>
                   <SelectTrigger><SelectValue placeholder={t("submit.selectField")} /></SelectTrigger>
                   <SelectContent>
-                    {FIELDS.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -121,7 +114,7 @@ const SubmitThesis = () => {
                 <Select value={degreeType} onValueChange={setDegreeType}>
                   <SelectTrigger><SelectValue placeholder={t("submit.selectDegree")} /></SelectTrigger>
                   <SelectContent>
-                    {DEGREE_TYPES.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                    {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

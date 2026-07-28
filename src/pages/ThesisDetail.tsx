@@ -10,11 +10,12 @@ import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag } from "lucide-react";
+import { fieldLabel, degreeLabel } from "@/i18n/fields";
 
 const ThesisDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [thesis, setThesis] = useState<any>(null);
   const [userRating, setUserRating] = useState<number | undefined>();
   const [avgRating, setAvgRating] = useState(0);
@@ -85,8 +86,8 @@ const ThesisDetail = () => {
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex flex-wrap gap-1.5">
-                <Badge variant="secondary">{thesis.field}</Badge>
-                {thesis.degree_type && <Badge variant="outline">{thesis.degree_type}</Badge>}
+                <Badge variant="secondary">{fieldLabel(thesis.field, language)}</Badge>
+                {thesis.degree_type && <Badge variant="outline">{degreeLabel(thesis.degree_type, language)}</Badge>}
                 {thesis.graduation_year && <Badge variant="outline">{thesis.graduation_year}</Badge>}
               </div>
               <h1 className="text-2xl font-bold leading-tight">{thesis.title}</h1>
@@ -98,7 +99,7 @@ const ThesisDetail = () => {
             <span className="flex items-center gap-1"><User className="h-4 w-4" />{thesis.author_name}</span>
             <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(thesis.created_at).toLocaleDateString()}</span>
             {thesis.degree_type && (
-              <span className="flex items-center gap-1"><GraduationCap className="h-4 w-4" />{thesis.degree_type}{thesis.graduation_year ? ` (${thesis.graduation_year})` : ""}</span>
+              <span className="flex items-center gap-1"><GraduationCap className="h-4 w-4" />{degreeLabel(thesis.degree_type, language)}{thesis.graduation_year ? ` (${thesis.graduation_year})` : ""}</span>
             )}
           </div>
 

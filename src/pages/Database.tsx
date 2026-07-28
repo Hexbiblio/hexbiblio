@@ -5,14 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ThesisCard from "@/components/ThesisCard";
 import { Search } from "lucide-react";
-
-const FIELDS = [
-  "All Fields", "Computer Science", "Mathematics", "Physics", "Biology", "Chemistry",
-  "Engineering", "Medicine", "Psychology", "Economics", "Law",
-  "Philosophy", "Literature", "History", "Sociology", "Education", "Other",
-];
-
-const DEGREE_FILTERS = ["All Degrees", "Bachelor", "Master", "PhD", "Other"];
+import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 
 interface ThesisWithRating {
   id: string;
@@ -34,7 +27,7 @@ const Database = () => {
   const [fieldFilter, setFieldFilter] = useState("All Fields");
   const [degreeFilter, setDegreeFilter] = useState("All Degrees");
   const [loading, setLoading] = useState(true);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const fetchTheses = async () => {
@@ -91,13 +84,15 @@ const Database = () => {
         <Select value={fieldFilter} onValueChange={setFieldFilter}>
           <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {FIELDS.map((f) => <SelectItem key={f} value={f}>{f === "All Fields" ? t("db.allFields") : f}</SelectItem>)}
+            <SelectItem value="All Fields">{t("db.allFields")}</SelectItem>
+            {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={degreeFilter} onValueChange={setDegreeFilter}>
           <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {DEGREE_FILTERS.map((d) => <SelectItem key={d} value={d}>{d === "All Degrees" ? t("db.allDegrees") : d}</SelectItem>)}
+            <SelectItem value="All Degrees">{t("db.allDegrees")}</SelectItem>
+            {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
