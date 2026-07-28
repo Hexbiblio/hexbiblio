@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Trophy, Sparkles, Target, BookOpen, FileSearch, Microscope, Library, Lightbulb, Bot, Lock } from "lucide-react";
+import { Check, Trophy, Sparkles, Target, BookOpen, FileSearch, Microscope, Library, Lightbulb, Bot, Lock, HelpCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export type QuestId =
   | "discipline"
@@ -201,7 +202,32 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
             </p>
           </div>
         </div>
-        <AnimatePresence>
+        <div className="flex items-center gap-1.5">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                aria-label={language === "fr" ? "Comment fonctionnent les quêtes" : "How quests work"}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 text-sm space-y-2.5">
+              <p className="font-semibold">{language === "fr" ? "Comment ça marche ?" : "How does this work?"}</p>
+              <p className="text-muted-foreground leading-relaxed">
+                {language === "fr"
+                  ? "Discutez de votre sujet avec l'assistant. Il repère automatiquement quand vous franchissez une étape clé — choisir une discipline, formuler une question, énoncer une thèse... — et coche la quête correspondante."
+                  : "Chat with the assistant about your topic. It automatically detects when you reach a key milestone — picking a discipline, framing a question, stating a thesis... — and checks off the matching quest."}
+              </p>
+              <p className="text-muted-foreground leading-relaxed">
+                {language === "fr"
+                  ? "Chaque étape validée enregistre ce que vous avez dit dans votre profil, où vous pouvez le modifier à tout moment. Si vous videz un champ, la quête associée se déverrouille pour que l'assistant puisse la redétecter."
+                  : "Each completed step saves what you said to your profile, where you can edit it anytime. Clearing a field unlocks the matching quest again so the assistant can re-detect it."}
+              </p>
+            </PopoverContent>
+          </Popover>
+          <AnimatePresence>
           {allDone && (
             <motion.div
               initial={{ scale: 0, rotate: -20 }}
@@ -212,7 +238,8 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
               {language === "fr" ? "Bravo !" : "Complete!"}
             </motion.div>
           )}
-        </AnimatePresence>
+          </AnimatePresence>
+        </div>
       </div>
 
       <Progress value={pct} className="mb-3 h-1.5" />
