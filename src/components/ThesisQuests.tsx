@@ -59,9 +59,20 @@ export const QUESTS: Quest[] = [
   },
 ];
 
+// Profile column each quest's captured value is persisted to.
+// "discipline" reuses the profile's existing field_of_study column.
+export const QUEST_PROFILE_FIELD: Record<QuestId, string> = {
+  discipline: "field_of_study",
+  theme: "research_theme",
+  question: "research_question",
+  thesis: "thesis_statement",
+  method: "methodology",
+  sources: "research_sources",
+};
+
 // Strict cues that must appear in the USER's own message for a quest to count.
 // Generic chatter ("hello") must NOT trigger anything.
-const USER_CUES: Record<QuestId, RegExp> = {
+export const USER_CUES: Record<QuestId, RegExp> = {
   discipline: /\b(sociology|psychology|biology|chemistry|physics|economics|history|philosophy|literature|engineering|computer science|medicine|law|anthropology|linguistics|education|political science|mathematics|sociologie|psychologie|biologie|chimie|physique|économie|histoire|philosophie|littérature|ingénierie|informatique|médecine|droit|anthropologie|linguistique|éducation|sciences? politiques?|mathématiques)\b/i,
   theme: /\b(impact of|effect of|influence of|role of|relationship between|focus on|interested in|my topic|topic is|effet de|influence de|rôle de|relation entre|mon sujet|sujet est|intéress)\b/i,
   question: /\?\s*$|\b(how|why|to what extent|in what ways|comment|pourquoi|dans quelle mesure|en quoi)\b.{5,}\?/i,
@@ -85,6 +96,25 @@ export function detectCompletedQuests(
     if (USER_CUES[q.id].test(text)) return [q.id];
   }
   return [];
+}
+
+const MAX_STORED_VALUE_LENGTH = 400;
+
+/**
+ * Extract what to remember in the user's profile for a completed quest.
+ * For "discipline" this is just the matched keyword (e.g. "sociology");
+ * for the others, which are inherently sentence-level, it's the message itself.
+ */
+export function extractQuestValue(id: QuestId, userMessage: string): string {
+  const text = (userMessage ?? "").trim();
+  if (id === "discipline") {
+    const match = text.match(USER_CUES.discipline);
+    if (match) {
+      const word = match[0];
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    }
+  }
+  return text.length > MAX_STORED_VALUE_LENGTH ? `${text.slice(0, MAX_STORED_VALUE_LENGTH).trim()}…` : text;
 }
 
 const storageKey = (uid: string) => `hexbiblio:quests:${uid}`;

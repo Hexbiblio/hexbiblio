@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import ThesisCard from "@/components/ThesisCard";
 import { useToast } from "@/hooks/use-toast";
-import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen } from "lucide-react";
+import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library } from "lucide-react";
 
 const ACADEMIC_LEVELS = [
   "High School", "Bachelor", "Master", "PhD", "Postdoc", "Professor", "Other",
@@ -25,6 +25,11 @@ const Profile = () => {
   const [country, setCountry] = useState("");
   const [university, setUniversity] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [researchTheme, setResearchTheme] = useState("");
+  const [researchQuestion, setResearchQuestion] = useState("");
+  const [thesisStatement, setThesisStatement] = useState("");
+  const [methodology, setMethodology] = useState("");
+  const [researchSources, setResearchSources] = useState("");
   const [bio, setBio] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState("");
@@ -47,6 +52,11 @@ const Profile = () => {
         setCountry((profile as any).country || "");
         setUniversity((profile as any).university || "");
         setFieldOfStudy((profile as any).field_of_study || "");
+        setResearchTheme((profile as any).research_theme || "");
+        setResearchQuestion((profile as any).research_question || "");
+        setThesisStatement((profile as any).thesis_statement || "");
+        setMethodology((profile as any).methodology || "");
+        setResearchSources((profile as any).research_sources || "");
         setBio((profile as any).bio || "");
         setInterests((profile as any).research_interests || []);
         setAvatarUrl(profile.avatar_url || null);
@@ -99,6 +109,11 @@ const Profile = () => {
       country: country.trim() || null,
       university: university.trim() || null,
       field_of_study: fieldOfStudy.trim() || null,
+      research_theme: researchTheme.trim() || null,
+      research_question: researchQuestion.trim() || null,
+      thesis_statement: thesisStatement.trim() || null,
+      methodology: methodology.trim() || null,
+      research_sources: researchSources.trim() || null,
       bio: bio.trim() || null,
       research_interests: interests,
     } as any).eq("user_id", user.id);
@@ -223,12 +238,45 @@ const Profile = () => {
               </div>
             )}
           </div>
-
-          <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
-            {saving ? (fr ? "Enregistrement..." : "Saving...") : t("profile.save")}
-          </Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Target className="h-5 w-5" /> {fr ? "Votre projet de recherche" : "Your research project"}</CardTitle>
+          <CardDescription>
+            {fr
+              ? "Rempli automatiquement au fil de vos conversations avec l'assistant — modifiable à tout moment."
+              : "Filled in automatically as you chat with the assistant — editable anytime."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5"><Lightbulb className="h-3.5 w-3.5" />{fr ? "Thème de recherche" : "Research theme"}</Label>
+            <Input value={researchTheme} onChange={(e) => setResearchTheme(e.target.value)} placeholder={fr ? "Ex : l'IA dans l'éducation" : "E.g. AI in education"} maxLength={200} />
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5"><FileSearch className="h-3.5 w-3.5" />{fr ? "Problématique" : "Research question"}</Label>
+            <Textarea value={researchQuestion} onChange={(e) => setResearchQuestion(e.target.value)} placeholder={fr ? "Votre question de recherche..." : "Your research question..."} rows={2} maxLength={500} />
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5"><Target className="h-3.5 w-3.5" />{fr ? "Énoncé de thèse" : "Thesis statement"}</Label>
+            <Textarea value={thesisStatement} onChange={(e) => setThesisStatement(e.target.value)} placeholder={fr ? "La position que vous défendez..." : "The position you're defending..."} rows={2} maxLength={500} />
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5"><Microscope className="h-3.5 w-3.5" />{fr ? "Méthodologie" : "Methodology"}</Label>
+            <Textarea value={methodology} onChange={(e) => setMethodology(e.target.value)} placeholder={fr ? "Qualitative, quantitative, mixte..." : "Qualitative, quantitative, mixed..."} rows={2} maxLength={500} />
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5"><Library className="h-3.5 w-3.5" />{fr ? "Sources" : "Sources"}</Label>
+            <Textarea value={researchSources} onChange={(e) => setResearchSources(e.target.value)} placeholder={fr ? "Références clés identifiées..." : "Key references identified..."} rows={2} maxLength={500} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
+        {saving ? (fr ? "Enregistrement..." : "Saving...") : t("profile.save")}
+      </Button>
 
       <div>
         <h2 className="text-xl font-bold mb-4">{t("profile.myTheses")} ({myTheses.length})</h2>

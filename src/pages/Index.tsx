@@ -4,10 +4,17 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Search, Upload, Users, ArrowRight, Sparkles } from "lucide-react";
 import ChatInterface from "@/components/ChatInterface";
-import ThesisQuests, { useQuestProgress, QuestId, detectCompletedQuests } from "@/components/ThesisQuests";
+import ThesisQuests, {
+  useQuestProgress,
+  QuestId,
+  detectCompletedQuests,
+  extractQuestValue,
+  QUEST_PROFILE_FIELD,
+} from "@/components/ThesisQuests";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const { user } = useAuth();
@@ -31,6 +38,21 @@ const Index = () => {
             : `+${added.length} step${added.length > 1 ? "s" : ""} unlocked`,
       });
       setTimeout(() => setJustCompleted(null), 1500);
+
+      // Remember what the user told the assistant — editable later from the profile page.
+      if (user) {
+        const updates: Record<string, string> = {};
+        for (const id of added) {
+          updates[QUEST_PROFILE_FIELD[id]] = extractQuestValue(id, text);
+        }
+        supabase
+          .from("profiles")
+          .update(updates as any)
+          .eq("user_id", user.id)
+          .then(({ error }) => {
+            if (error) console.error("Failed to save quest progress to profile:", error);
+          });
+      }
     }
   };
 

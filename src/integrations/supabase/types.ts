@@ -119,7 +119,12 @@ export type Database = {
           created_at: string
           field_of_study: string | null
           id: string
+          methodology: string | null
           research_interests: string[] | null
+          research_question: string | null
+          research_sources: string | null
+          research_theme: string | null
+          thesis_statement: string | null
           university: string | null
           user_id: string
           username: string | null
@@ -132,7 +137,12 @@ export type Database = {
           created_at?: string
           field_of_study?: string | null
           id?: string
+          methodology?: string | null
           research_interests?: string[] | null
+          research_question?: string | null
+          research_sources?: string | null
+          research_theme?: string | null
+          thesis_statement?: string | null
           university?: string | null
           user_id: string
           username?: string | null
@@ -145,7 +155,12 @@ export type Database = {
           created_at?: string
           field_of_study?: string | null
           id?: string
+          methodology?: string | null
           research_interests?: string[] | null
+          research_question?: string | null
+          research_sources?: string | null
+          research_theme?: string | null
+          thesis_statement?: string | null
           university?: string | null
           user_id?: string
           username?: string | null
