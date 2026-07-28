@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { BookOpen, Search, Upload, Bookmark, User, LogOut, MessageSquare, Globe, Menu, Check } from "lucide-react";
+import { Search, Upload, Bookmark, User, LogOut, MessageSquare, Globe, Menu, Check } from "lucide-react";
 import type { Language } from "@/i18n/translations";
 
 const Navbar = () => {
@@ -33,9 +33,11 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md supports-[backdrop-filter]:bg-card/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-105">
-            <BookOpen className="h-4 w-4" />
-          </div>
+          <img
+            src="/hexbiblio-logo.svg"
+            alt="HexBiblio"
+            className="h-8 w-8 transition-transform group-hover:scale-105"
+          />
           <span className="hidden sm:inline font-bold text-foreground tracking-tight" style={{ fontFamily: "'Libre Baskerville', serif" }}>
             HexBiblio
           </span>
