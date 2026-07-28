@@ -1,10 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
-import ChatInterface from "@/components/ChatInterface";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Navbar from "@/components/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -33,7 +32,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/database" element={<ProtectedRoute><Database /></ProtectedRoute>} />
               <Route path="/database/:id" element={<ProtectedRoute><ThesisDetail /></ProtectedRoute>} />
-              <Route path="/chat" element={<ProtectedRoute><ChatInterface /></ProtectedRoute>} />
+              <Route path="/chat" element={<Navigate to="/" replace />} />
               <Route path="/submit" element={<ProtectedRoute><SubmitThesis /></ProtectedRoute>} />
               <Route path="/my-collections" element={<ProtectedRoute><MyCollections /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />

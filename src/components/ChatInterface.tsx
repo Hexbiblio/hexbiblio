@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import BotMessage from "@/components/BotMessage";
-import ThesisQuests, { detectCompletedQuests, QuestId, useQuestProgress } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,11 +31,10 @@ const SUGGESTED_QUESTIONS = {
 };
 
 interface ChatInterfaceProps {
-  embedded?: boolean;
   onUserMessage?: (text: string) => void;
 }
 
-const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) => {
+const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -45,8 +43,6 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
   const { language, t } = useLanguage();
   const { user, session } = useAuth();
   const [profile, setProfile] = useState<any>(null);
-  const { completed, complete } = useQuestProgress();
-  const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
 
   useEffect(() => {
     if (!user) { setProfile(null); return; }
@@ -95,7 +91,7 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
     if (scrollParent) {
       scrollParent.scrollTo({ top: scrollParent.scrollHeight, behavior: "smooth" });
     }
-    // In embedded mode we intentionally do NOT scroll the page —
+    // We intentionally do NOT scroll the page itself —
     // the conversation flows inline like ChatGPT/Claude.
   }, [messages]);
 
@@ -169,25 +165,6 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
     try {
       await streamChat([...messages, userMsg]);
       onUserMessage?.(messageText);
-
-      if (!embedded) {
-        const ids = detectCompletedQuests(messageText, completed);
-        if (ids.length > 0) {
-          const added = complete(ids);
-          if (added.length > 0) {
-            const last = added[added.length - 1];
-            setJustCompleted(last);
-            toast({
-              title: language === "fr" ? "🎉 Quête accomplie !" : "🎉 Quest complete!",
-              description:
-                language === "fr"
-                  ? `+${added.length} étape${added.length > 1 ? "s" : ""} validée${added.length > 1 ? "s" : ""}`
-                  : `+${added.length} step${added.length > 1 ? "s" : ""} unlocked`,
-            });
-            setTimeout(() => setJustCompleted(null), 1500);
-          }
-        }
-      }
     } catch (e: any) {
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     } finally {
@@ -212,10 +189,28 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
 
   const isEmpty = messages.length === 0;
 
-  // Embedded + empty: render a minimal, Google-like single search bar
-  if (embedded && isEmpty) {
+  // Empty state: greeting + suggestions for everyone, "how it works" for signed-in users
+  // (guests already get an equivalent explanation further down the landing page).
+  if (isEmpty) {
     return (
-      <div className="w-full">
+      <div className="w-full space-y-6">
+        {user && (
+          <div className="mx-auto max-w-2xl space-y-1.5 text-center">
+            <h2 className="text-lg font-semibold">
+              {profile?.username
+                ? (language === "fr" ? `Bonjour ${profile.username} 👋` : `Hello ${profile.username} 👋`)
+                : t("chat.title")}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {profile?.field_of_study
+                ? (language === "fr"
+                    ? `Prêt à explorer votre prochaine question de recherche en ${profile.field_of_study} ?`
+                    : `Ready to dig into your next research question in ${profile.field_of_study}?`)
+                : t("chat.subtitle")}
+            </p>
+          </div>
+        )}
+
         <div className="mx-auto max-w-2xl">
           <div className="relative flex items-end gap-2 rounded-full border bg-card/80 backdrop-blur-sm px-2 py-1.5 shadow-sm transition-shadow focus-within:shadow-md">
             <Textarea
@@ -236,12 +231,37 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
             </Button>
           </div>
         </div>
+
+        <div className="mx-auto grid max-w-xl gap-2 sm:grid-cols-2">
+          {questions.map((q) => (
+            <button
+              key={q}
+              onClick={() => handleSend(q)}
+              className="rounded-lg border bg-card p-3 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              "{q.slice(0, 60)}..."
+            </button>
+          ))}
+        </div>
+
+        {user && (
+          <div className="mx-auto grid max-w-xl gap-4 border-t pt-6 sm:grid-cols-3">
+            {howItWorks.map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="flex flex-col items-center gap-1.5 text-center">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Icon className="h-4 w-4 text-primary" />
+                </div>
+                <p className="text-xs font-semibold">{title}</p>
+                <p className="text-[11px] leading-snug text-muted-foreground">{desc}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
-  // Render the input area (shared by both modes).
-  const renderInputArea = (variant: "embedded" | "full") => {
+  const renderInputArea = () => {
     if (isGuestLimitReached) {
       return (
         <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card/90 backdrop-blur-md px-5 py-4 shadow-sm">
@@ -260,189 +280,77 @@ const ChatInterface = ({ embedded = false, onUserMessage }: ChatInterfaceProps) 
       );
     }
 
-    if (variant === "embedded") {
-      return (
-        <>
-          <div className="relative flex items-end gap-2 rounded-full border bg-card/90 backdrop-blur-md px-2 py-1.5 shadow-sm transition-shadow focus-within:shadow-md">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t("chat.placeholder")}
-              className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 px-4 py-2.5"
-              rows={1}
-            />
-            <Button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isLoading}
-              size="icon"
-              className="shrink-0 rounded-full h-10 w-10"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </>
-      );
-    }
-
     return (
-      <>
-        <div className="flex items-end gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={t("chat.placeholder")}
-            className="min-h-[44px] max-h-[120px] resize-none"
-            rows={1}
-          />
-          <Button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            size="icon"
-            className="shrink-0"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-        <p className="mt-1 text-center text-xs text-muted-foreground">
-          {t("chat.poweredBy")}
-        </p>
-      </>
+      <div className="relative flex items-end gap-2 rounded-full border bg-card/90 backdrop-blur-md px-2 py-1.5 shadow-sm transition-shadow focus-within:shadow-md">
+        <Textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={t("chat.placeholder")}
+          className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 px-4 py-2.5"
+          rows={1}
+        />
+        <Button
+          onClick={() => handleSend()}
+          disabled={!input.trim() || isLoading}
+          size="icon"
+          className="shrink-0 rounded-full h-10 w-10"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
     );
   };
 
-  const renderMessages = () => (
-    <>
-      {messages.map((msg, i) => (
-        <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
-          {msg.role === "assistant" && (
+  // With messages: inline flow, no box, no inner scroll.
+  // Input becomes a sticky pill at the bottom of the viewport.
+  return (
+    <div className="w-full">
+      <div className="mx-auto max-w-3xl space-y-6 pb-32">
+        {messages.map((msg, i) => (
+          <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+            {msg.role === "assistant" && (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
+            )}
+            <div
+              className={
+                msg.role === "user"
+                  ? "max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground"
+                  : "max-w-[92%] text-foreground"
+              }
+            >
+              {msg.role === "assistant" ? (
+                <BotMessage content={msg.content} />
+              ) : (
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              )}
+            </div>
+            {msg.role === "user" && (
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
+                <User className="h-4 w-4" />
+              </div>
+            )}
+          </div>
+        ))}
+
+        {isLoading && messages[messages.length - 1]?.role === "user" && (
+          <div className="flex gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
               <Bot className="h-4 w-4 text-primary" />
             </div>
-          )}
-          <div
-            className={
-              msg.role === "user"
-                ? "max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground"
-                : embedded
-                  ? "max-w-[92%] text-foreground"
-                  : "max-w-[92%] rounded-2xl px-4 py-3 bg-card border"
-            }
-          >
-            {msg.role === "assistant" ? (
-              <BotMessage content={msg.content} />
-            ) : (
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-            )}
-          </div>
-          {msg.role === "user" && (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
-              <User className="h-4 w-4" />
+            <div className="px-1 py-3">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
-          )}
-        </div>
-      ))}
-
-      {isLoading && messages[messages.length - 1]?.role === "user" && (
-        <div className="flex gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-            <Bot className="h-4 w-4 text-primary" />
           </div>
-          <div className="px-1 py-3">
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          </div>
-        </div>
-      )}
+        )}
 
-      <div ref={messagesEndRef} />
-    </>
-  );
-
-  // EMBEDDED with messages: inline flow, no box, no inner scroll.
-  // Input becomes a sticky pill at the bottom of the viewport.
-  if (embedded) {
-    return (
-      <div className="w-full">
-        <div className="mx-auto max-w-3xl space-y-6 pb-32">
-          {renderMessages()}
-        </div>
-        <div className="sticky bottom-4 z-20 mt-6">
-          <div className="mx-auto max-w-2xl px-4">
-            {renderInputArea("embedded")}
-          </div>
-        </div>
+        <div ref={messagesEndRef} />
       </div>
-    );
-  }
-
-  // FULL page mode (e.g. /chat route): keep the bordered, scrollable layout.
-  return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col">
-      <div className="chat-scroll flex-1 overflow-y-auto">
-        <div className={`mx-auto px-4 py-6 ${user ? "max-w-5xl lg:grid lg:grid-cols-[1fr_300px] lg:items-start lg:gap-6" : "max-w-3xl"}`}>
-          <div className="mx-auto max-w-3xl space-y-6 lg:mx-0 lg:max-w-none">
-            {isEmpty && (
-              <div className="flex flex-col items-center justify-center py-8 space-y-8">
-                <div className="flex flex-col items-center space-y-5">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                    <Bot className="h-7 w-7 text-primary" />
-                  </div>
-                  <div className="text-center space-y-2">
-                    <h2 className="text-xl font-bold">
-                      {profile?.username
-                        ? (language === "fr" ? `Bonjour ${profile.username} 👋` : `Hello ${profile.username} 👋`)
-                        : t("chat.title")}
-                    </h2>
-                    <p className="text-muted-foreground text-sm max-w-md">
-                      {profile?.field_of_study
-                        ? (language === "fr"
-                            ? `Prêt à explorer votre prochaine question de recherche en ${profile.field_of_study} ?`
-                            : `Ready to dig into your next research question in ${profile.field_of_study}?`)
-                        : t("chat.subtitle")}
-                    </p>
-                  </div>
-                  <div className="grid gap-2 sm:grid-cols-2 w-full max-w-xl">
-                    {questions.map((q) => (
-                      <button
-                        key={q}
-                        onClick={() => handleSend(q)}
-                        className="rounded-lg border bg-card p-3 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                      >
-                        "{q.slice(0, 60)}..."
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-3 w-full max-w-xl border-t pt-6">
-                  {howItWorks.map(({ icon: Icon, title, desc }) => (
-                    <div key={title} className="flex flex-col items-center gap-1.5 text-center">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                        <Icon className="h-4 w-4 text-primary" />
-                      </div>
-                      <p className="text-xs font-semibold">{title}</p>
-                      <p className="text-[11px] leading-snug text-muted-foreground">{desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {renderMessages()}
-          </div>
-
-          {user && (
-            <aside className="hidden lg:block lg:sticky lg:top-6">
-              <ThesisQuests completed={completed} justCompleted={justCompleted} />
-            </aside>
-          )}
-        </div>
-      </div>
-
-      <div className="border-t bg-card/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-3xl px-4 py-3">
-          {renderInputArea("full")}
+      <div className="sticky bottom-4 z-20 mt-6">
+        <div className="mx-auto max-w-2xl px-4">
+          {renderInputArea()}
         </div>
       </div>
     </div>

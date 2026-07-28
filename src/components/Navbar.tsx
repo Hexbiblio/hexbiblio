@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Upload, Bookmark, User, LogOut, MessageSquare, Globe, Menu, Check } from "lucide-react";
+import { Search, Upload, Bookmark, User, LogOut, Globe, Menu, Check } from "lucide-react";
 import type { Language } from "@/i18n/translations";
 
 const Navbar = () => {
@@ -15,7 +15,6 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
-    { to: "/chat", label: t("nav.chatbot"), icon: MessageSquare },
     { to: "/database", label: t("nav.database"), icon: Search },
     { to: "/submit", label: t("nav.submit"), icon: Upload },
     { to: "/my-collections", label: t("nav.collections"), icon: Bookmark },

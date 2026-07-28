@@ -2,7 +2,6 @@ export type Language = "en" | "fr";
 
 export const translations = {
   // Navbar
-  "nav.chatbot": { en: "Chatbot", fr: "Chatbot" },
   "nav.database": { en: "Database", fr: "Base de données" },
   "nav.submit": { en: "Submit", fr: "Soumettre" },
   "nav.collections": { en: "Collections", fr: "Collections" },
@@ -55,7 +54,6 @@ export const translations = {
     fr: "Soumettez votre question de recherche et j'identifierai la discipline, les thèmes clés, et vous guiderai dans le développement de votre mémoire.",
   },
   "chat.placeholder": { en: "Enter your research question...", fr: "Entrez votre question de recherche..." },
-  "chat.poweredBy": { en: "Powered by AI · Identifies disciplines, themes & guides your research", fr: "Propulsé par l'IA · Identifie les disciplines, thèmes et guide votre recherche" },
   "chat.step1Title": { en: "Ask your question", fr: "Posez votre question" },
   "chat.step1Desc": { en: "Describe your topic, even a vague one.", fr: "Décrivez votre sujet, même vague." },
   "chat.step2Title": { en: "AI analyzes it", fr: "L'IA l'analyse" },
