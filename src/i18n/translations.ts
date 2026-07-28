@@ -8,6 +8,7 @@ export const translations = {
   "nav.collections": { en: "Collections", fr: "Collections" },
   "nav.profile": { en: "Profile", fr: "Profil" },
   "nav.signIn": { en: "Sign In", fr: "Connexion" },
+  "nav.signOut": { en: "Sign Out", fr: "Se déconnecter" },
 
   // Auth
   "auth.createAccount": { en: "Create Account", fr: "Créer un compte" },
@@ -33,6 +34,11 @@ export const translations = {
     fr: "Soumettez votre question de recherche et notre IA identifie instantanément votre discipline, extrait les thèmes clés et vous guide à chaque étape de votre mémoire — du raffinement de la question au choix de la méthodologie.",
   },
   "landing.getStarted": { en: "Get Started", fr: "Commencer" },
+  "landing.featuresTitle": { en: "How it works", fr: "Comment ça marche" },
+  "landing.ctaSubtitle": {
+    en: "Join a community of researchers who share their theses and help each other move their research forward.",
+    fr: "Rejoignez une communauté de chercheurs qui partagent leurs mémoires et s'entraident pour faire avancer leurs recherches.",
+  },
   "landing.disciplineTitle": { en: "Discipline Recognition", fr: "Reconnaissance de discipline" },
   "landing.disciplineDesc": { en: "AI identifies your academic field and interdisciplinary connections from your research question.", fr: "L'IA identifie votre domaine académique et les connexions interdisciplinaires à partir de votre question de recherche." },
   "landing.themeTitle": { en: "Theme Extraction", fr: "Extraction de thèmes" },
@@ -80,6 +86,7 @@ export const translations = {
   "submit.abstractLabel": { en: "Abstract", fr: "Résumé" },
   "submit.abstractPlaceholder": { en: "Summarize your research...", fr: "Résumez votre recherche..." },
   "submit.pdfLabel": { en: "PDF File (optional)", fr: "Fichier PDF (optionnel)" },
+  "submit.chooseFile": { en: "Choose file", fr: "Choisir un fichier" },
   "submit.maxSize": { en: "Max 20MB", fr: "Max 20 Mo" },
   "submit.submitting": { en: "Submitting...", fr: "Envoi en cours..." },
   "submit.submitBtn": { en: "Submit Thesis", fr: "Soumettre le mémoire" },

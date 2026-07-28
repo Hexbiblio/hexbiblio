@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, X } from "lucide-react";
+import { FileText, Upload, X } from "lucide-react";
 
 const FIELDS = [
   "Computer Science", "Mathematics", "Physics", "Biology", "Chemistry",
@@ -35,6 +35,7 @@ const SubmitThesis = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -166,7 +167,29 @@ const SubmitThesis = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="file">{t("submit.pdfLabel")}</Label>
-              <Input id="file" type="file" accept=".pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+              <input
+                ref={fileInputRef}
+                id="file"
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="h-4 w-4" />
+                  {t("submit.chooseFile")}
+                </Button>
+                {file && (
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span className="truncate max-w-[220px]">{file.name}</span>
+                    <button type="button" onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="hover:text-destructive">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">{t("submit.maxSize")}</p>
             </div>
             <Button type="submit" className="w-full gap-2" disabled={loading || !field}>

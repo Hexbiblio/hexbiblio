@@ -106,7 +106,7 @@ const Index = () => {
               transition={{ duration: 0.5 }}
               className="mb-12 text-center"
             >
-              <h2 className="text-2xl font-bold sm:text-3xl">{t("landing.title")}</h2>
+              <h2 className="text-2xl font-bold sm:text-3xl">{t("landing.featuresTitle")}</h2>
             </motion.div>
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -147,7 +147,7 @@ const Index = () => {
                 <h2 className="text-2xl font-bold sm:text-3xl">
                   {t("landing.getStarted")}
                 </h2>
-                <p className="text-muted-foreground">{t("landing.subtitle")}</p>
+                <p className="text-muted-foreground">{t("landing.ctaSubtitle")}</p>
                 <Link to="/auth">
                   <Button size="lg" className="mt-4 rounded-full px-8 gap-2 shadow-lg shadow-primary/25">
                     {t("nav.signIn")}

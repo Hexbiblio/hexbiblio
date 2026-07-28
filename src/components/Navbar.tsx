@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Search, Upload, Bookmark, User, LogOut, MessageSquare, Globe } from "lucide-react";
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { BookOpen, Search, Upload, Bookmark, User, LogOut, MessageSquare, Globe, Menu } from "lucide-react";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const { language, setLanguage, t } = useLanguage();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
     { to: "/chat", label: t("nav.chatbot"), icon: MessageSquare },
@@ -46,29 +49,71 @@ const Navbar = () => {
 
           {user && (
             <>
-              {links.map(({ to, label, icon: Icon }) => (
-                <Link key={to} to={to}>
-                  <Button
-                    variant={isActive(to) ? "default" : "ghost"}
-                    size="sm"
-                    className={`gap-1.5 text-xs sm:text-sm rounded-full transition-all ${
-                      isActive(to) ? "shadow-sm" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="hidden md:inline">{label}</span>
-                  </Button>
-                </Link>
-              ))}
-              <div className="ml-1 h-5 w-px bg-border" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={signOut}
-                className="gap-1.5 text-xs text-muted-foreground hover:text-destructive rounded-full"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
+              {/* Full nav — tablet and up */}
+              <div className="hidden sm:flex items-center gap-0.5">
+                {links.map(({ to, label, icon: Icon }) => (
+                  <Link key={to} to={to}>
+                    <Button
+                      variant={isActive(to) ? "default" : "ghost"}
+                      size="sm"
+                      className={`gap-1.5 text-xs sm:text-sm rounded-full transition-all ${
+                        isActive(to) ? "shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="hidden md:inline">{label}</span>
+                    </Button>
+                  </Link>
+                ))}
+                <div className="ml-1 h-5 w-px bg-border" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={signOut}
+                  className="gap-1.5 text-xs text-muted-foreground hover:text-destructive rounded-full"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Hamburger menu — mobile only */}
+              <div className="sm:hidden">
+                <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full">
+                      <Menu className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-72">
+                    <SheetTitle style={{ fontFamily: "'Libre Baskerville', serif" }}>HexBiblio</SheetTitle>
+                    <nav className="mt-6 flex flex-col gap-1">
+                      {links.map(({ to, label, icon: Icon }) => (
+                        <SheetClose asChild key={to}>
+                          <Link
+                            to={to}
+                            className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+                              isActive(to) ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-muted"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                            {label}
+                          </Link>
+                        </SheetClose>
+                      ))}
+                      <div className="my-2 h-px bg-border" />
+                      <SheetClose asChild>
+                        <button
+                          onClick={signOut}
+                          className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          {t("nav.signOut")}
+                        </button>
+                      </SheetClose>
+                    </nav>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </>
           )}
 
