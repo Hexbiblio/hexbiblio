@@ -48,7 +48,7 @@ const Index = () => {
         <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-primary/[0.07] blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full bg-accent/[0.08] blur-3xl" />
 
-        <div className="relative mx-auto max-w-4xl text-center">
+        <div className={`relative mx-auto text-center ${user ? "max-w-6xl lg:grid lg:grid-cols-[1fr_320px] lg:gap-6" : "max-w-4xl"}`}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -73,6 +73,7 @@ const Index = () => {
               </p>
             )}
           </motion.div>
+          {user && <div className="hidden lg:block" aria-hidden="true" />}
         </div>
       </section>
 
