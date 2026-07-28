@@ -4,7 +4,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { BookOpen, Search, Upload, Bookmark, User, LogOut, MessageSquare, Globe, Menu } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { BookOpen, Search, Upload, Bookmark, User, LogOut, MessageSquare, Globe, Menu, Check } from "lucide-react";
+import type { Language } from "@/i18n/translations";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -22,7 +24,10 @@ const Navbar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const toggleLanguage = () => setLanguage(language === "en" ? "fr" : "en");
+  const languageOptions: { code: Language; label: string }[] = [
+    { code: "fr", label: "Français" },
+    { code: "en", label: "English" },
+  ];
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md supports-[backdrop-filter]:bg-card/60">
@@ -37,15 +42,26 @@ const Navbar = () => {
         </Link>
 
         <div className="flex items-center gap-0.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleLanguage}
-            className="gap-1 text-xs font-medium rounded-full h-8 w-8 p-0 sm:w-auto sm:px-3 sm:gap-1.5"
-          >
-            <Globe className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{language === "en" ? "FR" : "EN"}</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-xs font-medium rounded-full px-3"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                {language.toUpperCase()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {languageOptions.map(({ code, label }) => (
+                <DropdownMenuItem key={code} onClick={() => setLanguage(code)} className="gap-2">
+                  <Check className={`h-4 w-4 ${language === code ? "opacity-100" : "opacity-0"}`} />
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {user && (
             <>
