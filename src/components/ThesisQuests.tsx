@@ -159,7 +159,18 @@ export function useQuestProgress() {
     });
   };
 
-  return { completed, complete, toggle };
+  const uncomplete = (ids: QuestId[]) => {
+    if (!user || ids.length === 0) return;
+    setCompleted((prev) => {
+      let changed = false;
+      const next = new Set(prev);
+      for (const id of ids) if (next.delete(id)) changed = true;
+      if (changed) persist(next);
+      return changed ? next : prev;
+    });
+  };
+
+  return { completed, complete, toggle, uncomplete };
 }
 
 interface Props {

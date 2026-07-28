@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import ThesisCard from "@/components/ThesisCard";
 import { useToast } from "@/hooks/use-toast";
 import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library } from "lucide-react";
+import { useQuestProgress, QuestId } from "@/components/ThesisQuests";
 
 const ACADEMIC_LEVELS = [
   "High School", "Bachelor", "Master", "PhD", "Postdoc", "Professor", "Other",
@@ -41,6 +42,7 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
+  const { uncomplete } = useQuestProgress();
 
   useEffect(() => {
     if (!user) return;
@@ -118,8 +120,25 @@ const Profile = () => {
       research_interests: interests,
     } as any).eq("user_id", user.id);
     setSaving(false);
-    if (error) toast({ title: t("common.error"), description: error.message, variant: "destructive" });
-    else toast({ title: t("profile.updated") });
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+
+    // A cleared field means the assistant no longer knows it — un-complete the
+    // matching quest so it can be detected and re-filled through chat again.
+    const questFieldValues: Record<QuestId, string> = {
+      discipline: fieldOfStudy.trim(),
+      theme: researchTheme.trim(),
+      question: researchQuestion.trim(),
+      thesis: thesisStatement.trim(),
+      method: methodology.trim(),
+      sources: researchSources.trim(),
+    };
+    const clearedQuests = (Object.keys(questFieldValues) as QuestId[]).filter((id) => !questFieldValues[id]);
+    if (clearedQuests.length) uncomplete(clearedQuests);
+
+    toast({ title: t("profile.updated") });
   };
 
   if (loading) {
