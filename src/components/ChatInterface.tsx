@@ -54,7 +54,21 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
       .then(({ data }) => setProfile(data));
   }, [user]);
 
-  // Restore a pending guest conversation once (on mount, or right after login).
+  // Keep the guest's in-progress conversation persisted at all times, so it
+  // survives navigating to /auth by any path — not just the in-chat prompt
+  // (e.g. clicking "Sign in" in the navbar instead).
+  useEffect(() => {
+    if (user || messages.length === 0) return;
+    try {
+      localStorage.setItem(PENDING_CHAT_KEY, JSON.stringify(messages));
+    } catch {
+      // storage may be full or unavailable — proceed without persisting
+    }
+  }, [messages, user]);
+
+  // Restore a pending guest conversation (on mount, or right after login).
+  // Once we know who's logged in, also replay quest detection on it — the
+  // messages were sent as a guest, so nothing could be captured yet.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(PENDING_CHAT_KEY);
@@ -62,8 +76,11 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
       const saved = JSON.parse(raw) as Msg[];
       if (Array.isArray(saved) && saved.length > 0) {
         setMessages(saved);
+        if (user) {
+          for (const m of saved) if (m.role === "user") onUserMessage?.(m.content);
+        }
       }
-      // Once the user is logged in, consume the pending chat so it isn't restored again.
+      // Once the user is logged in, consume the pending chat so it isn't replayed again.
       if (user) localStorage.removeItem(PENDING_CHAT_KEY);
     } catch {
       // ignore corrupted storage
@@ -73,14 +90,6 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
 
   const userMessageCount = messages.filter((m) => m.role === "user").length;
   const isGuestLimitReached = !user && userMessageCount >= GUEST_MESSAGE_LIMIT;
-
-  const handleSignInRedirect = () => {
-    try {
-      localStorage.setItem(PENDING_CHAT_KEY, JSON.stringify(messages));
-    } catch {
-      // storage may be full or unavailable — proceed without persisting
-    }
-  };
 
   useEffect(() => {
     if (messages.length === 0) return;
@@ -270,7 +279,7 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
               ? "Connectez-vous pour continuer la conversation. Votre échange sera conservé."
               : "Sign in to keep chatting — your conversation will be saved."}
           </p>
-          <Link to="/auth" onClick={handleSignInRedirect}>
+          <Link to="/auth">
             <Button className="gap-2 rounded-full px-6">
               <LogIn className="h-4 w-4" />
               {t("nav.signIn")}
