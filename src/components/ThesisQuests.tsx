@@ -96,8 +96,10 @@ export const USER_CUES: Record<QuestId, RegExp> = {
 };
 
 /**
- * Detect quests completed by the user's latest message.
- * Returns AT MOST ONE new quest per exchange so progress feels earned.
+ * Detect whether the user's latest message completes the *next* open quest —
+ * only that one, in roadmap order. A message that happens to match a later
+ * quest's cue (e.g. a question) doesn't skip ahead of earlier, still-open
+ * steps (e.g. discipline, theme): the roadmap only advances one step at a time.
  */
 export function detectCompletedQuests(
   userMessage: string,
@@ -105,10 +107,8 @@ export function detectCompletedQuests(
 ): QuestId[] {
   const text = (userMessage ?? "").trim();
   if (text.length < 15) return [];
-  for (const q of QUESTS) {
-    if (completed?.has(q.id)) continue;
-    if (USER_CUES[q.id].test(text)) return [q.id];
-  }
+  const next = getNextQuest(completed ?? new Set());
+  if (next && USER_CUES[next.id].test(text)) return [next.id];
   return [];
 }
 
