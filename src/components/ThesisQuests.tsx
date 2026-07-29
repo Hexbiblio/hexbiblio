@@ -123,14 +123,21 @@ const storageKey = (uid: string) => `hexbiblio:quests:${uid}`;
 export function useQuestProgress() {
   const { user } = useAuth();
   const [completed, setCompleted] = useState<Set<QuestId>>(new Set());
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!user) return;
+  // Load synchronously during render (not in an effect) the first time we see
+  // this user, so `completed` is already correct before any effect — e.g. a
+  // sibling replaying a restored guest chat — can call complete() and clobber
+  // it with a set that hasn't been loaded from storage yet.
+  if (user && user.id !== loadedUserId) {
+    setLoadedUserId(user.id);
+    let loaded = new Set<QuestId>();
     try {
       const raw = localStorage.getItem(storageKey(user.id));
-      if (raw) setCompleted(new Set(JSON.parse(raw)));
+      if (raw) loaded = new Set(JSON.parse(raw));
     } catch { /* ignore */ }
-  }, [user]);
+    setCompleted(loaded);
+  }
 
   const persist = (next: Set<QuestId>) => {
     if (!user) return;
