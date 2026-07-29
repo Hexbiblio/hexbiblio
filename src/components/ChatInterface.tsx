@@ -14,6 +14,9 @@ type Msg = { role: "user" | "assistant"; content: string };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/thesis-chat`;
 const GUEST_MESSAGE_LIMIT = 1;
 const PENDING_CHAT_KEY = "hexbiblio:pendingChat";
+const PENDING_CHAT_TTL_MS = 24 * 60 * 60 * 1000; // discard an abandoned guest draft after 24h
+
+type PendingChat = { messages: Msg[]; savedAt: number };
 
 const SUGGESTED_QUESTIONS = {
   en: [
@@ -60,7 +63,8 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
   useEffect(() => {
     if (user || messages.length === 0) return;
     try {
-      localStorage.setItem(PENDING_CHAT_KEY, JSON.stringify(messages));
+      const payload: PendingChat = { messages, savedAt: Date.now() };
+      localStorage.setItem(PENDING_CHAT_KEY, JSON.stringify(payload));
     } catch {
       // storage may be full or unavailable — proceed without persisting
     }
@@ -69,12 +73,24 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
   // Restore a pending guest conversation (on mount, or right after login).
   // Once we know who's logged in, also replay quest detection on it — the
   // messages were sent as a guest, so nothing could be captured yet.
+  // Drafts older than PENDING_CHAT_TTL_MS are treated as abandoned and discarded.
   useEffect(() => {
     try {
       const raw = localStorage.getItem(PENDING_CHAT_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as Msg[];
-      if (Array.isArray(saved) && saved.length > 0) {
+      const parsed = JSON.parse(raw) as Partial<PendingChat>;
+      const isFresh =
+        Array.isArray(parsed.messages) &&
+        typeof parsed.savedAt === "number" &&
+        Date.now() - parsed.savedAt < PENDING_CHAT_TTL_MS;
+
+      if (!isFresh) {
+        localStorage.removeItem(PENDING_CHAT_KEY);
+        return;
+      }
+
+      const saved = parsed.messages as Msg[];
+      if (saved.length > 0) {
         setMessages(saved);
         if (user) {
           for (const m of saved) if (m.role === "user") onUserMessage?.(m.content);
