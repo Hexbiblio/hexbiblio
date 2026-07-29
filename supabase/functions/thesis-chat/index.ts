@@ -89,6 +89,28 @@ serve(async (req) => {
     const limit = userId ? 40 : 3; // logged-in users vs anonymous guests, per 24h
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
+    // ---- Minimum spacing between messages ----
+    // The daily cap above doesn't stop a burst of rapid-fire requests within
+    // a short window — which is exactly the kind of traffic pattern that got
+    // a prior GEMINI_API_KEY's Google Cloud account flagged and denied access.
+    // A human reading a reply and typing a follow-up never sends two messages
+    // this close together, so this only ever blocks automated hammering.
+    const MIN_INTERVAL_MS = 3000;
+    const { data: lastLog } = await supabase
+      .from("chat_logs")
+      .select("created_at")
+      .eq("identifier", identifier)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastLog && Date.now() - new Date(lastLog.created_at).getTime() < MIN_INTERVAL_MS) {
+      return new Response(
+        JSON.stringify({ error: "Please wait a moment before sending another message." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { count } = await supabase
       .from("chat_logs")
       .select("id", { count: "exact", head: true })
@@ -240,6 +262,14 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 503) {
+        // Gemini's own infrastructure is temporarily overloaded — transient,
+        // not an account/key problem. Worth telling the user it's worth a retry.
+        return new Response(
+          JSON.stringify({ error: "The AI service is temporarily overloaded. Please try again in a moment." }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       const text = await response.text();
