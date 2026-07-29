@@ -26,6 +26,9 @@ const SYSTEM_PROMPT = `You are HexBiblio — an expert academic research advisor
 
 Only move to the next step once the current one feels resolved. If the student is vague, ask a clarifying follow-up rather than guessing.
 
+## Staying in order — CRITICAL
+The student's real progress is given below in "QUEST STATUS". If their latest message jumps ahead of the current open step (e.g. they state a thesis before a topic is set, or name a methodology before a research question exists), do NOT just follow along with the tangent. Briefly and warmly acknowledge what they shared (you can note it's a great direction for later), then steer them back to the current open step and say in one short sentence why finishing it first will make the later step easier. Only advance once the current step is actually resolved.
+
 ## First message
 If the student just says hi or hasn't shared a topic, greet them briefly and ask ONE opening question (e.g. "What field are you working in?" or "What topic is on your mind?"). Do NOT pre-list all the steps.
 
@@ -43,7 +46,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, language = "en" } = await req.json();
+    const { messages, language = "en", currentQuest = null, completedQuests = [] } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -189,7 +192,30 @@ serve(async (req) => {
       if (profile.bio) profileContext += `- Bio: ${profile.bio}\n`;
     }
 
-    const fullSystemPrompt = SYSTEM_PROMPT + profileContext + databaseContext + langInstruction;
+    // Roadmap step labels, matching the QuestId order defined client-side in
+    // src/components/ThesisQuests.tsx — kept in sync manually since the edge
+    // function can't import client source.
+    const ROADMAP_ORDER = ["discipline", "theme", "question", "thesis", "method", "sources"];
+    const ROADMAP_LABELS: Record<string, string> = {
+      discipline: "Discipline (field of study)",
+      theme: "Theme / topic",
+      question: "Research question",
+      thesis: "Thesis statement / hypothesis",
+      method: "Methodology",
+      sources: "Sources",
+    };
+
+    const doneLabels = (Array.isArray(completedQuests) ? completedQuests : [])
+      .filter((id: string) => ROADMAP_LABELS[id])
+      .map((id: string) => ROADMAP_LABELS[id]);
+
+    let questContext = `\n\n---\n## QUEST STATUS (roadmap progress)\nRoadmap order: ${ROADMAP_ORDER.map((id) => ROADMAP_LABELS[id]).join(" → ")}.\n`;
+    questContext += doneLabels.length ? `Already completed: ${doneLabels.join(", ")}.\n` : "Nothing completed yet.\n";
+    questContext += currentQuest && ROADMAP_LABELS[currentQuest]
+      ? `Current open step: **${ROADMAP_LABELS[currentQuest]}**. Focus the conversation here — see the "Staying in order" rule above.\n`
+      : `All roadmap steps are complete — feel free to go deeper on sources or open follow-up questions.\n`;
+
+    const fullSystemPrompt = SYSTEM_PROMPT + profileContext + questContext + databaseContext + langInstruction;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

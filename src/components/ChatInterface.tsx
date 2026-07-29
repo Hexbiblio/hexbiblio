@@ -123,13 +123,24 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   }, [messages]);
 
   const streamChat = async (allMessages: Msg[]) => {
+    // Tell the bot where the student actually stands on the roadmap so it can
+    // nudge them back in order instead of following a tangent (e.g. a thesis
+    // stated before a topic is set).
+    const completedSet = completed ?? new Set<QuestId>();
+    const currentQuest = getNextQuest(completedSet);
+
      const resp = await fetch(CHAT_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ messages: allMessages, language }),
+      body: JSON.stringify({
+        messages: allMessages,
+        language,
+        currentQuest: currentQuest?.id ?? null,
+        completedQuests: [...completedSet],
+      }),
     });
 
     if (!resp.ok) {
