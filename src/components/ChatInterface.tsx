@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import BotMessage from "@/components/BotMessage";
+import { getNextQuest, QuestId } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,10 +35,11 @@ const SUGGESTED_QUESTIONS = {
 };
 
 interface ChatInterfaceProps {
+  completed?: Set<QuestId>;
   onUserMessage?: (text: string) => void;
 }
 
-const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
+const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -206,6 +208,12 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
 
   const questions = SUGGESTED_QUESTIONS[language];
 
+  // Once the user has started their quests (but not finished them), point the
+  // input at whatever's next instead of the generic placeholder. Guests and
+  // brand-new users (nothing completed yet) keep the default invitation.
+  const nextQuest = user && completed && completed.size > 0 ? getNextQuest(completed) : undefined;
+  const chatPlaceholder = nextQuest ? nextQuest.placeholder[language] : t("chat.placeholder");
+
   const howItWorks = [
     { icon: MessageSquare, title: t("chat.step1Title"), desc: t("chat.step1Desc") },
     { icon: Sparkles, title: t("chat.step2Title"), desc: t("chat.step2Desc") },
@@ -242,7 +250,7 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={t("chat.placeholder")}
+              placeholder={chatPlaceholder}
               className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 px-4 py-2.5"
               rows={1}
             />
@@ -311,7 +319,7 @@ const ChatInterface = ({ onUserMessage }: ChatInterfaceProps) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={t("chat.placeholder")}
+          placeholder={chatPlaceholder}
           className="min-h-[44px] max-h-[120px] resize-none border-0 bg-transparent shadow-none focus-visible:ring-0 px-4 py-2.5"
           rows={1}
         />

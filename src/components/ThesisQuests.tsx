@@ -19,6 +19,8 @@ type Quest = {
   icon: React.ComponentType<{ className?: string }>;
   label: { en: string; fr: string };
   hint: { en: string; fr: string };
+  // Imperative prompt shown as the chat input's placeholder while this is the next open quest.
+  placeholder: { en: string; fr: string };
 };
 
 export const QUESTS: Quest[] = [
@@ -27,38 +29,49 @@ export const QUESTS: Quest[] = [
     icon: BookOpen,
     label: { en: "Pick a discipline", fr: "Choisir une discipline" },
     hint: { en: "Tell the bot your field of study", fr: "Indiquez votre domaine d'étude" },
+    placeholder: { en: "What's your field of study?", fr: "Quel est votre domaine d'étude ?" },
   },
   {
     id: "theme",
     icon: Lightbulb,
     label: { en: "Explore a theme", fr: "Explorer un thème" },
     hint: { en: "Narrow down to a specific topic", fr: "Affinez vers un sujet précis" },
+    placeholder: { en: "What theme would you like to explore?", fr: "Quel thème souhaitez-vous explorer ?" },
   },
   {
     id: "question",
     icon: FileSearch,
     label: { en: "Frame a research question", fr: "Formuler une question de recherche" },
     hint: { en: "A clear, focused question", fr: "Une question claire et ciblée" },
+    placeholder: { en: "Frame your research question...", fr: "Formulez votre question de recherche..." },
   },
   {
     id: "thesis",
     icon: Target,
     label: { en: "Thesis statement", fr: "Énoncé de thèse" },
     hint: { en: "A defendable position or claim", fr: "Une position défendable" },
+    placeholder: { en: "What's your thesis or position?", fr: "Quelle est votre thèse ou position défendue ?" },
   },
   {
     id: "method",
     icon: Microscope,
     label: { en: "Choose a methodology", fr: "Choisir une méthodologie" },
     hint: { en: "Qualitative, quantitative, mixed…", fr: "Qualitative, quantitative, mixte…" },
+    placeholder: { en: "What methodology are you considering?", fr: "Quelle méthodologie envisagez-vous ?" },
   },
   {
     id: "sources",
     icon: Library,
     label: { en: "Gather sources", fr: "Rassembler des sources" },
     hint: { en: "Identify key references", fr: "Identifier les références clés" },
+    placeholder: { en: "What sources have you identified?", fr: "Quelles sources avez-vous identifiées ?" },
   },
 ];
+
+/** The next open quest, in the fixed roadmap order above — or undefined once all are done. */
+export function getNextQuest(completed: Set<QuestId>): Quest | undefined {
+  return QUESTS.find((q) => !completed.has(q.id));
+}
 
 // Profile column each quest's captured value is persisted to.
 // "discipline" reuses the profile's existing field_of_study column.

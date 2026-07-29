@@ -108,7 +108,7 @@ const Index = () => {
           className={user ? "grid gap-6 lg:grid-cols-[1fr_320px]" : ""}
         >
           <div className="min-w-0">
-            <ChatInterface onUserMessage={user ? handleUserMessage : undefined} />
+            <ChatInterface completed={completed} onUserMessage={user ? handleUserMessage : undefined} />
           </div>
           {user && (
             <aside className="lg:sticky lg:top-20 lg:self-start">
