@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Trophy, Sparkles, Target, BookOpen, FileSearch, Microscope, Library, Lightbulb, Bot, Lock, HelpCircle } from "lucide-react";
+import { Check, Trophy, Sparkles, Target, BookOpen, FileSearch, Microscope, Library, Lightbulb, Bot, HelpCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
@@ -205,6 +205,7 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
   const done = completed.size;
   const pct = useMemo(() => Math.round((done / total) * 100), [done, total]);
   const allDone = done === total;
+  const nextQuest = useMemo(() => getNextQuest(completed), [completed]);
 
   return (
     <div className="rounded-2xl border bg-card/80 backdrop-blur-sm p-5 shadow-sm">
@@ -276,57 +277,52 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
         </p>
       </div>
 
-      <ul className="space-y-2">
-        {QUESTS.map((q) => {
+      <ol>
+        {QUESTS.map((q, i) => {
           const isDone = completed.has(q.id);
+          const isCurrent = !isDone && q.id === nextQuest?.id;
           const isNew = justCompleted === q.id;
+          const isLast = i === QUESTS.length - 1;
           const Icon = q.icon;
           return (
-            <li key={q.id}>
-              <motion.div
-                animate={isNew ? { scale: [1, 1.04, 1] } : {}}
-                transition={{ duration: 0.5 }}
-                aria-disabled="true"
-                title={language === "fr" ? "Validé automatiquement par l'assistant" : "Auto-checked by the assistant"}
-                className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left cursor-default select-none ${
-                  isDone
-                    ? "border-primary/30 bg-primary/5"
-                    : "border-border bg-background"
-                }`}
-              >
-                <div
-                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all ${
+            <li key={q.id} className="relative flex gap-3">
+              <div className="flex flex-col items-center">
+                <motion.div
+                  animate={isNew ? { scale: [1, 1.15, 1] } : {}}
+                  transition={{ duration: 0.5 }}
+                  title={language === "fr" ? "Validé automatiquement par l'assistant" : "Auto-checked by the assistant"}
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                     isDone
                       ? "border-primary bg-primary text-primary-foreground"
-                      : "border-muted-foreground/30 bg-background"
+                      : isCurrent
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-background text-muted-foreground/40"
                   }`}
                 >
-                  {isDone ? (
-                    <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }}>
-                      <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                    </motion.span>
-                  ) : (
-                    <Lock className="h-2.5 w-2.5 text-muted-foreground/60" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <Icon className={`h-3.5 w-3.5 ${isDone ? "text-primary" : "text-muted-foreground"}`} />
-                    <span
-                      className={`text-sm font-medium ${
-                        isDone ? "text-foreground line-through decoration-primary/40" : "text-foreground"
-                      }`}
-                    >
-                      {q.label[language]}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{q.hint[language]}</p>
-                </div>
-              </motion.div>
+                  {isDone ? <Check className="h-4 w-4" strokeWidth={3} /> : <Icon className="h-3.5 w-3.5" />}
+                </motion.div>
+                {!isLast && (
+                  <div className={`w-px flex-1 transition-colors ${isDone ? "bg-primary/40" : "bg-border"}`} />
+                )}
+              </div>
+              <div className={`min-w-0 flex-1 ${isLast ? "pb-0" : "pb-5"}`}>
+                <p
+                  className={`pt-1.5 text-sm font-medium transition-colors ${
+                    isDone
+                      ? "text-muted-foreground line-through decoration-primary/40"
+                      : isCurrent
+                        ? "text-foreground"
+                        : "text-muted-foreground"
+                  }`}
+                >
+                  {q.label[language]}
+                </p>
+                {isCurrent && <p className="mt-0.5 text-xs text-muted-foreground">{q.hint[language]}</p>}
+              </div>
             </li>
           );
         })}
-      </ul>
+      </ol>
     </div>
   );
 };
