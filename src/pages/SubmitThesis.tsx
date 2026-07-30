@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -13,13 +13,25 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Upload, X } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+import { validateThesisTitle, validateThesisAbstract } from "@/lib/thesisValidation";
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 30 }, (_, i) => currentYear - i);
+const SUBMIT_THESIS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-thesis`;
+
+// Supabase Storage keys must be S3-safe ASCII — accented characters (common
+// in French filenames) and other non-ASCII characters are rejected outright
+// with "Invalid key". Strip diacritics (é -> e) then swap anything else
+// unsafe for an underscore, so real-world filenames never fail the upload.
+function sanitizeFileName(name: string): string {
+  const withoutDiacritics = name.normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return withoutDiacritics.replace(/[^a-zA-Z0-9_.\-!*'() &$@=;:+,?]/g, "_");
+}
 
 const SubmitThesis = () => {
   const [title, setTitle] = useState("");
   const [authorName, setAuthorName] = useState("");
+  const [profileLoading, setProfileLoading] = useState(true);
   const [abstract, setAbstract] = useState("");
   const [field, setField] = useState("");
   const [degreeType, setDegreeType] = useState("");
@@ -28,11 +40,32 @@ const SubmitThesis = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language } = useLanguage();
+
+  // Author identity is locked to the submitter's own profile username —
+  // never a free-text field the user can type someone else's name into.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    supabase
+      .from("profiles")
+      .select("username")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setAuthorName(data?.username?.trim() ?? "");
+        setProfileLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const addKeyword = () => {
     const kw = keywordInput.trim().toLowerCase();
@@ -47,38 +80,93 @@ const SubmitThesis = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !field) return;
+
+    if (!authorName) {
+      toast({ title: t("common.error"), description: t("submit.authorMissing"), variant: "destructive" });
+      return;
+    }
+
+    if (!file) {
+      toast({ title: t("common.error"), description: t("submit.error.pdfRequired"), variant: "destructive" });
+      return;
+    }
+
+    const titleError = validateThesisTitle(title);
+    const abstractError = validateThesisAbstract(abstract);
+    const validationError = titleError ?? abstractError;
+    if (validationError) {
+      toast({ title: t("common.error"), description: t(`submit.error.${validationError}`), variant: "destructive" });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      let file_url: string | null = null;
+      // Fast, friendly duplicate check before doing any upload work. The
+      // unique index in the DB migration is the authoritative guard (catches
+      // case/whitespace variants and race conditions) — this just avoids
+      // uploading a file for a submission we already know will be rejected.
+      const { data: existing } = await supabase
+        .from("theses")
+        .select("id")
+        .eq("title", title.trim())
+        .eq("author_name", authorName)
+        .maybeSingle();
 
-      if (file) {
-        const filePath = `${user.id}/${Date.now()}_${file.name}`;
-        const { error: uploadError } = await supabase.storage.from("theses").upload(filePath, file);
-        if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage.from("theses").getPublicUrl(filePath);
-        file_url = urlData.publicUrl;
+      if (existing) {
+        toast({ title: t("common.error"), description: t("submit.error.duplicate"), variant: "destructive" });
+        return;
       }
 
-      const { error } = await supabase.from("theses").insert({
-        user_id: user.id,
-        title: title.trim(),
-        author_name: authorName.trim(),
-        abstract: abstract.trim(),
-        field,
-        file_url,
-        keywords,
-        degree_type: degreeType || null,
-        graduation_year: graduationYear ? parseInt(graduationYear) : null,
+      const filePath = `${user.id}/${Date.now()}_${sanitizeFileName(file.name)}`;
+      const { error: uploadError } = await supabase.storage.from("theses").upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      // Everything past this point — reading the PDF, checking its content
+      // against the declared title/field/abstract with Gemini, and actually
+      // creating the thesis row — happens server-side in submit-thesis. The
+      // client can no longer insert into theses directly (RLS blocks it), so
+      // this call is the only way a submission can succeed. Raw fetch (not
+      // supabase.functions.invoke) to match ChatInterface.tsx's convention —
+      // it surfaces the function's actual JSON error body on non-2xx
+      // responses instead of a generic wrapped error.
+      setVerifying(true);
+      const resp = await fetch(SUBMIT_THESIS_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          abstract: abstract.trim(),
+          field,
+          degreeType: degreeType || null,
+          graduationYear: graduationYear ? parseInt(graduationYear) : null,
+          keywords,
+          filePath,
+          language,
+        }),
       });
 
-      if (error) throw error;
+      const result = await resp.json().catch(() => null);
+
+      if (!resp.ok) {
+        throw new Error(result?.error || `Error ${resp.status}`);
+      }
+
+      if (result?.rejected) {
+        toast({ title: t("submit.error.contentMismatch"), description: result.reason, variant: "destructive" });
+        return;
+      }
+
       toast({ title: t("submit.success"), description: t("submit.successDesc") });
       navigate("/database");
     } catch (error: any) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally {
       setLoading(false);
+      setVerifying(false);
     }
   };
 
@@ -97,7 +185,15 @@ const SubmitThesis = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="author">{t("submit.authorLabel")} *</Label>
-              <Input id="author" value={authorName} onChange={(e) => setAuthorName(e.target.value)} placeholder={t("submit.authorPlaceholder")} required maxLength={200} />
+              <Input id="author" value={authorName} disabled placeholder={t("submit.authorPlaceholder")} />
+              {!profileLoading && !authorName ? (
+                <p className="text-xs text-destructive">
+                  {t("submit.authorMissing")}{" "}
+                  <Link to="/profile" className="underline">{t("submit.authorMissingLink")}</Link>
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("submit.authorLocked")}</p>
+              )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -159,7 +255,7 @@ const SubmitThesis = () => {
               <Textarea id="abstract" value={abstract} onChange={(e) => setAbstract(e.target.value)} placeholder={t("submit.abstractPlaceholder")} className="min-h-[150px]" required maxLength={5000} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="file">{t("submit.pdfLabel")}</Label>
+              <Label htmlFor="file">{t("submit.pdfLabel")} *</Label>
               <input
                 ref={fileInputRef}
                 id="file"
@@ -185,9 +281,9 @@ const SubmitThesis = () => {
               </div>
               <p className="text-xs text-muted-foreground">{t("submit.maxSize")}</p>
             </div>
-            <Button type="submit" className="w-full gap-2" disabled={loading || !field}>
+            <Button type="submit" className="w-full gap-2" disabled={loading || !field || !authorName}>
               <Upload className="h-4 w-4" />
-              {loading ? t("submit.submitting") : t("submit.submitBtn")}
+              {loading ? (verifying ? t("submit.verifying") : t("submit.submitting")) : t("submit.submitBtn")}
             </Button>
           </form>
         </CardContent>
