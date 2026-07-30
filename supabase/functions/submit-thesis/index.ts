@@ -20,6 +20,10 @@ const MAX_EXTRACTED_CHARS = 20000;
 // of how long the full document is.
 const MAX_PAGES_TO_SCAN = 15;
 const DAILY_SUBMIT_LIMIT = 20;
+// After a content-mismatch rejection, block further submission attempts from
+// the same account for a while — discourages repeatedly probing the checker
+// (and each attempt costs a Gemini call regardless of outcome).
+const MISMATCH_LOCKOUT_MS = 60 * 60 * 1000; // 1 hour
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -79,6 +83,27 @@ serve(async (req) => {
     const { data: userData, error: authError } = await supabase.auth.getUser(token);
     const userId = userData?.user?.id;
     if (authError || !userId) return jsonResponse({ error: "Authentication required" }, 401);
+
+    // ---- Content-mismatch lockout — checked before anything else so a
+    // locked-out account doesn't burn a PDF download + Gemini call just to
+    // be told no. ----
+    const rejectIdentifier = `submit-reject:${userId}`;
+    const lockoutSince = new Date(Date.now() - MISMATCH_LOCKOUT_MS).toISOString();
+    const { data: recentRejection } = await supabase
+      .from("chat_logs")
+      .select("created_at")
+      .eq("identifier", rejectIdentifier)
+      .gte("created_at", lockoutSince)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (recentRejection) {
+      return jsonResponse(
+        { error: "Your last submission didn't match its declared content. Please wait before trying again." },
+        429,
+      );
+    }
 
     // ---- Light abuse guard — reuses chat_logs with a distinct identifier
     // prefix instead of a new table. Submissions are inherently much rarer
@@ -208,10 +233,15 @@ Set "consistent" to false if the document is off-topic, unrelated, gibberish, or
     }
 
     if (!verdict.consistent) {
+      // Log Gemini's actual reasoning for our own debugging, but never send
+      // it to the client — the specifics of what the checker noticed are
+      // exactly what someone probing it would want to see.
+      console.log("submit-thesis: content mismatch —", verdict.reason);
       await supabase.storage.from("theses").remove([filePath]);
+      await supabase.from("chat_logs").insert({ identifier: rejectIdentifier, user_id: userId });
       return jsonResponse({
         rejected: true,
-        reason: verdict.reason || "The PDF content does not appear to match the declared title, field, or abstract.",
+        reason: "The submitted PDF does not match the declared title, field, or abstract.",
       });
     }
 
