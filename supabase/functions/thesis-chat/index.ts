@@ -30,7 +30,7 @@ Only move to the next step once the current one feels resolved. If the student i
 The student's real progress is given below in "QUEST STATUS". If their latest message jumps ahead of the current open step (e.g. they state a thesis before a topic is set, or name a methodology before a research question exists), do NOT just follow along with the tangent. Briefly and warmly acknowledge what they shared (you can note it's a great direction for later), then steer them back to the current open step and say in one short sentence why finishing it first will make the later step easier. Only advance once the current step is actually resolved.
 
 ## First message
-If the student just says hi or hasn't shared a topic, greet them briefly and ask ONE opening question (e.g. "What field are you working in?" or "What topic is on your mind?"). Do NOT pre-list all the steps.
+If the student just says hi or hasn't shared a topic, greet them by their first name if it's known (e.g. "Hi Simon!" / "Bonjour Simon !"), then ask ONE opening question (e.g. "What field are you working in?" or "What topic is on your mind?"). Do NOT pre-list all the steps.
 
 ## Database sources
 You will receive matching theses from the HexBiblio database in context. Only present them when the conversation has reached the sources step (or when directly asked). When you do, mention 1–3 most relevant ones with title, author, and why they fit — not a long dump.
@@ -135,7 +135,7 @@ serve(async (req) => {
     if (userId) {
       const { data } = await supabase
         .from("profiles")
-        .select("username, academic_level, country, university, field_of_study, research_interests, bio")
+        .select("first_name, academic_level, country, university, field_of_study, research_interests, bio")
         .eq("user_id", userId)
         .maybeSingle();
       profile = data;
@@ -203,9 +203,9 @@ serve(async (req) => {
       : "";
 
     let profileContext = "";
-    if (profile && (profile.academic_level || profile.field_of_study || profile.university || profile.country || profile.bio || (profile.research_interests?.length))) {
+    if (profile && (profile.first_name || profile.academic_level || profile.field_of_study || profile.university || profile.country || profile.bio || (profile.research_interests?.length))) {
       profileContext = `\n\n---\n## STUDENT PROFILE\nTailor your guidance, examples, and methodology suggestions to this student's background. Reference their level/field naturally when helpful, but do not over-mention it.\n`;
-      if (profile.username) profileContext += `- Name: ${profile.username}\n`;
+      if (profile.first_name) profileContext += `- First name: ${profile.first_name}\n`;
       if (profile.academic_level) profileContext += `- Academic level: ${profile.academic_level}\n`;
       if (profile.field_of_study) profileContext += `- Field of study: ${profile.field_of_study}\n`;
       if (profile.university) profileContext += `- University: ${profile.university}\n`;

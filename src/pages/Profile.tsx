@@ -21,6 +21,8 @@ const ACADEMIC_LEVELS = [
 
 const Profile = () => {
   const { user } = useAuth();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
   const [academicLevel, setAcademicLevel] = useState("");
   const [country, setCountry] = useState("");
@@ -49,6 +51,8 @@ const Profile = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
       if (profile) {
+        setFirstName((profile as any).first_name || "");
+        setLastName((profile as any).last_name || "");
         setUsername(profile.username || "");
         setAcademicLevel((profile as any).academic_level || "");
         setCountry((profile as any).country || "");
@@ -106,6 +110,8 @@ const Profile = () => {
     if (!user) return;
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
+      first_name: firstName.trim() || null,
+      last_name: lastName.trim() || null,
       username: username.trim(),
       academic_level: academicLevel || null,
       country: country.trim() || null,
@@ -191,9 +197,22 @@ const Profile = () => {
             </div>
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>{t("profile.firstName")}</Label>
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} maxLength={100} />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("profile.lastName")}</Label>
+              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} maxLength={100} />
+            </div>
+            <p className="sm:col-span-2 text-xs text-muted-foreground">{t("profile.nameHint")}</p>
+          </div>
+
           <div className="space-y-2">
             <Label>{t("profile.username")}</Label>
             <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t("profile.yourUsername")} maxLength={50} />
+            <p className="text-xs text-muted-foreground">{t("profile.usernameHint")}</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

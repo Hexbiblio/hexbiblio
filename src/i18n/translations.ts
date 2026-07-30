@@ -77,8 +77,8 @@ export const translations = {
   "submit.titlePlaceholder": { en: "Your thesis title", fr: "Le titre de votre mémoire" },
   "submit.authorLabel": { en: "Author Name", fr: "Nom de l'auteur" },
   "submit.authorPlaceholder": { en: "Full name", fr: "Nom complet" },
-  "submit.authorLocked": { en: "Locked to your profile username (not editable).", fr: "Verrouillé sur le nom d'utilisateur de votre profil (non modifiable)." },
-  "submit.authorMissing": { en: "Set a username on your profile before submitting a thesis.", fr: "Renseignez un nom d'utilisateur dans votre profil avant de soumettre un mémoire." },
+  "submit.authorLocked": { en: "Locked to your profile's first and last name (not editable).", fr: "Verrouillé sur le prénom et nom de votre profil (non modifiable)." },
+  "submit.authorMissing": { en: "Set your first and last name on your profile before submitting a thesis.", fr: "Renseignez votre prénom et nom dans votre profil avant de soumettre un mémoire." },
   "submit.authorMissingLink": { en: "Go to my profile", fr: "Aller à mon profil" },
   "submit.fieldLabel": { en: "Field / Discipline", fr: "Domaine / Discipline" },
   "submit.selectField": { en: "Select a field", fr: "Choisir un domaine" },
@@ -125,8 +125,12 @@ export const translations = {
 
   // Profile
   "profile.title": { en: "Profile", fr: "Profil" },
+  "profile.firstName": { en: "First name", fr: "Prénom" },
+  "profile.lastName": { en: "Last name", fr: "Nom" },
+  "profile.nameHint": { en: "Used to identify you as the author of any thesis you submit.", fr: "Utilisé pour vous identifier comme auteur des mémoires que vous soumettez." },
   "profile.username": { en: "Username", fr: "Nom d'utilisateur" },
   "profile.yourUsername": { en: "Your username", fr: "Votre nom d'utilisateur" },
+  "profile.usernameHint": { en: "Just for personalization (e.g. how the assistant addresses you) — not used as your author name.", fr: "Juste pour la personnalisation (ex. comment l'assistant s'adresse à vous) — pas utilisé comme nom d'auteur." },
   "profile.save": { en: "Save", fr: "Enregistrer" },
   "profile.updated": { en: "Profile updated!", fr: "Profil mis à jour !" },
   "profile.myTheses": { en: "My Theses", fr: "Mes mémoires" },

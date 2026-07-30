@@ -68,19 +68,21 @@ const SubmitThesis = () => {
     return () => clearInterval(interval);
   }, [verifying]);
 
-  // Author identity is locked to the submitter's own profile username —
+  // Author identity is locked to the submitter's own profile first/last name —
   // never a free-text field the user can type someone else's name into.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     supabase
       .from("profiles")
-      .select("username")
+      .select("first_name, last_name")
       .eq("user_id", user.id)
       .single()
       .then(({ data }) => {
         if (cancelled) return;
-        setAuthorName(data?.username?.trim() ?? "");
+        const firstName = (data as any)?.first_name?.trim();
+        const lastName = (data as any)?.last_name?.trim();
+        setAuthorName(firstName && lastName ? `${firstName} ${lastName}` : "");
         setProfileLoading(false);
       });
     return () => {
