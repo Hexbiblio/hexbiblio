@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
-import { extractText, getDocumentProxy } from "npm:unpdf";
+import { getDocumentProxy } from "npm:unpdf";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +12,13 @@ const corsHeaders = {
 // cost/latency bounded regardless of PDF length (capped at 20MB by the
 // storage bucket already).
 const MAX_EXTRACTED_CHARS = 20000;
+// unpdf's extractText() has no page-range option and always walks every page
+// of the document — for a 80-150 page thesis that reliably exceeds the edge
+// function's per-request CPU budget and gets killed with a raw 546
+// (WORKER_LIMIT). Title/abstract/intro are always in the first few pages, so
+// pulling pages one at a time and stopping early keeps this cheap regardless
+// of how long the full document is.
+const MAX_PAGES_TO_SCAN = 15;
 const DAILY_SUBMIT_LIMIT = 20;
 
 function jsonResponse(body: unknown, status = 200) {
@@ -19,6 +26,21 @@ function jsonResponse(body: unknown, status = 200) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+// deno-lint-ignore no-explicit-any
+async function extractLeadingText(pdf: any, maxChars: number, maxPages: number): Promise<string> {
+  const pageCount = Math.min(pdf.numPages, maxPages);
+  let text = "";
+  for (let i = 1; i <= pageCount; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    // deno-lint-ignore no-explicit-any
+    const pageText = content.items.map((item: any) => ("str" in item ? item.str : "")).join(" ");
+    text += pageText + "\n";
+    if (text.length >= maxChars) break;
+  }
+  return text.trim();
 }
 
 serve(async (req) => {
@@ -88,13 +110,12 @@ serve(async (req) => {
       return jsonResponse({ error: "Could not read the uploaded PDF." }, 400);
     }
 
-    // ---- Extract text ----
+    // ---- Extract text (first few pages only — see MAX_PAGES_TO_SCAN) ----
     let extractedText = "";
     try {
       const buffer = new Uint8Array(await fileBlob.arrayBuffer());
       const pdf = await getDocumentProxy(buffer);
-      const { text } = await extractText(pdf, { mergePages: true });
-      extractedText = text.trim();
+      extractedText = await extractLeadingText(pdf, MAX_EXTRACTED_CHARS, MAX_PAGES_TO_SCAN);
     } catch (e) {
       console.error("submit-thesis PDF extraction error:", e);
       await supabase.storage.from("theses").remove([filePath]);
