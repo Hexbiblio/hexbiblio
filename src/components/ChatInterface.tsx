@@ -53,7 +53,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
     if (!user) { setProfile(null); return; }
     supabase
       .from("profiles")
-      .select("username, academic_level, country, university, field_of_study, research_interests, bio")
+      .select("first_name, academic_level, country, university, field_of_study, research_interests, bio")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => setProfile(data));
@@ -241,8 +241,8 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
         {user && (
           <div className="mx-auto max-w-2xl space-y-1.5 text-center">
             <h2 className="text-lg font-semibold">
-              {profile?.username
-                ? (language === "fr" ? `Bonjour ${profile.username} 👋` : `Hello ${profile.username} 👋`)
+              {profile?.first_name
+                ? (language === "fr" ? `Bonjour ${profile.first_name} 👋` : `Hello ${profile.first_name} 👋`)
                 : t("chat.title")}
             </h2>
             <p className="text-sm text-muted-foreground">
