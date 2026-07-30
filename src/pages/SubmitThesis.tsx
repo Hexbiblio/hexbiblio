@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Upload, X } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
@@ -41,11 +42,31 @@ const SubmitThesis = () => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [verifyProgress, setVerifyProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, session } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language } = useLanguage();
+
+  // Simulated progress while waiting on submit-thesis (PDF read + Gemini call
+  // has no real progress to report). Climbs quickly at first, then eases off
+  // and holds just short of 100% until the actual response comes back, so it
+  // never looks "done" before it is.
+  useEffect(() => {
+    if (!verifying) {
+      setVerifyProgress(0);
+      return;
+    }
+    setVerifyProgress(15);
+    const interval = setInterval(() => {
+      setVerifyProgress((prev) => {
+        if (prev >= 90) return prev;
+        return Math.min(90, prev + (90 - prev) / 6);
+      });
+    }, 400);
+    return () => clearInterval(interval);
+  }, [verifying]);
 
   // Author identity is locked to the submitter's own profile username —
   // never a free-text field the user can type someone else's name into.
@@ -285,6 +306,7 @@ const SubmitThesis = () => {
               <Upload className="h-4 w-4" />
               {loading ? (verifying ? t("submit.verifying") : t("submit.submitting")) : t("submit.submitBtn")}
             </Button>
+            {verifying && <Progress value={verifyProgress} className="h-1.5" />}
           </form>
         </CardContent>
       </Card>
