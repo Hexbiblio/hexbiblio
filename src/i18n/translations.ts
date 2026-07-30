@@ -3,6 +3,7 @@ export type Language = "en" | "fr";
 export const translations = {
   // Navbar
   "nav.database": { en: "Database", fr: "Base de données" },
+  "nav.sources": { en: "Sources", fr: "Sources" },
   "nav.submit": { en: "Submit", fr: "Soumettre" },
   "nav.collections": { en: "Collections", fr: "Collections" },
   "nav.profile": { en: "Profile", fr: "Profil" },
@@ -69,6 +70,14 @@ export const translations = {
   "db.allDegrees": { en: "All Degrees", fr: "Tous les diplômes" },
   "db.noTheses": { en: "No theses found", fr: "Aucun mémoire trouvé" },
   "db.tryAdjusting": { en: "Try adjusting your search or be the first to submit!", fr: "Essayez d'ajuster votre recherche ou soyez le premier à soumettre !" },
+
+  // Sources
+  "sources.title": { en: "Sources", fr: "Sources" },
+  "sources.subtitle": { en: "Browse citations extracted from theses in the database", fr: "Parcourez les citations extraites des mémoires de la base" },
+  "sources.searchPlaceholder": { en: "Search by citation, title, or author...", fr: "Rechercher par citation, titre ou auteur..." },
+  "sources.noSources": { en: "No sources found", fr: "Aucune source trouvée" },
+  "sources.tryAdjusting": { en: "Try adjusting your search or filters.", fr: "Essayez d'ajuster votre recherche ou vos filtres." },
+  "sources.fromThesis": { en: "From thesis", fr: "Issu du mémoire" },
 
   // Submit
   "submit.title": { en: "Submit Your Thesis", fr: "Soumettre votre mémoire" },

@@ -199,6 +199,44 @@ export type Database = {
           },
         ]
       }
+      sources: {
+        Row: {
+          authors: string | null
+          created_at: string
+          id: string
+          raw_citation: string
+          thesis_id: string
+          title: string | null
+          year: number | null
+        }
+        Insert: {
+          authors?: string | null
+          created_at?: string
+          id?: string
+          raw_citation: string
+          thesis_id: string
+          title?: string | null
+          year?: number | null
+        }
+        Update: {
+          authors?: string | null
+          created_at?: string
+          id?: string
+          raw_citation?: string
+          thesis_id?: string
+          title?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sources_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       theses: {
         Row: {
           abstract: string

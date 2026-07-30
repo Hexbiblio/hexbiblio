@@ -10,6 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Database from "./pages/Database";
+import Sources from "./pages/Sources";
 import ThesisDetail from "./pages/ThesisDetail";
 import SubmitThesis from "./pages/SubmitThesis";
 import MyCollections from "./pages/MyCollections";
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/database" element={<ProtectedRoute><Database /></ProtectedRoute>} />
               <Route path="/database/:id" element={<ProtectedRoute><ThesisDetail /></ProtectedRoute>} />
+              <Route path="/sources" element={<ProtectedRoute><Sources /></ProtectedRoute>} />
               <Route path="/chat" element={<Navigate to="/" replace />} />
               <Route path="/submit" element={<ProtectedRoute><SubmitThesis /></ProtectedRoute>} />
               <Route path="/my-collections" element={<ProtectedRoute><MyCollections /></ProtectedRoute>} />

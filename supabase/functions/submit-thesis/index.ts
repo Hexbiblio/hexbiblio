@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { getDocumentProxy } from "npm:unpdf";
+import { extractAndStoreSources } from "../_shared/extractSources.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -282,6 +283,16 @@ Set "consistent" to false if the document is off-topic, unrelated, gibberish, or
       }
       return jsonResponse({ error: "Could not save the thesis. Please try again." }, 500);
     }
+
+    // ---- Bibliography extraction happens after the response — never worth
+    // slowing down or risking the submission itself. Phase 3's backfill
+    // function catches anything this misses (worker cut off, transient
+    // Gemini error, etc.) since it just looks for theses with zero sources.
+    EdgeRuntime.waitUntil(
+      extractAndStoreSources(supabase, inserted.id, filePath, title, field, GEMINI_API_KEY).catch((e) =>
+        console.error("submit-thesis: background source extraction failed:", e)
+      ),
+    );
 
     return jsonResponse({ success: true, thesisId: inserted.id });
   } catch (e) {
