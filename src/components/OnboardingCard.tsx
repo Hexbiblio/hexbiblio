@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ACADEMIC_LEVELS, FIELDS } from "@/i18n/fields";
-import { Sparkles, X } from "lucide-react";
+import MascotAvatar from "@/components/MascotAvatar";
+import { X } from "lucide-react";
 
 const MAX_ONBOARDING_INTERESTS = 5;
 
@@ -60,11 +61,12 @@ const OnboardingCard = ({ userId, firstName, onSaved, onSkip }: OnboardingCardPr
   const canSave = Boolean(academicLevel || fieldOfStudy || interests.length > 0);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4 rounded-2xl border bg-card/90 backdrop-blur-sm p-5 shadow-sm">
-      <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
-          <Sparkles className="h-4 w-4 text-primary" />
-        </div>
+    <div className="mx-auto flex max-w-2xl items-start gap-2.5">
+      <MascotAvatar />
+      {/* Same speech-bubble treatment as a real chat message (see ChatInterface.tsx) —
+          the mentor is asking these questions, not filling out a form. */}
+      <div className="relative flex-1 space-y-4 rounded-2xl rounded-tl-md bg-muted px-5 py-4 text-foreground">
+        <span className="absolute -left-1 top-3 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
         <div>
           <h2 className="text-base font-semibold">
             {firstName ? (language === "fr" ? `Salut ${firstName} ! ` : `Hey ${firstName}! `) : ""}
@@ -72,73 +74,73 @@ const OnboardingCard = ({ userId, firstName, onSaved, onSkip }: OnboardingCardPr
           </h2>
           <p className="text-sm text-muted-foreground">{t("onboarding.subtitle")}</p>
         </div>
-      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">{t("onboarding.academicLevelLabel")}</label>
-          <Select value={academicLevel} onValueChange={setAcademicLevel}>
-            <SelectTrigger><SelectValue placeholder={t("onboarding.selectLevel")} /></SelectTrigger>
-            <SelectContent>
-              {ACADEMIC_LEVELS.map((l) => (
-                <SelectItem key={l.value} value={l.value}>{language === "fr" ? l.fr : l.en}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("onboarding.academicLevelLabel")}</label>
+            <Select value={academicLevel} onValueChange={setAcademicLevel}>
+              <SelectTrigger><SelectValue placeholder={t("onboarding.selectLevel")} /></SelectTrigger>
+              <SelectContent>
+                {ACADEMIC_LEVELS.map((l) => (
+                  <SelectItem key={l.value} value={l.value}>{language === "fr" ? l.fr : l.en}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("onboarding.fieldLabel")}</label>
+            <Select value={fieldOfStudy} onValueChange={setFieldOfStudy}>
+              <SelectTrigger><SelectValue placeholder={t("onboarding.selectField")} /></SelectTrigger>
+              <SelectContent>
+                {FIELDS.map((f) => (
+                  <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">{t("onboarding.fieldLabel")}</label>
-          <Select value={fieldOfStudy} onValueChange={setFieldOfStudy}>
-            <SelectTrigger><SelectValue placeholder={t("onboarding.selectField")} /></SelectTrigger>
-            <SelectContent>
-              {FIELDS.map((f) => (
-                <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-muted-foreground">{t("onboarding.interestsLabel")}</label>
-        <div className="flex gap-2">
-          <Input
-            value={interestInput}
-            onChange={(e) => setInterestInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addInterest(); } }}
-            placeholder={t("onboarding.interestsPlaceholder")}
-            maxLength={40}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addInterest}
-            disabled={interests.length >= MAX_ONBOARDING_INTERESTS}
-          >
-            {t("submit.add")}
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">{t("onboarding.interestsLabel")}</label>
+          <div className="flex gap-2">
+            <Input
+              value={interestInput}
+              onChange={(e) => setInterestInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addInterest(); } }}
+              placeholder={t("onboarding.interestsPlaceholder")}
+              maxLength={40}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addInterest}
+              disabled={interests.length >= MAX_ONBOARDING_INTERESTS}
+            >
+              {t("submit.add")}
+            </Button>
+          </div>
+          {interests.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {interests.map((i) => (
+                <Badge key={i} variant="secondary" className="gap-1">
+                  {i}
+                  <button onClick={() => setInterests(interests.filter((x) => x !== i))} className="hover:text-destructive">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <button onClick={onSkip} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            {t("onboarding.skip")}
+          </button>
+          <Button onClick={handleSave} disabled={saving || !canSave} size="sm" className="rounded-full px-5">
+            {t("onboarding.save")}
           </Button>
         </div>
-        {interests.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {interests.map((i) => (
-              <Badge key={i} variant="secondary" className="gap-1">
-                {i}
-                <button onClick={() => setInterests(interests.filter((x) => x !== i))} className="hover:text-destructive">
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between pt-1">
-        <button onClick={onSkip} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          {t("onboarding.skip")}
-        </button>
-        <Button onClick={handleSave} disabled={saving || !canSave} size="sm" className="rounded-full px-5">
-          {t("onboarding.save")}
-        </Button>
       </div>
     </div>
   );
