@@ -9,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
-import SourceCard from "@/components/SourceCard";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag } from "lucide-react";
 import { fieldLabel, degreeLabel } from "@/i18n/fields";
 
@@ -152,12 +151,25 @@ const ThesisDetail = () => {
 
           {sources.length > 0 && (
             <div>
-              <h2 className="mb-3 text-lg font-semibold">{t("detail.sources")} ({sources.length})</h2>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {sources.map((source) => (
-                  <SourceCard key={source.id} raw_citation={source.raw_citation} title={source.title} authors={source.authors} year={source.year} />
+              <h2 className="mb-2 text-lg font-semibold">{t("detail.sources")} ({sources.length})</h2>
+              <ol className="space-y-1.5">
+                {sources.map((source, i) => (
+                  <li key={source.id} className="flex gap-2 text-sm text-muted-foreground leading-snug">
+                    <span className="shrink-0 text-xs tabular-nums">{i + 1}.</span>
+                    <span>
+                      {source.title ? (
+                        <>
+                          {source.authors && `${source.authors} `}
+                          {source.year && `(${source.year}). `}
+                          <span className="text-foreground">{source.title}</span>
+                        </>
+                      ) : (
+                        source.raw_citation
+                      )}
+                    </span>
+                  </li>
                 ))}
-              </div>
+              </ol>
             </div>
           )}
 
