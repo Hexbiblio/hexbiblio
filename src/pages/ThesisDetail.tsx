@@ -58,11 +58,13 @@ const ThesisDetail = () => {
   const [editKeywordInput, setEditKeywordInput] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
 
-  // Admin-only: the lock_immutable_thesis_fields_trigger lets admins (and
-  // only admins) touch these three columns — see the DB migration. Must
-  // stay hidden for non-admin owners, since the trigger still reverts them
-  // for anyone else regardless of what the UI sends.
+  // Admin-only: lock_immutable_thesis_fields_trigger and
+  // set_thesis_author_name_trigger both let admins (and only admins) touch
+  // these four columns — see the DB migrations. Must stay hidden for
+  // non-admin owners, since the triggers still revert/re-derive them for
+  // anyone else regardless of what the UI sends.
   const [editTitle, setEditTitle] = useState("");
+  const [editAuthorName, setEditAuthorName] = useState("");
   const [editAbstract, setEditAbstract] = useState("");
   const [editFileUrl, setEditFileUrl] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -119,6 +121,7 @@ const ThesisDetail = () => {
     setEditKeywordInput("");
     if (isAdmin) {
       setEditTitle(thesis.title || "");
+      setEditAuthorName(thesis.author_name || "");
       setEditAbstract(thesis.abstract || "");
       setEditFileUrl(thesis.file_url || "");
     }
@@ -146,6 +149,7 @@ const ThesisDetail = () => {
     };
     if (isAdmin) {
       payload.title = editTitle;
+      payload.author_name = editAuthorName;
       payload.abstract = editAbstract;
       payload.file_url = editFileUrl || null;
     }
@@ -309,6 +313,10 @@ const ThesisDetail = () => {
               {isAdmin && (
                 <div className="space-y-3 rounded-md border border-dashed p-3">
                   <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">{t("submit.authorLabel")}</label>
+                    <Input value={editAuthorName} onChange={(e) => setEditAuthorName(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
                     <label className="text-xs font-medium text-muted-foreground">{t("detail.abstract")}</label>
                     <Textarea value={editAbstract} onChange={(e) => setEditAbstract(e.target.value)} rows={5} />
                   </div>
@@ -319,7 +327,11 @@ const ThesisDetail = () => {
                 </div>
               )}
               <div className="flex gap-2">
-                <Button size="sm" onClick={saveEdit} disabled={savingEdit || !editField}>
+                <Button
+                  size="sm"
+                  onClick={saveEdit}
+                  disabled={savingEdit || !editField || (isAdmin && (!editTitle.trim() || !editAuthorName.trim() || !editAbstract.trim()))}
+                >
                   {savingEdit ? t("submit.submitting") : t("profile.save")}
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setEditing(false)} disabled={savingEdit}>
