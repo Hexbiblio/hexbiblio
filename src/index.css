@@ -100,3 +100,9 @@
     font-family: 'Libre Baskerville', serif;
   }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  * {
+    transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+  }
+}
