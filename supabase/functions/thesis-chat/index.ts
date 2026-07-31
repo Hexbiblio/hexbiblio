@@ -215,7 +215,7 @@ serve(async (req) => {
 
     // Combine system prompt with database context, profile, and language instruction
     const langInstruction = language === "fr"
-      ? "\n\n## LANGUAGE\nYou MUST respond entirely in French. All headers, explanations, and suggestions must be in French."
+      ? "\n\n## LANGUAGE\nYou MUST respond entirely in French. All headers, explanations, and suggestions must be in French. Always use tutoiement (tu/ton/ta/toi) — never vouvoiement (vous/votre). Hexbiblio speaks to students like a mentor and a peer, not a formal institution."
       : "";
 
     let profileContext = "";
