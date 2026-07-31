@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Send, Bot, User, Loader2, LogIn, MessageSquare, Sparkles, Compass } from "lucide-react";
+import { Send, UserRound, Loader2, LogIn, MessageSquare, Sparkles, Compass } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -393,39 +393,45 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
     <div className="w-full">
       <div className="mx-auto max-w-3xl space-y-6 pb-32">
         {messages.map((msg, i) => (
-          <div key={i} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}>
+          <div key={i} className={`flex items-start gap-2.5 ${msg.role === "user" ? "justify-end" : ""}`}>
             {msg.role === "assistant" && (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Bot className="h-4 w-4 text-primary" />
-              </div>
+              // Static mascot for now — the user is designing an animated (Clippy-style)
+              // version for later, this is the placeholder until that exists.
+              <img src="/mascot-book.png" alt="" className="h-10 w-9 shrink-0 object-contain" />
             )}
             <div
               className={
                 msg.role === "user"
-                  ? "max-w-[85%] rounded-2xl px-4 py-3 bg-primary text-primary-foreground"
-                  : "max-w-[92%] text-foreground"
+                  ? "relative max-w-[85%] rounded-2xl rounded-tr-md px-4 py-3 bg-primary text-primary-foreground"
+                  : "relative max-w-[85%] rounded-2xl rounded-tl-md bg-muted px-4 py-3 text-foreground"
               }
             >
+              {/* Speech-bubble tail, pointing back at the avatar it came from */}
+              {msg.role === "assistant" && (
+                <span className="absolute -left-1 top-3 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
+              )}
               {msg.role === "assistant" ? (
                 <BotMessage content={msg.content} />
               ) : (
                 <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
               )}
+              {msg.role === "user" && (
+                <span className="absolute -right-1 top-3 h-3 w-3 rotate-45 rounded-[2px] bg-primary" />
+              )}
             </div>
             {msg.role === "user" && (
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
-                <User className="h-4 w-4" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary">
+                <UserRound className="h-[18px] w-[18px]" />
               </div>
             )}
           </div>
         ))}
 
         {isLoading && messages[messages.length - 1]?.role === "user" && (
-          <div className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <Bot className="h-4 w-4 text-primary" />
-            </div>
-            <div className="px-1 py-3">
+          <div className="flex items-start gap-2.5">
+            <img src="/mascot-book.png" alt="" className="h-10 w-9 shrink-0 object-contain" />
+            <div className="relative rounded-2xl rounded-tl-md bg-muted px-4 py-3">
+              <span className="absolute -left-1 top-3 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             </div>
           </div>
