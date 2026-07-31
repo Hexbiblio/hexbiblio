@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Database from "./pages/Database";
@@ -16,6 +17,7 @@ import ThesisDetail from "./pages/ThesisDetail";
 import SubmitThesis from "./pages/SubmitThesis";
 import MyCollections from "./pages/MyCollections";
 import Profile from "./pages/Profile";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +42,7 @@ const App = () => (
                 <Route path="/submit" element={<ProtectedRoute><SubmitThesis /></ProtectedRoute>} />
                 <Route path="/my-collections" element={<ProtectedRoute><MyCollections /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>

@@ -48,7 +48,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { language, t } = useLanguage();
-  const { user, session } = useAuth();
+  const { user, session, isAdmin } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
 
@@ -65,8 +65,9 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   // Onboarding is mandatory, not skippable — it keeps showing on every visit
   // until both required fields are filled (interests stays optional, so it's
   // not part of this check), blocking the rest of the chat until then.
+  // Admin accounts skip it entirely — they're not students being onboarded.
   const needsOnboarding =
-    !!user && profileLoaded && !(profile?.academic_level && profile?.field_of_study);
+    !isAdmin && !!user && profileLoaded && !(profile?.academic_level && profile?.field_of_study);
 
   // Keep the guest's in-progress conversation persisted at all times, so it
   // survives navigating to /auth by any path — not just the in-chat prompt

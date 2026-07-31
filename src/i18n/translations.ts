@@ -7,6 +7,7 @@ export const translations = {
   "nav.submit": { en: "Submit", fr: "Soumettre" },
   "nav.collections": { en: "Collections", fr: "Collections" },
   "nav.profile": { en: "Profile", fr: "Profil" },
+  "nav.admin": { en: "Admin", fr: "Admin" },
   "nav.signIn": { en: "Sign In", fr: "Connexion" },
   "nav.signOut": { en: "Sign Out", fr: "Se déconnecter" },
 
@@ -160,6 +161,25 @@ export const translations = {
   "profile.updated": { en: "Profile updated!", fr: "Profil mis à jour !" },
   "profile.myTheses": { en: "My Work", fr: "Mon travail" },
   "profile.noTheses": { en: "You haven't put anything online yet — whenever you're ready.", fr: "Tu n'as encore rien mis en ligne — quand tu es prêt." },
+
+  // Admin (moderation dashboard — internal surface, only the site owner sees this)
+  "admin.title": { en: "Moderation dashboard", fr: "Tableau de modération" },
+  "admin.thesesTab": { en: "Theses", fr: "Mémoires" },
+  "admin.accountsTab": { en: "Accounts", fr: "Comptes" },
+  "admin.noResults": { en: "No results", fr: "Aucun résultat" },
+  "admin.view": { en: "View", fr: "Voir" },
+  "admin.delete": { en: "Delete", fr: "Supprimer" },
+  "admin.deleteThesisTitle": { en: "Delete this thesis?", fr: "Supprimer ce mémoire ?" },
+  "admin.deleteThesisBody": { en: "This can't be undone.", fr: "Action irréversible." },
+  "admin.deleteAccountTitle": { en: "Delete this account permanently", fr: "Supprimer ce compte définitivement" },
+  "admin.deleteAccountBody": {
+    en: "This deletes the account and everything tied to it — theses, comments, ratings, bookmarks. This can't be undone. Type the username below to confirm.",
+    fr: "Ça supprime le compte et tout ce qui lui est lié — mémoires, commentaires, notes, favoris. Action irréversible. Tape le nom d'utilisateur ci-dessous pour confirmer.",
+  },
+  "admin.typeToConfirm": { en: "Type the username to confirm", fr: "Tape le nom d'utilisateur pour confirmer" },
+  "admin.confirmDelete": { en: "Delete permanently", fr: "Supprimer définitivement" },
+  "admin.thesisDeleted": { en: "Thesis deleted", fr: "Mémoire supprimé" },
+  "admin.accountDeleted": { en: "Account deleted", fr: "Compte supprimé" },
 
   // Rating
   "rating.quality": { en: "Quality", fr: "Qualité" },

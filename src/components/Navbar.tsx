@@ -6,11 +6,11 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Upload, Bookmark, User, LogOut, Globe, Menu, Check, BookOpen, Moon, Sun } from "lucide-react";
+import { Search, Upload, Bookmark, User, LogOut, Globe, Menu, Check, BookOpen, Moon, Sun, ShieldCheck } from "lucide-react";
 import type { Language } from "@/i18n/translations";
 
 const Navbar = () => {
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const location = useLocation();
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
@@ -22,6 +22,7 @@ const Navbar = () => {
     { to: "/submit", label: t("nav.submit"), icon: Upload },
     { to: "/my-collections", label: t("nav.collections"), icon: Bookmark },
     { to: "/profile", label: t("nav.profile"), icon: User },
+    ...(isAdmin ? [{ to: "/admin", label: t("nav.admin"), icon: ShieldCheck }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;

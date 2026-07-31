@@ -101,6 +101,18 @@ serve(async (req) => {
     const userId = userData?.user?.id;
     if (authError || !userId) return jsonResponse({ error: "Authentication required" }, 401);
 
+    // ---- Admin accounts skip the lockout and daily cap below (not the AI
+    // content-verification check itself — that's a quality gate, not a rate
+    // control). Looked up via user_roles, which has no authenticated write
+    // path — this can't be spoofed by anything the client sends. ----
+    const { data: roleRow } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    const isAdmin = !!roleRow;
+
     // ---- Content-mismatch lockout — checked before anything else so a
     // locked-out account doesn't burn a PDF download + Gemini call just to
     // be told no. ----
@@ -115,7 +127,7 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    if (recentRejection) {
+    if (!isAdmin && recentRejection) {
       return jsonResponse(
         {
           error: msg(
@@ -141,7 +153,7 @@ serve(async (req) => {
       .eq("identifier", identifier)
       .gte("created_at", since);
 
-    if ((count ?? 0) >= DAILY_SUBMIT_LIMIT) {
+    if (!isAdmin && (count ?? 0) >= DAILY_SUBMIT_LIMIT) {
       return jsonResponse(
         { error: msg(language, "You've hit today's submission limit. Let's pick this up tomorrow?", "Tu as atteint la limite de soumissions du jour. On se retrouve demain ?") },
         429,

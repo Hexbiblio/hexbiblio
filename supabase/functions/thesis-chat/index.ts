@@ -97,6 +97,22 @@ serve(async (req) => {
       userId = userData?.user?.id ?? null;
     }
 
+    // ---- Admin accounts skip rate limits (but never the spacing check
+    // below — that one protects the shared GEMINI_API_KEY itself, not just
+    // the student experience, so it stays on for everyone). Looked up via
+    // user_roles, which has no authenticated write path — this can't be
+    // spoofed by anything the client sends. ----
+    let isAdmin = false;
+    if (userId) {
+      const { data: roleRow } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      isAdmin = !!roleRow;
+    }
+
     // ---- Server-side rate limiting (this cannot be bypassed from the client) ----
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
@@ -134,7 +150,7 @@ serve(async (req) => {
       .eq("identifier", identifier)
       .gte("created_at", since);
 
-    if ((count ?? 0) >= limit) {
+    if (!isAdmin && (count ?? 0) >= limit) {
       return new Response(
         JSON.stringify({
           error: userId

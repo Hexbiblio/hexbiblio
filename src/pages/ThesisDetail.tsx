@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -7,12 +7,24 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X } from "lucide-react";
+import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2 } from "lucide-react";
 import { fieldLabel, degreeLabel, FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 
 const currentYear = new Date().getFullYear();
@@ -20,7 +32,8 @@ const YEARS = Array.from({ length: 30 }, (_, i) => currentYear - i);
 
 const ThesisDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   const { t, language } = useLanguage();
   const { toast } = useToast();
   const [thesis, setThesis] = useState<any>(null);
@@ -44,6 +57,15 @@ const ThesisDetail = () => {
   const [editKeywords, setEditKeywords] = useState<string[]>([]);
   const [editKeywordInput, setEditKeywordInput] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // Admin-only: the lock_immutable_thesis_fields_trigger lets admins (and
+  // only admins) touch these three columns — see the DB migration. Must
+  // stay hidden for non-admin owners, since the trigger still reverts them
+  // for anyone else regardless of what the UI sends.
+  const [editTitle, setEditTitle] = useState("");
+  const [editAbstract, setEditAbstract] = useState("");
+  const [editFileUrl, setEditFileUrl] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   const fetchThesis = async () => {
     if (!id) return;
@@ -95,6 +117,11 @@ const ThesisDetail = () => {
     setEditYear(thesis.graduation_year ? String(thesis.graduation_year) : "");
     setEditKeywords(thesis.keywords || []);
     setEditKeywordInput("");
+    if (isAdmin) {
+      setEditTitle(thesis.title || "");
+      setEditAbstract(thesis.abstract || "");
+      setEditFileUrl(thesis.file_url || "");
+    }
     setEditing(true);
   };
 
@@ -111,23 +138,39 @@ const ThesisDetail = () => {
   const saveEdit = async () => {
     if (!thesis) return;
     setSavingEdit(true);
-    const { error } = await supabase
-      .from("theses")
-      .update({
-        field: editField,
-        degree_type: editDegree || null,
-        graduation_year: editYear ? parseInt(editYear, 10) : null,
-        keywords: editKeywords,
-      })
-      .eq("id", thesis.id);
+    const payload: Record<string, unknown> = {
+      field: editField,
+      degree_type: editDegree || null,
+      graduation_year: editYear ? parseInt(editYear, 10) : null,
+      keywords: editKeywords,
+    };
+    if (isAdmin) {
+      payload.title = editTitle;
+      payload.abstract = editAbstract;
+      payload.file_url = editFileUrl || null;
+    }
+    const { error } = await supabase.from("theses").update(payload).eq("id", thesis.id);
     setSavingEdit(false);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       return;
     }
-    setThesis({ ...thesis, field: editField, degree_type: editDegree || null, graduation_year: editYear ? parseInt(editYear, 10) : null, keywords: editKeywords });
+    setThesis({ ...thesis, ...payload });
     setEditing(false);
     toast({ title: t("detail.editSaved") });
+  };
+
+  const deleteThesis = async () => {
+    if (!thesis) return;
+    setDeleting(true);
+    const { error } = await supabase.from("theses").delete().eq("id", thesis.id);
+    setDeleting(false);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("admin.thesisDeleted") });
+    navigate("/database");
   };
 
   if (loading) {
@@ -148,6 +191,7 @@ const ThesisDetail = () => {
   }
 
   const isOwner = Boolean(user && thesis.user_id === user.id);
+  const canEditMetadata = isOwner || isAdmin;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -185,14 +229,47 @@ const ThesisDetail = () => {
                   <Badge variant="secondary">{fieldLabel(thesis.field, language)}</Badge>
                   {thesis.degree_type && <Badge variant="outline">{degreeLabel(thesis.degree_type, language)}</Badge>}
                   {thesis.graduation_year && <Badge variant="outline">{thesis.graduation_year}</Badge>}
-                  {isOwner && (
+                  {canEditMetadata && (
                     <Button variant="ghost" size="sm" className="h-6 gap-1 px-1.5 text-xs text-muted-foreground" onClick={startEditing}>
                       <Pencil className="h-3 w-3" /> {t("detail.edit")}
                     </Button>
                   )}
+                  {isAdmin && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 gap-1 px-1.5 text-xs text-destructive hover:text-destructive">
+                          <Trash2 className="h-3 w-3" /> {t("admin.delete")}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{t("admin.deleteThesisTitle")}</AlertDialogTitle>
+                          <AlertDialogDescription>{t("admin.deleteThesisBody")}</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{t("detail.editCancel")}</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={deleteThesis}
+                            disabled={deleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {t("admin.delete")}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               )}
-              <h1 className="text-2xl font-bold leading-tight">{thesis.title}</h1>
+              {editing && isAdmin ? (
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="text-xl font-bold h-auto py-1.5"
+                />
+              ) : (
+                <h1 className="text-2xl font-bold leading-tight">{thesis.title}</h1>
+              )}
             </div>
             <BookmarkButton thesisId={thesis.id} />
           </div>
@@ -227,6 +304,18 @@ const ThesisDetail = () => {
                       </button>
                     </Badge>
                   ))}
+                </div>
+              )}
+              {isAdmin && (
+                <div className="space-y-3 rounded-md border border-dashed p-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">{t("detail.abstract")}</label>
+                    <Textarea value={editAbstract} onChange={(e) => setEditAbstract(e.target.value)} rows={5} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">PDF URL</label>
+                    <Input value={editFileUrl} onChange={(e) => setEditFileUrl(e.target.value)} placeholder="https://..." />
+                  </div>
                 </div>
               )}
               <div className="flex gap-2">
