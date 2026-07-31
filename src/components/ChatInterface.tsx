@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import BotMessage from "@/components/BotMessage";
+import MascotAvatar from "@/components/MascotAvatar";
 import OnboardingCard, { OnboardingPatch } from "@/components/OnboardingCard";
 import { getNextQuest, QuestId } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
@@ -397,7 +398,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
             {msg.role === "assistant" && (
               // Static mascot for now — the user is designing an animated (Clippy-style)
               // version for later, this is the placeholder until that exists.
-              <img src="/mascot-book.png" alt="" className="h-10 w-9 shrink-0 object-contain" />
+              <MascotAvatar />
             )}
             <div
               className={
@@ -429,7 +430,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
 
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <div className="flex items-start gap-2.5">
-            <img src="/mascot-book.png" alt="" className="h-10 w-9 shrink-0 object-contain" />
+            <MascotAvatar />
             <div className="relative rounded-2xl rounded-tl-md bg-muted px-4 py-3">
               <span className="absolute -left-1 top-3 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
