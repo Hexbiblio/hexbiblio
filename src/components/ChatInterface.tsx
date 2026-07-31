@@ -51,7 +51,6 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   const { user, session } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
-  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
   useEffect(() => {
     if (!user) { setProfile(null); setProfileLoaded(false); return; }
@@ -63,34 +62,11 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
       .then(({ data }) => { setProfile(data); setProfileLoaded(true); });
   }, [user]);
 
-  // Remembers a skip locally so the card doesn't reappear every visit — it
-  // naturally stops appearing for good once the student actually fills it in
-  // (the fields it writes are exactly what the "needs onboarding" check reads).
-  useEffect(() => {
-    if (!user) { setOnboardingDismissed(false); return; }
-    try {
-      setOnboardingDismissed(localStorage.getItem(`hexbiblio:onboardingDismissed:${user.id}`) === "1");
-    } catch {
-      setOnboardingDismissed(false);
-    }
-  }, [user]);
-
-  const handleSkipOnboarding = () => {
-    setOnboardingDismissed(true);
-    if (user) {
-      try { localStorage.setItem(`hexbiblio:onboardingDismissed:${user.id}`, "1"); } catch {
-        // storage may be full or unavailable — the card just won't remember the skip
-      }
-    }
-  };
-
+  // Onboarding is mandatory, not skippable — it keeps showing on every visit
+  // until both required fields are filled (interests stays optional, so it's
+  // not part of this check), blocking the rest of the chat until then.
   const needsOnboarding =
-    !!user &&
-    profileLoaded &&
-    !onboardingDismissed &&
-    !profile?.academic_level &&
-    !profile?.field_of_study &&
-    !(profile?.research_interests?.length > 0);
+    !!user && profileLoaded && !(profile?.academic_level && profile?.field_of_study);
 
   // Keep the guest's in-progress conversation persisted at all times, so it
   // survives navigating to /auth by any path — not just the in-chat prompt
@@ -266,35 +242,50 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
 
   const isEmpty = messages.length === 0;
 
-  // Empty state: greeting + suggestions for everyone, "how it works" for signed-in users
-  // (guests already get an equivalent explanation further down the landing page).
   if (isEmpty) {
+    // Still resolving whether this logged-in student needs onboarding — avoid
+    // flashing the normal chat UI right before replacing it with the card.
+    if (user && !profileLoaded) {
+      return (
+        <div className="flex justify-center py-10">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      );
+    }
+
+    // Onboarding is mandatory: nothing else in the chat renders until it's
+    // done — no skip, no suggested questions, no input box.
+    if (user && needsOnboarding) {
+      return (
+        <div className="w-full">
+          <OnboardingCard
+            userId={user.id}
+            firstName={profile?.first_name}
+            onSaved={(patch: OnboardingPatch) => setProfile((prev: any) => ({ ...prev, ...patch }))}
+          />
+        </div>
+      );
+    }
+
+    // Empty state: greeting + suggestions for everyone, "how it works" for signed-in users
+    // (guests already get an equivalent explanation further down the landing page).
     return (
       <div className="w-full space-y-6">
-        {user && profileLoaded && (
-          needsOnboarding ? (
-            <OnboardingCard
-              userId={user.id}
-              firstName={profile?.first_name}
-              onSaved={(patch: OnboardingPatch) => setProfile((prev: any) => ({ ...prev, ...patch }))}
-              onSkip={handleSkipOnboarding}
-            />
-          ) : (
-            <div className="mx-auto max-w-2xl space-y-1.5 text-center">
-              <h2 className="text-lg font-semibold">
-                {profile?.first_name
-                  ? (language === "fr" ? `Bonjour ${profile.first_name} 👋` : `Hello ${profile.first_name} 👋`)
-                  : t("chat.title")}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {profile?.field_of_study
-                  ? (language === "fr"
-                      ? `Prêt à explorer ta prochaine question de recherche en ${profile.field_of_study} ?`
-                      : `Ready to dig into your next research question in ${profile.field_of_study}?`)
-                  : t("chat.subtitle")}
-              </p>
-            </div>
-          )
+        {user && (
+          <div className="mx-auto max-w-2xl space-y-1.5 text-center">
+            <h2 className="text-lg font-semibold">
+              {profile?.first_name
+                ? (language === "fr" ? `Bonjour ${profile.first_name} 👋` : `Hello ${profile.first_name} 👋`)
+                : t("chat.title")}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {profile?.field_of_study
+                ? (language === "fr"
+                    ? `Prêt à explorer ta prochaine question de recherche en ${profile.field_of_study} ?`
+                    : `Ready to dig into your next research question in ${profile.field_of_study}?`)
+                : t("chat.subtitle")}
+            </p>
+          </div>
         )}
 
         <div className="mx-auto max-w-2xl">

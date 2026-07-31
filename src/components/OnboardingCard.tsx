@@ -22,10 +22,9 @@ interface OnboardingCardProps {
   userId: string;
   firstName?: string | null;
   onSaved: (patch: OnboardingPatch) => void;
-  onSkip: () => void;
 }
 
-const OnboardingCard = ({ userId, firstName, onSaved, onSkip }: OnboardingCardProps) => {
+const OnboardingCard = ({ userId, firstName, onSaved }: OnboardingCardProps) => {
   const { language, t } = useLanguage();
   const { toast } = useToast();
   const [academicLevel, setAcademicLevel] = useState("");
@@ -58,7 +57,9 @@ const OnboardingCard = ({ userId, firstName, onSaved, onSkip }: OnboardingCardPr
     onSaved(patch);
   };
 
-  const canSave = Boolean(academicLevel || fieldOfStudy || interests.length > 0);
+  // Level and field are the required fields (interests stays labeled "optional" in the UI) —
+  // onboarding is mandatory now, so Save shouldn't enable on interests alone.
+  const canSave = Boolean(academicLevel && fieldOfStudy);
 
   return (
     <div className="mx-auto flex max-w-2xl items-start gap-2.5">
@@ -133,10 +134,7 @@ const OnboardingCard = ({ userId, firstName, onSaved, onSkip }: OnboardingCardPr
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-1">
-          <button onClick={onSkip} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            {t("onboarding.skip")}
-          </button>
+        <div className="flex justify-end pt-1">
           <Button onClick={handleSave} disabled={saving || !canSave} size="sm" className="rounded-full px-5">
             {t("onboarding.save")}
           </Button>
