@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
+import SourceCard from "@/components/SourceCard";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag } from "lucide-react";
 import { fieldLabel, degreeLabel } from "@/i18n/fields";
 
@@ -23,6 +24,7 @@ const ThesisDetail = () => {
   const [userAccuracy, setUserAccuracy] = useState<number | undefined>();
   const [avgAccuracy, setAvgAccuracy] = useState(0);
   const [totalAccuracy, setTotalAccuracy] = useState(0);
+  const [sources, setSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchThesis = async () => {
@@ -52,10 +54,21 @@ const ThesisDetail = () => {
     }
   };
 
+  const fetchSources = async () => {
+    if (!id) return;
+    const { data } = await supabase
+      .from("sources")
+      .select("id, raw_citation, title, authors, year")
+      .eq("thesis_id", id)
+      .order("created_at", { ascending: true });
+    setSources(data || []);
+  };
+
   useEffect(() => {
     fetchThesis();
     fetchRatings();
     fetchAccuracy();
+    fetchSources();
   }, [id, user]);
 
   if (loading) {
@@ -135,6 +148,17 @@ const ThesisDetail = () => {
                 <Download className="h-4 w-4" /> {t("detail.downloadPdf")}
               </Button>
             </a>
+          )}
+
+          {sources.length > 0 && (
+            <div>
+              <h2 className="mb-3 text-lg font-semibold">{t("detail.sources")} ({sources.length})</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {sources.map((source) => (
+                  <SourceCard key={source.id} raw_citation={source.raw_citation} title={source.title} authors={source.authors} year={source.year} />
+                ))}
+              </div>
+            </div>
           )}
 
           <hr className="border-border" />

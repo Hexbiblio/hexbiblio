@@ -121,6 +121,7 @@ export const translations = {
   "detail.abstract": { en: "Abstract", fr: "Résumé" },
   "detail.downloadPdf": { en: "Download PDF", fr: "Télécharger le PDF" },
   "detail.notFound": { en: "Thesis not found", fr: "Mémoire introuvable" },
+  "detail.sources": { en: "Sources", fr: "Sources" },
 
   // Collections
   "collections.title": { en: "My Collections", fr: "Mes collections" },
