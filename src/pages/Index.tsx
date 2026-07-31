@@ -85,7 +85,7 @@ const Index = () => {
 
             <h1 className={`font-bold tracking-tight ${user ? "text-2xl sm:text-3xl" : "text-4xl sm:text-5xl md:text-6xl"}`}>
               <span className="bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
-                HexBiblio
+                Hexbiblio
               </span>
             </h1>
 

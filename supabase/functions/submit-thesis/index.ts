@@ -9,6 +9,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Brand voice: a mentor, not a tool — user-facing errors stay warm and never
+// leak technical detail (that goes to console.error instead). msg() picks
+// the FR/EN pair; the generic AI-error copy is reused for every "something
+// went wrong upstream" case so a student never sees a raw status code.
+// Mirrors thesis-chat/index.ts's own msg() helper.
+function msg(language: string, en: string, fr: string): string {
+  return language === "fr" ? fr : en;
+}
+const GENERIC_AI_ERROR_EN = "A small hiccup on our end. Try again in a moment — if it keeps happening, we're here.";
+const GENERIC_AI_ERROR_FR = "Petit accroc de notre côté. Réessaie dans un instant — si ça persiste, on est là.";
+
 // A few pages of text is plenty to judge topical consistency — keeps Gemini
 // cost/latency bounded regardless of PDF length (capped at 20MB by the
 // storage bucket already).
@@ -53,7 +64,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Declared outside the try block so the catch handler can still pick the
+  // right language for its error message even if something fails before
+  // (or during) parsing the request body.
+  let language = "en";
   try {
+    const body = await req.json();
+    language = body.language ?? "en";
     const {
       title,
       abstract,
@@ -62,8 +79,7 @@ serve(async (req) => {
       graduationYear,
       keywords,
       filePath,
-      language = "en",
-    } = await req.json();
+    } = body;
 
     if (!title || !abstract || !field || !filePath) {
       return jsonResponse({ error: "Missing required fields" }, 400);
@@ -101,7 +117,13 @@ serve(async (req) => {
 
     if (recentRejection) {
       return jsonResponse(
-        { error: "Your last submission didn't match its declared content. Please wait before trying again." },
+        {
+          error: msg(
+            language,
+            "Your last submission didn't quite match what it was supposed to be about. Give it a little while before trying again.",
+            "Ta dernière soumission ne correspondait pas vraiment à son sujet déclaré. Laisse passer un peu de temps avant de retenter.",
+          ),
+        },
         429,
       );
     }
@@ -120,7 +142,10 @@ serve(async (req) => {
       .gte("created_at", since);
 
     if ((count ?? 0) >= DAILY_SUBMIT_LIMIT) {
-      return jsonResponse({ error: "Daily submission limit reached. Please try again tomorrow." }, 429);
+      return jsonResponse(
+        { error: msg(language, "You've hit today's submission limit. Let's pick this up tomorrow?", "Tu as atteint la limite de soumissions du jour. On se retrouve demain ?") },
+        429,
+      );
     }
 
     await supabase.from("chat_logs").insert({ identifier, user_id: userId });
@@ -133,7 +158,7 @@ serve(async (req) => {
 
     if (downloadError || !fileBlob) {
       console.error("submit-thesis download error:", downloadError);
-      return jsonResponse({ error: "Could not read the uploaded PDF." }, 400);
+      return jsonResponse({ error: msg(language, "We couldn't read the file you uploaded. Try uploading it again.", "On n'a pas réussi à lire le fichier envoyé. Essaie de le renvoyer.") }, 400);
     }
 
     // ---- Extract text (first few pages only — see MAX_PAGES_TO_SCAN) ----
@@ -147,7 +172,11 @@ serve(async (req) => {
       await supabase.storage.from("theses").remove([filePath]);
       return jsonResponse({
         rejected: true,
-        reason: "The PDF could not be read — it may be corrupted, encrypted, or not a real PDF.",
+        reason: msg(
+          language,
+          "We couldn't open this PDF — it might be corrupted, encrypted, or not a real PDF file.",
+          "On n'a pas réussi à ouvrir ce PDF — il est peut-être corrompu, protégé, ou ce n'est pas un vrai fichier PDF.",
+        ),
       });
     }
 
@@ -155,7 +184,11 @@ serve(async (req) => {
       await supabase.storage.from("theses").remove([filePath]);
       return jsonResponse({
         rejected: true,
-        reason: "The PDF appears to contain little or no extractable text.",
+        reason: msg(
+          language,
+          "This PDF doesn't seem to contain readable text — make sure it's not just scanned images.",
+          "Ce PDF ne semble pas contenir de texte lisible — vérifie qu'il ne s'agit pas juste d'images scannées.",
+        ),
       });
     }
 
@@ -204,17 +237,14 @@ Set "consistent" to false if the document is off-topic, unrelated, gibberish, or
 
     if (!geminiResponse.ok) {
       if (geminiResponse.status === 429) {
-        return jsonResponse({ error: "Rate limit exceeded. Please wait a moment and try again." }, 429);
+        return jsonResponse({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }, 429);
       }
       if (geminiResponse.status === 503) {
-        return jsonResponse(
-          { error: "The AI service is temporarily overloaded. Please try again in a moment." },
-          503,
-        );
+        return jsonResponse({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }, 503);
       }
       const text = await geminiResponse.text();
       console.error("submit-thesis Gemini API error:", geminiResponse.status, text);
-      return jsonResponse({ error: "AI service error" }, 500);
+      return jsonResponse({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }, 500);
     }
 
     const geminiData = await geminiResponse.json();
@@ -225,12 +255,12 @@ Set "consistent" to false if the document is off-topic, unrelated, gibberish, or
       verdict = JSON.parse(rawContent);
     } catch {
       console.error("submit-thesis: could not parse Gemini verdict:", rawContent);
-      return jsonResponse({ error: "AI verification returned an unexpected response. Please try again." }, 500);
+      return jsonResponse({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }, 500);
     }
 
     if (typeof verdict.consistent !== "boolean") {
       console.error("submit-thesis: malformed verdict shape:", verdict);
-      return jsonResponse({ error: "AI verification returned an unexpected response. Please try again." }, 500);
+      return jsonResponse({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }, 500);
     }
 
     if (!verdict.consistent) {
@@ -242,7 +272,11 @@ Set "consistent" to false if the document is off-topic, unrelated, gibberish, or
       await supabase.from("chat_logs").insert({ identifier: rejectIdentifier, user_id: userId });
       return jsonResponse({
         rejected: true,
-        reason: "The submitted PDF does not match the declared title, field, or abstract.",
+        reason: msg(
+          language,
+          "This PDF doesn't seem to match the title, field, or abstract you entered — double-check they describe the same work.",
+          "Ce PDF ne semble pas correspondre au titre, au domaine ou au résumé renseignés — vérifie qu'ils décrivent bien le même travail.",
+        ),
       });
     }
 
@@ -272,16 +306,24 @@ Set "consistent" to false if the document is off-topic, unrelated, gibberish, or
       if (insertError.code === "23505") {
         return jsonResponse({
           rejected: true,
-          reason: "A thesis with this title and author already exists in the database.",
+          reason: msg(
+            language,
+            "A submission with this title and author is already online.",
+            "Un travail avec ce titre et cet auteur est déjà en ligne.",
+          ),
         });
       }
       if (insertError.code === "23514") {
         return jsonResponse({
           rejected: true,
-          reason: "Title or abstract does not meet the minimum length requirement.",
+          reason: msg(
+            language,
+            "Your title or abstract is a bit short — give it a little more length.",
+            "Ton titre ou ton résumé est un peu court — donne-lui un peu plus de longueur.",
+          ),
         });
       }
-      return jsonResponse({ error: "Could not save the thesis. Please try again." }, 500);
+      return jsonResponse({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }, 500);
     }
 
     // ---- Bibliography extraction happens after the response — never worth
@@ -297,6 +339,6 @@ Set "consistent" to false if the document is off-topic, unrelated, gibberish, or
     return jsonResponse({ success: true, thesisId: inserted.id });
   } catch (e) {
     console.error("submit-thesis error:", e);
-    return jsonResponse({ error: e instanceof Error ? e.message : "Unknown error" }, 500);
+    return jsonResponse({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }, 500);
   }
 });

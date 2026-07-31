@@ -7,6 +7,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Brand voice: a mentor, not a tool — user-facing errors stay warm and never
+// leak technical detail (that goes to console.error instead). msg() picks
+// the FR/EN pair; the generic AI-error copy is reused for every "something
+// went wrong upstream" case so a student never sees a raw status code.
+function msg(language: string, en: string, fr: string): string {
+  return language === "fr" ? fr : en;
+}
+const GENERIC_AI_ERROR_EN = "A small hiccup on our end. Try again in a moment — if it keeps happening, we're here.";
+const GENERIC_AI_ERROR_FR = "Petit accroc de notre côté. Réessaie dans un instant — si ça persiste, on est là.";
+
 const SYSTEM_PROMPT = `You are HexBiblio — an expert academic research advisor guiding students through their thesis journey via a Socratic, one-step-at-a-time conversation.
 
 ## Conversation Style — CRITICAL
@@ -45,8 +55,14 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Declared outside the try block so the catch handler can still pick the
+  // right language for its error message even if something fails before
+  // (or during) parsing the request body.
+  let language = "en";
   try {
-    const { messages, language = "en", currentQuest = null, completedQuests = [] } = await req.json();
+    const body = await req.json();
+    language = body.language ?? "en";
+    const { messages, currentQuest = null, completedQuests = [] } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -56,7 +72,7 @@ serve(async (req) => {
     }
     if (messages.length > 40) {
       return new Response(
-        JSON.stringify({ error: "Conversation too long" }),
+        JSON.stringify({ error: msg(language, "This conversation's getting long — start a new one.", "Cette conversation devient longue — recommence une nouvelle discussion.") }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -106,7 +122,7 @@ serve(async (req) => {
 
     if (lastLog && Date.now() - new Date(lastLog.created_at).getTime() < MIN_INTERVAL_MS) {
       return new Response(
-        JSON.stringify({ error: "Please wait a moment before sending another message." }),
+        JSON.stringify({ error: msg(language, "Give it a second before sending another message.", "Laisse passer un instant avant d'envoyer un autre message.") }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -121,8 +137,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: userId
-            ? "Daily message limit reached. Please try again tomorrow."
-            : "Guest limit reached. Please sign in to continue chatting.",
+            ? msg(language, "You've hit today's limit. Let's pick this up tomorrow?", "Tu as atteint la limite du jour. On se retrouve demain ?")
+            : msg(language, "Sign in to keep chatting without a limit.", "Connecte-toi pour continuer à discuter sans limite."),
         }),
         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -260,7 +276,7 @@ serve(async (req) => {
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }),
+          JSON.stringify({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -268,14 +284,14 @@ serve(async (req) => {
         // Gemini's own infrastructure is temporarily overloaded — transient,
         // not an account/key problem. Worth telling the user it's worth a retry.
         return new Response(
-          JSON.stringify({ error: "The AI service is temporarily overloaded. Please try again in a moment." }),
+          JSON.stringify({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }),
           { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       const text = await response.text();
       console.error("Gemini API error:", response.status, text);
       return new Response(
-        JSON.stringify({ error: "AI service error" }),
+        JSON.stringify({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -286,7 +302,7 @@ serve(async (req) => {
   } catch (e) {
     console.error("thesis-chat error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: msg(language, GENERIC_AI_ERROR_EN, GENERIC_AI_ERROR_FR) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

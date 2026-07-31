@@ -35,11 +35,11 @@ const Navbar = () => {
         <Link to="/" className="flex items-center gap-2.5 group">
           <img
             src="/hexbiblio-logo.svg"
-            alt="HexBiblio"
+            alt="Hexbiblio"
             className="h-8 w-8 transition-transform group-hover:scale-105"
           />
           <span className="hidden sm:inline font-bold text-foreground tracking-tight" style={{ fontFamily: "'Libre Baskerville', serif" }}>
-            HexBiblio
+            Hexbiblio
           </span>
         </Link>
 
@@ -103,7 +103,7 @@ const Navbar = () => {
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="right" className="w-72">
-                    <SheetTitle style={{ fontFamily: "'Libre Baskerville', serif" }}>HexBiblio</SheetTitle>
+                    <SheetTitle style={{ fontFamily: "'Libre Baskerville', serif" }}>Hexbiblio</SheetTitle>
                     <nav className="mt-6 flex flex-col gap-1">
                       {links.map(({ to, label, icon: Icon }) => (
                         <SheetClose asChild key={to}>

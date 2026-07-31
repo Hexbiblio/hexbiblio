@@ -20,6 +20,14 @@ const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 30 }, (_, i) => currentYear - i);
 const SUBMIT_THESIS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-thesis`;
 
+// French distinguishes "mémoire" (Bachelor's/Master's) from "thèse" (PhD) —
+// not interchangeable. English "thesis" covers both, so no branching needed
+// there. Only used here, once we actually know degreeType (post-submission).
+function submittedWorkLabel(degreeType: string, language: "en" | "fr"): string {
+  if (language !== "fr") return "Your thesis is online.";
+  return degreeType === "PhD" ? "Ta thèse est en ligne." : "Ton mémoire est en ligne.";
+}
+
 // Supabase Storage keys must be S3-safe ASCII — accented characters (common
 // in French filenames) and other non-ASCII characters are rejected outright
 // with "Invalid key". Strip diacritics (é -> e) then swap anything else
@@ -183,7 +191,7 @@ const SubmitThesis = () => {
         return;
       }
 
-      toast({ title: t("submit.success"), description: t("submit.successDesc") });
+      toast({ title: t("submit.success"), description: submittedWorkLabel(degreeType, language) });
       navigate("/database");
     } catch (error: any) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
