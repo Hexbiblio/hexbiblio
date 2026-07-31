@@ -6,16 +6,23 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
-import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag } from "lucide-react";
-import { fieldLabel, degreeLabel } from "@/i18n/fields";
+import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X } from "lucide-react";
+import { fieldLabel, degreeLabel, FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+
+const currentYear = new Date().getFullYear();
+const YEARS = Array.from({ length: 30 }, (_, i) => currentYear - i);
 
 const ThesisDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const { toast } = useToast();
   const [thesis, setThesis] = useState<any>(null);
   const [userRating, setUserRating] = useState<number | undefined>();
   const [avgRating, setAvgRating] = useState(0);
@@ -25,6 +32,18 @@ const ThesisDetail = () => {
   const [totalAccuracy, setTotalAccuracy] = useState(0);
   const [sources, setSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Only field/degree_type/graduation_year/keywords are editable post-submission —
+  // title/abstract/author/PDF stay exactly what Phase 2's AI check verified.
+  // The DB also enforces this (lock_immutable_thesis_fields_trigger), this
+  // is just the UI's own scope.
+  const [editing, setEditing] = useState(false);
+  const [editField, setEditField] = useState("");
+  const [editDegree, setEditDegree] = useState("");
+  const [editYear, setEditYear] = useState("");
+  const [editKeywords, setEditKeywords] = useState<string[]>([]);
+  const [editKeywordInput, setEditKeywordInput] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const fetchThesis = async () => {
     if (!id) return;
@@ -70,6 +89,47 @@ const ThesisDetail = () => {
     fetchSources();
   }, [id, user]);
 
+  const startEditing = () => {
+    setEditField(thesis.field || "");
+    setEditDegree(thesis.degree_type || "");
+    setEditYear(thesis.graduation_year ? String(thesis.graduation_year) : "");
+    setEditKeywords(thesis.keywords || []);
+    setEditKeywordInput("");
+    setEditing(true);
+  };
+
+  const addEditKeyword = () => {
+    const kw = editKeywordInput.trim().toLowerCase();
+    if (kw && !editKeywords.includes(kw) && editKeywords.length < 10) {
+      setEditKeywords([...editKeywords, kw]);
+      setEditKeywordInput("");
+    }
+  };
+
+  const removeEditKeyword = (kw: string) => setEditKeywords(editKeywords.filter((k) => k !== kw));
+
+  const saveEdit = async () => {
+    if (!thesis) return;
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("theses")
+      .update({
+        field: editField,
+        degree_type: editDegree || null,
+        graduation_year: editYear ? parseInt(editYear, 10) : null,
+        keywords: editKeywords,
+      })
+      .eq("id", thesis.id);
+    setSavingEdit(false);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    setThesis({ ...thesis, field: editField, degree_type: editDegree || null, graduation_year: editYear ? parseInt(editYear, 10) : null, keywords: editKeywords });
+    setEditing(false);
+    toast({ title: t("detail.editSaved") });
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
@@ -87,6 +147,8 @@ const ThesisDetail = () => {
     );
   }
 
+  const isOwner = Boolean(user && thesis.user_id === user.id);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <Link to="/database" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -96,12 +158,40 @@ const ThesisDetail = () => {
       <Card>
         <CardContent className="p-6 space-y-6">
           <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="secondary">{fieldLabel(thesis.field, language)}</Badge>
-                {thesis.degree_type && <Badge variant="outline">{degreeLabel(thesis.degree_type, language)}</Badge>}
-                {thesis.graduation_year && <Badge variant="outline">{thesis.graduation_year}</Badge>}
-              </div>
+            <div className="space-y-2 flex-1">
+              {editing ? (
+                <div className="grid gap-2 sm:grid-cols-3 max-w-md">
+                  <Select value={editField} onValueChange={setEditField}>
+                    <SelectTrigger><SelectValue placeholder={t("submit.selectField")} /></SelectTrigger>
+                    <SelectContent>
+                      {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={editDegree} onValueChange={setEditDegree}>
+                    <SelectTrigger><SelectValue placeholder={t("submit.selectDegree")} /></SelectTrigger>
+                    <SelectContent>
+                      {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={editYear} onValueChange={setEditYear}>
+                    <SelectTrigger><SelectValue placeholder={t("submit.selectYear")} /></SelectTrigger>
+                    <SelectContent>
+                      {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Badge variant="secondary">{fieldLabel(thesis.field, language)}</Badge>
+                  {thesis.degree_type && <Badge variant="outline">{degreeLabel(thesis.degree_type, language)}</Badge>}
+                  {thesis.graduation_year && <Badge variant="outline">{thesis.graduation_year}</Badge>}
+                  {isOwner && (
+                    <Button variant="ghost" size="sm" className="h-6 gap-1 px-1.5 text-xs text-muted-foreground" onClick={startEditing}>
+                      <Pencil className="h-3 w-3" /> {t("detail.edit")}
+                    </Button>
+                  )}
+                </div>
+              )}
               <h1 className="text-2xl font-bold leading-tight">{thesis.title}</h1>
             </div>
             <BookmarkButton thesisId={thesis.id} />
@@ -115,13 +205,48 @@ const ThesisDetail = () => {
             )}
           </div>
 
-          {thesis.keywords && thesis.keywords.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              <Tag className="h-4 w-4 text-muted-foreground mt-0.5" />
-              {thesis.keywords.map((kw: string) => (
-                <Badge key={kw} variant="secondary" className="text-xs">{kw}</Badge>
-              ))}
+          {editing ? (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  value={editKeywordInput}
+                  onChange={(e) => setEditKeywordInput(e.target.value)}
+                  placeholder={t("submit.addKeyword")}
+                  maxLength={50}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addEditKeyword(); } }}
+                />
+                <Button type="button" variant="outline" onClick={addEditKeyword} disabled={editKeywords.length >= 10}>{t("submit.add")}</Button>
+              </div>
+              {editKeywords.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {editKeywords.map((kw) => (
+                    <Badge key={kw} variant="secondary" className="gap-1 pr-1 text-xs">
+                      {kw}
+                      <button type="button" onClick={() => removeEditKeyword(kw)} className="ml-0.5 hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button size="sm" onClick={saveEdit} disabled={savingEdit || !editField}>
+                  {savingEdit ? t("submit.submitting") : t("profile.save")}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setEditing(false)} disabled={savingEdit}>
+                  {t("detail.editCancel")}
+                </Button>
+              </div>
             </div>
+          ) : (
+            thesis.keywords && thesis.keywords.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                <Tag className="h-4 w-4 text-muted-foreground mt-0.5" />
+                {thesis.keywords.map((kw: string) => (
+                  <Badge key={kw} variant="secondary" className="text-xs">{kw}</Badge>
+                ))}
+              </div>
+            )
           )}
 
           <RatingWidget

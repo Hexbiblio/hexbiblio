@@ -122,6 +122,9 @@ export const translations = {
   "detail.downloadPdf": { en: "Download PDF", fr: "Télécharger le PDF" },
   "detail.notFound": { en: "Thesis not found", fr: "Mémoire introuvable" },
   "detail.sources": { en: "Sources", fr: "Sources" },
+  "detail.edit": { en: "Edit details", fr: "Modifier les infos" },
+  "detail.editCancel": { en: "Cancel", fr: "Annuler" },
+  "detail.editSaved": { en: "Thesis details updated.", fr: "Infos du mémoire mises à jour." },
 
   // Collections
   "collections.title": { en: "My Collections", fr: "Mes collections" },
