@@ -42,6 +42,19 @@ export const DEGREE_TYPES: FieldOption[] = [
   { value: "Other", en: "Other", fr: "Autre" },
 ];
 
+// `academic_level` on profiles is a broader, looser notion than theses.degree_type
+// (includes stages before/after a degree, e.g. high school or postdoc) — kept
+// as its own list rather than reusing DEGREE_TYPES.
+export const ACADEMIC_LEVELS: FieldOption[] = [
+  { value: "High School", en: "High School", fr: "Lycée" },
+  { value: "Bachelor", en: "Bachelor", fr: "Licence" },
+  { value: "Master", en: "Master", fr: "Master" },
+  { value: "PhD", en: "PhD", fr: "Doctorat" },
+  { value: "Postdoc", en: "Postdoc", fr: "Post-doctorat" },
+  { value: "Professor", en: "Professor", fr: "Professeur" },
+  { value: "Other", en: "Other", fr: "Autre" },
+];
+
 const buildLookup = (options: FieldOption[]) => {
   const map = new Map(options.map((o) => [o.value, o]));
   return (value: string | null | undefined, language: Language): string => {

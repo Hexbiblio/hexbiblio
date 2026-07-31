@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import BotMessage from "@/components/BotMessage";
+import OnboardingCard, { OnboardingPatch } from "@/components/OnboardingCard";
 import { getNextQuest, QuestId } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -48,16 +49,47 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   const { language, t } = useLanguage();
   const { user, session } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
 
   useEffect(() => {
-    if (!user) { setProfile(null); return; }
+    if (!user) { setProfile(null); setProfileLoaded(false); return; }
     supabase
       .from("profiles")
       .select("first_name, academic_level, country, university, field_of_study, research_interests, bio")
       .eq("user_id", user.id)
       .maybeSingle()
-      .then(({ data }) => setProfile(data));
+      .then(({ data }) => { setProfile(data); setProfileLoaded(true); });
   }, [user]);
+
+  // Remembers a skip locally so the card doesn't reappear every visit — it
+  // naturally stops appearing for good once the student actually fills it in
+  // (the fields it writes are exactly what the "needs onboarding" check reads).
+  useEffect(() => {
+    if (!user) { setOnboardingDismissed(false); return; }
+    try {
+      setOnboardingDismissed(localStorage.getItem(`hexbiblio:onboardingDismissed:${user.id}`) === "1");
+    } catch {
+      setOnboardingDismissed(false);
+    }
+  }, [user]);
+
+  const handleSkipOnboarding = () => {
+    setOnboardingDismissed(true);
+    if (user) {
+      try { localStorage.setItem(`hexbiblio:onboardingDismissed:${user.id}`, "1"); } catch {
+        // storage may be full or unavailable — the card just won't remember the skip
+      }
+    }
+  };
+
+  const needsOnboarding =
+    !!user &&
+    profileLoaded &&
+    !onboardingDismissed &&
+    !profile?.academic_level &&
+    !profile?.field_of_study &&
+    !(profile?.research_interests?.length > 0);
 
   // Keep the guest's in-progress conversation persisted at all times, so it
   // survives navigating to /auth by any path — not just the in-chat prompt
@@ -238,21 +270,30 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   if (isEmpty) {
     return (
       <div className="w-full space-y-6">
-        {user && (
-          <div className="mx-auto max-w-2xl space-y-1.5 text-center">
-            <h2 className="text-lg font-semibold">
-              {profile?.first_name
-                ? (language === "fr" ? `Bonjour ${profile.first_name} 👋` : `Hello ${profile.first_name} 👋`)
-                : t("chat.title")}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {profile?.field_of_study
-                ? (language === "fr"
-                    ? `Prêt à explorer votre prochaine question de recherche en ${profile.field_of_study} ?`
-                    : `Ready to dig into your next research question in ${profile.field_of_study}?`)
-                : t("chat.subtitle")}
-            </p>
-          </div>
+        {user && profileLoaded && (
+          needsOnboarding ? (
+            <OnboardingCard
+              userId={user.id}
+              firstName={profile?.first_name}
+              onSaved={(patch: OnboardingPatch) => setProfile((prev: any) => ({ ...prev, ...patch }))}
+              onSkip={handleSkipOnboarding}
+            />
+          ) : (
+            <div className="mx-auto max-w-2xl space-y-1.5 text-center">
+              <h2 className="text-lg font-semibold">
+                {profile?.first_name
+                  ? (language === "fr" ? `Bonjour ${profile.first_name} 👋` : `Hello ${profile.first_name} 👋`)
+                  : t("chat.title")}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {profile?.field_of_study
+                  ? (language === "fr"
+                      ? `Prêt à explorer ta prochaine question de recherche en ${profile.field_of_study} ?`
+                      : `Ready to dig into your next research question in ${profile.field_of_study}?`)
+                  : t("chat.subtitle")}
+              </p>
+            </div>
+          )
         )}
 
         <div className="mx-auto max-w-2xl">

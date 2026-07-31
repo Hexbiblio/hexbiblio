@@ -1,0 +1,147 @@
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ACADEMIC_LEVELS, FIELDS } from "@/i18n/fields";
+import { Sparkles, X } from "lucide-react";
+
+const MAX_ONBOARDING_INTERESTS = 5;
+
+export interface OnboardingPatch {
+  academic_level: string | null;
+  field_of_study: string | null;
+  research_interests: string[];
+}
+
+interface OnboardingCardProps {
+  userId: string;
+  firstName?: string | null;
+  onSaved: (patch: OnboardingPatch) => void;
+  onSkip: () => void;
+}
+
+const OnboardingCard = ({ userId, firstName, onSaved, onSkip }: OnboardingCardProps) => {
+  const { language, t } = useLanguage();
+  const { toast } = useToast();
+  const [academicLevel, setAcademicLevel] = useState("");
+  const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
+  const [interestInput, setInterestInput] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const addInterest = () => {
+    const v = interestInput.trim();
+    if (!v || interests.includes(v) || interests.length >= MAX_ONBOARDING_INTERESTS) return;
+    setInterests([...interests, v]);
+    setInterestInput("");
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const patch: OnboardingPatch = {
+      academic_level: academicLevel || null,
+      field_of_study: fieldOfStudy || null,
+      research_interests: interests,
+    };
+    const { error } = await supabase.from("profiles").update(patch as any).eq("user_id", userId);
+    setSaving(false);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: t("onboarding.saved") });
+    onSaved(patch);
+  };
+
+  const canSave = Boolean(academicLevel || fieldOfStudy || interests.length > 0);
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-4 rounded-2xl border bg-card/90 backdrop-blur-sm p-5 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <Sparkles className="h-4 w-4 text-primary" />
+        </div>
+        <div>
+          <h2 className="text-base font-semibold">
+            {firstName ? (language === "fr" ? `Salut ${firstName} ! ` : `Hey ${firstName}! `) : ""}
+            {t("onboarding.title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t("onboarding.subtitle")}</p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">{t("onboarding.academicLevelLabel")}</label>
+          <Select value={academicLevel} onValueChange={setAcademicLevel}>
+            <SelectTrigger><SelectValue placeholder={t("onboarding.selectLevel")} /></SelectTrigger>
+            <SelectContent>
+              {ACADEMIC_LEVELS.map((l) => (
+                <SelectItem key={l.value} value={l.value}>{language === "fr" ? l.fr : l.en}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">{t("onboarding.fieldLabel")}</label>
+          <Select value={fieldOfStudy} onValueChange={setFieldOfStudy}>
+            <SelectTrigger><SelectValue placeholder={t("onboarding.selectField")} /></SelectTrigger>
+            <SelectContent>
+              {FIELDS.map((f) => (
+                <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">{t("onboarding.interestsLabel")}</label>
+        <div className="flex gap-2">
+          <Input
+            value={interestInput}
+            onChange={(e) => setInterestInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addInterest(); } }}
+            placeholder={t("onboarding.interestsPlaceholder")}
+            maxLength={40}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addInterest}
+            disabled={interests.length >= MAX_ONBOARDING_INTERESTS}
+          >
+            {t("submit.add")}
+          </Button>
+        </div>
+        {interests.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {interests.map((i) => (
+              <Badge key={i} variant="secondary" className="gap-1">
+                {i}
+                <button onClick={() => setInterests(interests.filter((x) => x !== i))} className="hover:text-destructive">
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between pt-1">
+        <button onClick={onSkip} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+          {t("onboarding.skip")}
+        </button>
+        <Button onClick={handleSave} disabled={saving || !canSave} size="sm" className="rounded-full px-5">
+          {t("onboarding.save")}
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default OnboardingCard;

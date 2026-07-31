@@ -14,10 +14,7 @@ import ThesisCard from "@/components/ThesisCard";
 import { useToast } from "@/hooks/use-toast";
 import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library } from "lucide-react";
 import { useQuestProgress, QuestId } from "@/components/ThesisQuests";
-
-const ACADEMIC_LEVELS = [
-  "High School", "Bachelor", "Master", "PhD", "Postdoc", "Professor", "Other",
-];
+import { ACADEMIC_LEVELS } from "@/i18n/fields";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -221,7 +218,7 @@ const Profile = () => {
               <Select value={academicLevel} onValueChange={setAcademicLevel}>
                 <SelectTrigger><SelectValue placeholder={fr ? "Sélectionner" : "Select"} /></SelectTrigger>
                 <SelectContent>
-                  {ACADEMIC_LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                  {ACADEMIC_LEVELS.map((l) => <SelectItem key={l.value} value={l.value}>{fr ? l.fr : l.en}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

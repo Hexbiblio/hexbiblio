@@ -62,6 +62,22 @@ export const translations = {
   "chat.step3Title": { en: "You get guided", fr: "Tu es guidé" },
   "chat.step3Desc": { en: "Refine your question, thesis, and methodology step by step.", fr: "Affine question, thèse et méthodologie pas à pas." },
 
+  // Onboarding (first-steps personalization card, shown once profile is empty)
+  "onboarding.title": { en: "Let's personalize things a bit", fr: "Personnalisons un peu les choses" },
+  "onboarding.subtitle": {
+    en: "Three quick things so the guidance actually fits where you're at — skip anytime.",
+    fr: "Trois infos rapides pour que l'accompagnement colle à ta situation — tu peux passer à tout moment.",
+  },
+  "onboarding.academicLevelLabel": { en: "Academic level", fr: "Niveau académique" },
+  "onboarding.selectLevel": { en: "Select your level", fr: "Choisis ton niveau" },
+  "onboarding.fieldLabel": { en: "Field of study", fr: "Domaine d'études" },
+  "onboarding.selectField": { en: "Select your field", fr: "Choisis ton domaine" },
+  "onboarding.interestsLabel": { en: "A few interests (optional)", fr: "Quelques intérêts (facultatif)" },
+  "onboarding.interestsPlaceholder": { en: "e.g. climate policy...", fr: "ex. politique climatique..." },
+  "onboarding.skip": { en: "Skip for now", fr: "Plus tard" },
+  "onboarding.save": { en: "Save and continue", fr: "Enregistrer et continuer" },
+  "onboarding.saved": { en: "Got it, thanks!", fr: "Merci, c'est noté !" },
+
   // Database
   "db.title": { en: "Work Already Online", fr: "Les travaux déjà en ligne" },
   "db.subtitle": { en: "See what others have already explored on your topic", fr: "Regarde ce que d'autres ont déjà exploré sur ton sujet" },
