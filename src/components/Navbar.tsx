@@ -2,16 +2,18 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Search, Upload, Bookmark, User, LogOut, Globe, Menu, Check, BookOpen } from "lucide-react";
+import { Search, Upload, Bookmark, User, LogOut, Globe, Menu, Check, BookOpen, Moon, Sun } from "lucide-react";
 import type { Language } from "@/i18n/translations";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const { language, setLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const links = [
@@ -44,6 +46,20 @@ const Navbar = () => {
         </Link>
 
         <div className="flex items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="h-8 w-8 p-0 rounded-full"
+            aria-label={
+              theme === "dark"
+                ? (language === "fr" ? "Passer en mode clair" : "Switch to light mode")
+                : (language === "fr" ? "Passer en mode sombre" : "Switch to dark mode")
+            }
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
