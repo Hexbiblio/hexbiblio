@@ -41,7 +41,10 @@ const SourceCard = ({ raw_citation, title, authors, year, theses }: SourceCardPr
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        {title && <p className="line-clamp-3 text-sm text-muted-foreground">{raw_citation}</p>}
+        {/* The raw citation already restates author/year/title once we have a
+            clean parse — only show it when parsing didn't give us a title,
+            since then it's the only readable version of the citation we have. */}
+        {!title && <p className="line-clamp-3 text-sm text-muted-foreground">{raw_citation}</p>}
         {theses && (
           <Link
             to={`/database/${theses.id}`}
