@@ -61,6 +61,19 @@ const OnboardingCard = ({ userId, firstName, onSaved }: OnboardingCardProps) => 
   // onboarding is mandatory now, so Save shouldn't enable on interests alone.
   const canSave = Boolean(academicLevel && fieldOfStudy);
 
+  // The first name sits mid-sentence, not as a prefix — built inline rather
+  // than through translations.ts, which only does static key lookups.
+  const greetingTitle = firstName
+    ? (language === "fr"
+        ? `Bonjour ${firstName}, bienvenue sur Hexbiblio, je suis ton nouveau mentor`
+        : `Hi ${firstName}, welcome to Hexbiblio — I'm your new mentor`)
+    : (language === "fr"
+        ? "Bienvenue sur Hexbiblio, je suis ton nouveau mentor"
+        : "Welcome to Hexbiblio — I'm your new mentor");
+  const greetingSubtitle = language === "fr"
+    ? "Avant de commencer, j'ai besoin de quelques informations te concernant."
+    : "Before we get started, I need a few details about you.";
+
   return (
     <div className="mx-auto flex max-w-2xl items-start gap-2.5">
       <MascotAvatar />
@@ -69,11 +82,8 @@ const OnboardingCard = ({ userId, firstName, onSaved }: OnboardingCardProps) => 
       <div className="relative flex-1 space-y-4 rounded-2xl rounded-tl-md bg-muted px-5 py-4 text-foreground">
         <span className="absolute -left-1 top-3 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
         <div>
-          <h2 className="text-base font-semibold">
-            {firstName ? (language === "fr" ? `Salut ${firstName} ! ` : `Hey ${firstName}! `) : ""}
-            {t("onboarding.title")}
-          </h2>
-          <p className="text-sm text-muted-foreground">{t("onboarding.subtitle")}</p>
+          <h2 className="text-base font-semibold">{greetingTitle}</h2>
+          <p className="text-sm text-muted-foreground">{greetingSubtitle}</p>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
