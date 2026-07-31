@@ -21,6 +21,7 @@ ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 
 -- Users may read their own role assignment (needed so the frontend can ask
 -- "am I an admin?"). No INSERT/UPDATE/DELETE policy is created here.
+DROP POLICY IF EXISTS "Users can view own roles" ON public.user_roles;
 CREATE POLICY "Users can view own roles"
 ON public.user_roles FOR SELECT TO authenticated
 USING (auth.uid() = user_id);
@@ -68,10 +69,12 @@ $$;
 -- "Users can update own theses" / "Users can delete own theses" policies.
 -- No admin INSERT policy is added — theses stay server-only-insertable via
 -- the submit-thesis edge function's AI content-verification gate.
+DROP POLICY IF EXISTS "Admins can update any thesis" ON public.theses;
 CREATE POLICY "Admins can update any thesis"
 ON public.theses FOR UPDATE TO authenticated
 USING (public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Admins can delete any thesis" ON public.theses;
 CREATE POLICY "Admins can delete any thesis"
 ON public.theses FOR DELETE TO authenticated
 USING (public.is_admin(auth.uid()));
@@ -82,6 +85,7 @@ USING (public.is_admin(auth.uid()));
 -- removed via the existing auth.users CASCADE, which account deletion
 -- (via the admin-delete-user edge function's Auth Admin API call) already
 -- triggers — service_role bypasses RLS regardless.
+DROP POLICY IF EXISTS "Admins can update any profile" ON public.profiles;
 CREATE POLICY "Admins can update any profile"
 ON public.profiles FOR UPDATE TO authenticated
 USING (public.is_admin(auth.uid()));
