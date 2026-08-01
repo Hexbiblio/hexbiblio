@@ -161,7 +161,7 @@ export function useQuestProgress() {
 
   const complete = (ids: QuestId[]) => {
     if (!user || ids.length === 0) return [] as QuestId[];
-    let added: QuestId[] = [];
+    const added: QuestId[] = [];
     setCompleted((prev) => {
       const next = new Set(prev);
       for (const id of ids) if (!next.has(id)) { next.add(id); added.push(id); }
