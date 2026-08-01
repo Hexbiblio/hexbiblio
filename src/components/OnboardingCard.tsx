@@ -59,7 +59,7 @@ const OnboardingCard = ({ userId, firstName, lastName, onSaved }: OnboardingCard
       field_of_study: fieldOfStudy || null,
       research_interests: interests,
     };
-    const { error } = await supabase.from("profiles").update(patch as any).eq("user_id", userId);
+    const { error } = await supabase.from("profiles").update(patch).eq("user_id", userId);
     setSaving(false);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });

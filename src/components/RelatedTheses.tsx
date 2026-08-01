@@ -33,7 +33,7 @@ const RelatedTheses = ({ thesisId }: RelatedThesesProps) => {
   useEffect(() => {
     const fetchRelated = async () => {
       setLoading(true);
-      const { data, error } = await (supabase.rpc as any)("get_related_theses", {
+      const { data, error } = await supabase.rpc("get_related_theses", {
         _thesis_id: thesisId,
         _limit: RELATED_LIMIT,
         _min_shared: MIN_SHARED,

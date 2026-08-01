@@ -94,8 +94,8 @@ const SubmitThesis = () => {
       .single()
       .then(({ data }) => {
         if (cancelled) return;
-        setProfileFirstName((data as any)?.first_name?.trim() || "");
-        const storedLastName = (data as any)?.last_name?.trim() || "";
+        setProfileFirstName(data?.first_name?.trim() || "");
+        const storedLastName = data?.last_name?.trim() || "";
         setLastName(storedLastName);
         setLastNameFromProfile(Boolean(storedLastName));
         setProfileLoading(false);
@@ -133,7 +133,7 @@ const SubmitThesis = () => {
     if (!lastNameFromProfile) {
       const { error: nameError } = await supabase
         .from("profiles")
-        .update({ last_name: lastName.trim() } as any)
+        .update({ last_name: lastName.trim() })
         .eq("user_id", user.id);
       if (nameError) {
         toast({ title: t("common.error"), description: nameError.message, variant: "destructive" });

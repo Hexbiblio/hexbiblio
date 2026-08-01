@@ -35,7 +35,7 @@ const FieldEssentials = ({ field, onExplore }: FieldEssentialsProps) => {
       setLoading(true);
       // Aggregation happens in Postgres — the alternative would be pulling every
       // source row into the browser to count them there.
-      const { data, error } = await (supabase.rpc as any)("get_field_essentials", {
+      const { data, error } = await supabase.rpc("get_field_essentials", {
         _field: field === "All Fields" ? null : field,
         _limit: ESSENTIALS_LIMIT,
         _min_theses: MIN_THESES,

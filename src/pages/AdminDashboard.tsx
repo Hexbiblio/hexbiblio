@@ -94,7 +94,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchAccounts = async () => {
       setAccountsLoading(true);
-      let query = (supabase.from("profiles") as any)
+      let query = supabase.from("profiles")
         .select("id, user_id, username, first_name, last_name, university, field_of_study")
         .order("created_at", { ascending: false });
       if (accountSearch.trim()) {
@@ -102,7 +102,7 @@ const AdminDashboard = () => {
       }
       const [{ data: profilesData }, { data: rolesData }] = await Promise.all([
         query,
-        (supabase.from("user_roles") as any).select("user_id").eq("role", "admin"),
+        supabase.from("user_roles").select("user_id").eq("role", "admin"),
       ]);
       setAccounts(profilesData || []);
       setAdminUserIds(new Set((rolesData || []).map((r: any) => r.user_id)));

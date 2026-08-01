@@ -48,20 +48,20 @@ const Profile = () => {
     const fetchData = async () => {
       const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", user.id).single();
       if (profile) {
-        setFirstName((profile as any).first_name || "");
-        setLastName((profile as any).last_name || "");
+        setFirstName(profile.first_name || "");
+        setLastName(profile.last_name || "");
         setUsername(profile.username || "");
-        setAcademicLevel((profile as any).academic_level || "");
-        setCountry((profile as any).country || "");
-        setUniversity((profile as any).university || "");
-        setFieldOfStudy((profile as any).field_of_study || "");
-        setResearchTheme((profile as any).research_theme || "");
-        setResearchQuestion((profile as any).research_question || "");
-        setThesisStatement((profile as any).thesis_statement || "");
-        setMethodology((profile as any).methodology || "");
-        setResearchSources((profile as any).research_sources || "");
-        setBio((profile as any).bio || "");
-        setInterests((profile as any).research_interests || []);
+        setAcademicLevel(profile.academic_level || "");
+        setCountry(profile.country || "");
+        setUniversity(profile.university || "");
+        setFieldOfStudy(profile.field_of_study || "");
+        setResearchTheme(profile.research_theme || "");
+        setResearchQuestion(profile.research_question || "");
+        setThesisStatement(profile.thesis_statement || "");
+        setMethodology(profile.methodology || "");
+        setResearchSources(profile.research_sources || "");
+        setBio(profile.bio || "");
+        setInterests(profile.research_interests || []);
         setAvatarUrl(profile.avatar_url || null);
       }
 
@@ -121,7 +121,7 @@ const Profile = () => {
       research_sources: researchSources.trim() || null,
       bio: bio.trim() || null,
       research_interests: interests,
-    } as any).eq("user_id", user.id);
+    }).eq("user_id", user.id);
     setSaving(false);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });

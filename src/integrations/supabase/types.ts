@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -78,6 +78,27 @@ export type Database = {
           },
         ]
       }
+      chat_logs: {
+        Row: {
+          created_at: string
+          id: string
+          identifier: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identifier: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identifier?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -118,7 +139,9 @@ export type Database = {
           country: string | null
           created_at: string
           field_of_study: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
           methodology: string | null
           research_interests: string[] | null
           research_question: string | null
@@ -136,7 +159,9 @@ export type Database = {
           country?: string | null
           created_at?: string
           field_of_study?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           methodology?: string | null
           research_interests?: string[] | null
           research_question?: string | null
@@ -154,7 +179,9 @@ export type Database = {
           country?: string | null
           created_at?: string
           field_of_study?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
           methodology?: string | null
           research_interests?: string[] | null
           research_question?: string | null
@@ -282,13 +309,58 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_chat_logs: { Args: never; Returns: undefined }
+      get_field_essentials: {
+        Args: { _field?: string; _limit?: number; _min_theses?: number }
+        Returns: {
+          authors: string
+          sample_citation: string
+          thesis_count: number
+          title: string
+          year: number
+        }[]
+      }
+      get_related_theses: {
+        Args: { _limit?: number; _min_shared?: number; _thesis_id: string }
+        Returns: {
+          author_name: string
+          degree_type: string
+          field: string
+          shared_sources: number
+          thesis_id: string
+          title: string
+        }[]
+      }
       get_thesis_accuracy: { Args: { thesis_uuid: string }; Returns: number }
       get_thesis_avg_rating: { Args: { thesis_uuid: string }; Returns: number }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      normalize_citation_title: { Args: { _title: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

@@ -47,12 +47,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!user) { setIsAdmin(false); setIsAdminLoading(false); return; }
     setIsAdminLoading(true);
-    (supabase.from("user_roles") as any)
+    supabase.from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .eq("role", "admin")
       .maybeSingle()
-      .then(({ data }: any) => { setIsAdmin(!!data); setIsAdminLoading(false); });
+      .then(({ data }) => { setIsAdmin(!!data); setIsAdminLoading(false); });
   }, [user]);
 
   const signUp = async (email: string, password: string, username?: string) => {

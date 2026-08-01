@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 
 const Index = () => {
   const { user } = useAuth();
@@ -47,7 +48,7 @@ const Index = () => {
         }
         supabase
           .from("profiles")
-          .update(updates as any)
+          .update(updates as Partial<TablesUpdate<"profiles">>)
           .eq("user_id", user.id)
           .then(({ error }) => {
             if (error) console.error("Failed to save quest progress to profile:", error);
