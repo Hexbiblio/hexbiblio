@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
@@ -20,37 +19,33 @@ import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
-
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ThemeProvider>
-          <LanguageProvider>
-            <AuthProvider>
-              <Navbar />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/database" element={<ProtectedRoute><Database /></ProtectedRoute>} />
-                <Route path="/database/:id" element={<ProtectedRoute><ThesisDetail /></ProtectedRoute>} />
-                <Route path="/sources" element={<ProtectedRoute><Sources /></ProtectedRoute>} />
-                <Route path="/chat" element={<Navigate to="/" replace />} />
-                <Route path="/submit" element={<ProtectedRoute><SubmitThesis /></ProtectedRoute>} />
-                <Route path="/my-collections" element={<ProtectedRoute><MyCollections /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AuthProvider>
-          </LanguageProvider>
-        </ThemeProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <TooltipProvider>
+    <Toaster />
+    <Sonner />
+    <BrowserRouter>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/database" element={<ProtectedRoute><Database /></ProtectedRoute>} />
+              <Route path="/database/:id" element={<ProtectedRoute><ThesisDetail /></ProtectedRoute>} />
+              <Route path="/sources" element={<ProtectedRoute><Sources /></ProtectedRoute>} />
+              <Route path="/chat" element={<Navigate to="/" replace />} />
+              <Route path="/submit" element={<ProtectedRoute><SubmitThesis /></ProtectedRoute>} />
+              <Route path="/my-collections" element={<ProtectedRoute><MyCollections /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  </TooltipProvider>
 );
 
 export default App;
