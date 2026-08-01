@@ -151,6 +151,11 @@ export const translations = {
   "detail.downloadPdf": { en: "Download PDF", fr: "Télécharger le PDF" },
   "detail.notFound": { en: "We couldn't find this.", fr: "Ce travail est introuvable." },
   "detail.sources": { en: "Sources", fr: "Sources" },
+  "detail.relatedTheses": { en: "Related theses", fr: "Mémoires proches" },
+  "detail.relatedThesesHint": {
+    en: "Other theses that cite several of the same sources as this one.",
+    fr: "D'autres mémoires qui citent plusieurs des mêmes sources que celui-ci.",
+  },
   "detail.edit": { en: "Edit details", fr: "Modifier les infos" },
   "detail.editCancel": { en: "Cancel", fr: "Annuler" },
   "detail.editSaved": { en: "Details updated.", fr: "Infos mises à jour." },

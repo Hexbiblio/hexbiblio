@@ -23,6 +23,7 @@ import {
 import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
+import RelatedTheses from "@/components/RelatedTheses";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2 } from "lucide-react";
 import { fieldLabel, degreeLabel, FIELDS, DEGREE_TYPES } from "@/i18n/fields";
@@ -398,6 +399,8 @@ const ThesisDetail = () => {
               </ol>
             </div>
           )}
+
+          <RelatedTheses thesisId={thesis.id} />
 
           <hr className="border-border" />
 
