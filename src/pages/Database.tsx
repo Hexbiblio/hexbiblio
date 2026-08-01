@@ -4,9 +4,14 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ThesisCard from "@/components/ThesisCard";
+import PageControls from "@/components/PageControls";
 import { Search } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 import { buildIlikeOrFilter } from "@/lib/searchFilter";
+
+// 24 divides evenly by both the 2- and 3-column grid breakpoints below, so a
+// full page never ends on a half-empty row.
+const PAGE_SIZE = 24;
 
 interface ThesisWithRating {
   id: string;
@@ -24,21 +29,34 @@ interface ThesisWithRating {
 
 const Database = () => {
   const [theses, setTheses] = useState<ThesisWithRating[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [fieldFilter, setFieldFilter] = useState("All Fields");
   const [degreeFilter, setDegreeFilter] = useState("All Degrees");
   const [loading, setLoading] = useState(true);
   const { t, language } = useLanguage();
 
+  // Any change to what's being filtered/searched invalidates the current page —
+  // going through these instead of the raw setters keeps that from needing a
+  // second, page-reset-triggered fetch on top of the one the filter itself causes.
+  const handleSearch = (v: string) => { setSearch(v); setPage(1); };
+  const handleFieldFilter = (v: string) => { setFieldFilter(v); setPage(1); };
+  const handleDegreeFilter = (v: string) => { setDegreeFilter(v); setPage(1); };
+  const goToPage = (p: number) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
+
   useEffect(() => {
     const fetchTheses = async () => {
       setLoading(true);
-      let query = supabase.from("theses").select("*").order("created_at", { ascending: false });
+      let query = supabase.from("theses").select("*", { count: "exact" }).order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
       if (search.trim()) query = query.or(buildIlikeOrFilter(["title", "author_name", "abstract"], search));
+      const from = (page - 1) * PAGE_SIZE;
+      query = query.range(from, from + PAGE_SIZE - 1);
 
-      const { data } = await query;
+      const { data, count } = await query;
+      setTotal(count ?? 0);
       if (!data) { setLoading(false); return; }
 
       const ids = data.map(t => t.id);
@@ -68,7 +86,7 @@ const Database = () => {
       setLoading(false);
     };
     fetchTheses();
-  }, [search, fieldFilter, degreeFilter]);
+  }, [search, fieldFilter, degreeFilter, page]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -80,16 +98,16 @@ const Database = () => {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("db.searchPlaceholder")} className="pl-9" />
+          <Input value={search} onChange={(e) => handleSearch(e.target.value)} placeholder={t("db.searchPlaceholder")} className="pl-9" />
         </div>
-        <Select value={fieldFilter} onValueChange={setFieldFilter}>
+        <Select value={fieldFilter} onValueChange={handleFieldFilter}>
           <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="All Fields">{t("db.allFields")}</SelectItem>
             {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={degreeFilter} onValueChange={setDegreeFilter}>
+        <Select value={degreeFilter} onValueChange={handleDegreeFilter}>
           <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="All Degrees">{t("db.allDegrees")}</SelectItem>
@@ -108,11 +126,14 @@ const Database = () => {
           <p className="text-sm">{t("db.tryAdjusting")}</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {theses.map((thesis) => (
-            <ThesisCard key={thesis.id} {...thesis} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {theses.map((thesis) => (
+              <ThesisCard key={thesis.id} {...thesis} />
+            ))}
+          </div>
+          <PageControls page={page} pageSize={PAGE_SIZE} total={total} onPageChange={goToPage} />
+        </>
       )}
     </div>
   );

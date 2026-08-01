@@ -6,9 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SourceCard from "@/components/SourceCard";
 import FieldEssentials from "@/components/FieldEssentials";
+import PageControls from "@/components/PageControls";
 import { Search } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 import { buildIlikeOrFilter } from "@/lib/searchFilter";
+
+// Same grid as /database, same reasoning: 24 divides evenly by 2 and 3 columns.
+const PAGE_SIZE = 24;
 
 interface SourceWithThesis {
   id: string;
@@ -26,6 +30,8 @@ interface SourceWithThesis {
 
 const Sources = () => {
   const [sources, setSources] = useState<SourceWithThesis[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [fieldFilter, setFieldFilter] = useState("All Fields");
   const [degreeFilter, setDegreeFilter] = useState("All Degrees");
@@ -33,11 +39,20 @@ const Sources = () => {
   const [tab, setTab] = useState("essentials");
   const { t, language } = useLanguage();
 
+  // Same reasoning as Database.tsx: route filter changes through these so a
+  // filter change doesn't cause both its own fetch and a second one from
+  // resetting the page.
+  const handleSearch = (v: string) => { setSearch(v); setPage(1); };
+  const handleFieldFilter = (v: string) => { setFieldFilter(v); setPage(1); };
+  const handleDegreeFilter = (v: string) => { setDegreeFilter(v); setPage(1); };
+  const goToPage = (p: number) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
+
   // Clicking a key work jumps to the full list, pre-searched for that title —
   // so the ranking is a way into the citations rather than a dead-end list.
   const exploreCitations = (title: string) => {
     setSearch(title);
     setDegreeFilter("All Degrees");
+    setPage(1);
     setTab("all");
   };
 
@@ -53,7 +68,7 @@ const Sources = () => {
       // whether the source row itself is included.
       let query = supabase
         .from("sources")
-        .select("id, raw_citation, title, authors, year, theses!inner(id, title, field, degree_type)")
+        .select("id, raw_citation, title, authors, year, theses!inner(id, title, field, degree_type)", { count: "exact" })
         .order("created_at", { ascending: false });
 
       if (fieldFilter !== "All Fields") query = query.eq("theses.field", fieldFilter);
@@ -61,13 +76,16 @@ const Sources = () => {
       if (search.trim()) {
         query = query.or(buildIlikeOrFilter(["raw_citation", "title", "authors"], search));
       }
+      const from = (page - 1) * PAGE_SIZE;
+      query = query.range(from, from + PAGE_SIZE - 1);
 
-      const { data } = await query;
+      const { data, count } = await query;
+      setTotal(count ?? 0);
       setSources((data as unknown as SourceWithThesis[]) || []);
       setLoading(false);
     };
     fetchSources();
-  }, [search, fieldFilter, degreeFilter, tab]);
+  }, [search, fieldFilter, degreeFilter, tab, page]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -84,7 +102,7 @@ const Sources = () => {
 
         {/* Field applies to both views, so it sits outside them. */}
         <div className="my-4">
-          <Select value={fieldFilter} onValueChange={setFieldFilter}>
+          <Select value={fieldFilter} onValueChange={handleFieldFilter}>
             <SelectTrigger className="w-full sm:w-[220px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="All Fields">{t("db.allFields")}</SelectItem>
@@ -101,9 +119,9 @@ const Sources = () => {
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("sources.searchPlaceholder")} className="pl-9" />
+              <Input value={search} onChange={(e) => handleSearch(e.target.value)} placeholder={t("sources.searchPlaceholder")} className="pl-9" />
             </div>
-            <Select value={degreeFilter} onValueChange={setDegreeFilter}>
+            <Select value={degreeFilter} onValueChange={handleDegreeFilter}>
               <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="All Degrees">{t("db.allDegrees")}</SelectItem>
@@ -122,11 +140,14 @@ const Sources = () => {
               <p className="text-sm">{t("sources.tryAdjusting")}</p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {sources.map((source) => (
-                <SourceCard key={source.id} {...source} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {sources.map((source) => (
+                  <SourceCard key={source.id} {...source} />
+                ))}
+              </div>
+              <PageControls page={page} pageSize={PAGE_SIZE} total={total} onPageChange={goToPage} />
+            </>
           )}
         </TabsContent>
       </Tabs>
