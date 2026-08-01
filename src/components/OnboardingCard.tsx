@@ -13,6 +13,8 @@ import { X } from "lucide-react";
 const MAX_ONBOARDING_INTERESTS = 5;
 
 export interface OnboardingPatch {
+  first_name: string | null;
+  last_name: string | null;
   academic_level: string | null;
   field_of_study: string | null;
   research_interests: string[];
@@ -21,12 +23,20 @@ export interface OnboardingPatch {
 interface OnboardingCardProps {
   userId: string;
   firstName?: string | null;
+  lastName?: string | null;
   onSaved: (patch: OnboardingPatch) => void;
 }
 
-const OnboardingCard = ({ userId, firstName, onSaved }: OnboardingCardProps) => {
+const OnboardingCard = ({ userId, firstName, lastName, onSaved }: OnboardingCardProps) => {
   const { language, t } = useLanguage();
   const { toast } = useToast();
+  // First name is collected here because nothing else asks for it before the
+  // student needs it — the author-name trigger derives a thesis's public author
+  // from it, so without it their first submission would dead-end. Last name is
+  // optional here and asked for at submission time instead, where it's actually
+  // needed (see SubmitThesis.tsx).
+  const [firstNameInput, setFirstNameInput] = useState(firstName?.trim() || "");
+  const [lastNameInput, setLastNameInput] = useState(lastName?.trim() || "");
   const [academicLevel, setAcademicLevel] = useState("");
   const [fieldOfStudy, setFieldOfStudy] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
@@ -43,6 +53,8 @@ const OnboardingCard = ({ userId, firstName, onSaved }: OnboardingCardProps) => 
   const handleSave = async () => {
     setSaving(true);
     const patch: OnboardingPatch = {
+      first_name: firstNameInput.trim() || null,
+      last_name: lastNameInput.trim() || null,
       academic_level: academicLevel || null,
       field_of_study: fieldOfStudy || null,
       research_interests: interests,
@@ -57,9 +69,10 @@ const OnboardingCard = ({ userId, firstName, onSaved }: OnboardingCardProps) => 
     onSaved(patch);
   };
 
-  // Level and field are the required fields (interests stays labeled "optional" in the UI) —
-  // onboarding is mandatory now, so Save shouldn't enable on interests alone.
-  const canSave = Boolean(academicLevel && fieldOfStudy);
+  // First name, level and field are required (last name and interests are
+  // labeled optional in the UI) — onboarding is mandatory, so Save shouldn't
+  // enable until the gate's own required fields are actually filled.
+  const canSave = Boolean(firstNameInput.trim() && academicLevel && fieldOfStudy);
 
   // The first name sits mid-sentence, not as a prefix — built inline rather
   // than through translations.ts, which only does static key lookups.
@@ -87,6 +100,24 @@ const OnboardingCard = ({ userId, firstName, onSaved }: OnboardingCardProps) => 
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("profile.firstName")}</label>
+            <Input
+              value={firstNameInput}
+              onChange={(e) => setFirstNameInput(e.target.value)}
+              placeholder={t("onboarding.firstNamePlaceholder")}
+              maxLength={100}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("onboarding.lastNameLabel")}</label>
+            <Input
+              value={lastNameInput}
+              onChange={(e) => setLastNameInput(e.target.value)}
+              placeholder={t("onboarding.lastNamePlaceholder")}
+              maxLength={100}
+            />
+          </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">{t("onboarding.academicLevelLabel")}</label>
             <Select value={academicLevel} onValueChange={setAcademicLevel}>

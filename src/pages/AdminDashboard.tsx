@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Search, Trash2 } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+import { buildIlikeOrFilter } from "@/lib/searchFilter";
 
 const ADMIN_DELETE_USER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`;
 
@@ -82,7 +83,7 @@ const AdminDashboard = () => {
         .order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
-      if (thesisSearch.trim()) query = query.or(`title.ilike.%${thesisSearch}%,author_name.ilike.%${thesisSearch}%`);
+      if (thesisSearch.trim()) query = query.or(buildIlikeOrFilter(["title", "author_name"], thesisSearch));
       const { data } = await query;
       setTheses(data || []);
       setThesesLoading(false);
@@ -97,9 +98,7 @@ const AdminDashboard = () => {
         .select("id, user_id, username, first_name, last_name, university, field_of_study")
         .order("created_at", { ascending: false });
       if (accountSearch.trim()) {
-        query = query.or(
-          `username.ilike.%${accountSearch}%,first_name.ilike.%${accountSearch}%,last_name.ilike.%${accountSearch}%`,
-        );
+        query = query.or(buildIlikeOrFilter(["username", "first_name", "last_name"], accountSearch));
       }
       const [{ data: profilesData }, { data: rolesData }] = await Promise.all([
         query,

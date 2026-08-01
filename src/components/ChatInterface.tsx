@@ -56,18 +56,23 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
     if (!user) { setProfile(null); setProfileLoaded(false); return; }
     supabase
       .from("profiles")
-      .select("first_name, academic_level, country, university, field_of_study, research_interests, bio")
+      .select("first_name, last_name, academic_level, country, university, field_of_study, research_interests, bio")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => { setProfile(data); setProfileLoaded(true); });
   }, [user]);
 
   // Onboarding is mandatory, not skippable — it keeps showing on every visit
-  // until both required fields are filled (interests stays optional, so it's
-  // not part of this check), blocking the rest of the chat until then.
+  // until the required fields are filled (last name and interests stay
+  // optional, so they're not part of this check), blocking the rest of the
+  // chat until then. First name is included because the author-name trigger
+  // needs it before a student can ever submit a thesis.
   // Admin accounts skip it entirely — they're not students being onboarded.
   const needsOnboarding =
-    !isAdmin && !!user && profileLoaded && !(profile?.academic_level && profile?.field_of_study);
+    !isAdmin &&
+    !!user &&
+    profileLoaded &&
+    !(profile?.first_name && profile?.academic_level && profile?.field_of_study);
 
   // Keep the guest's in-progress conversation persisted at all times, so it
   // survives navigating to /auth by any path — not just the in-chat prompt
@@ -262,6 +267,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
           <OnboardingCard
             userId={user.id}
             firstName={profile?.first_name}
+            lastName={profile?.last_name}
             onSaved={(patch: OnboardingPatch) => setProfile((prev: any) => ({ ...prev, ...patch }))}
           />
         </div>

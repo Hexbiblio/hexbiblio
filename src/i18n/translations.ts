@@ -66,6 +66,9 @@ export const translations = {
   // Onboarding (first-steps personalization card, shown until profile has level + field)
   // Title/subtitle are built inline in OnboardingCard.tsx, not here — the
   // first name sits mid-sentence, which translations.ts's static lookups can't do.
+  "onboarding.firstNamePlaceholder": { en: "Your first name", fr: "Ton prénom" },
+  "onboarding.lastNameLabel": { en: "Last name (optional)", fr: "Nom (facultatif)" },
+  "onboarding.lastNamePlaceholder": { en: "Your last name", fr: "Ton nom" },
   "onboarding.academicLevelLabel": { en: "Academic level", fr: "Niveau académique" },
   "onboarding.selectLevel": { en: "Select your level", fr: "Choisis ton niveau" },
   "onboarding.fieldLabel": { en: "Field of study", fr: "Domaine d'études" },
@@ -100,6 +103,7 @@ export const translations = {
   "submit.authorLabel": { en: "Author Name", fr: "Nom de l'auteur" },
   "submit.authorPlaceholder": { en: "Full name", fr: "Nom complet" },
   "submit.authorLocked": { en: "Locked to your profile's first and last name (not editable).", fr: "Verrouillé sur ton prénom et nom de profil (non modifiable)." },
+  "submit.lastNameNeeded": { en: "Add your last name so your work is published under your full name. We'll remember it.", fr: "Ajoute ton nom pour publier sous ton nom complet. On s'en souviendra." },
   "submit.authorMissing": { en: "Set your first and last name on your profile before submitting your work.", fr: "Renseigne ton prénom et ton nom dans ton profil avant de soumettre ton travail." },
   "submit.authorMissingLink": { en: "Go to my profile", fr: "Aller à mon profil" },
   "submit.fieldLabel": { en: "Field / Discipline", fr: "Domaine / Discipline" },

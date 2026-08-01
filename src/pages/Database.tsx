@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ThesisCard from "@/components/ThesisCard";
 import { Search } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+import { buildIlikeOrFilter } from "@/lib/searchFilter";
 
 interface ThesisWithRating {
   id: string;
@@ -35,7 +36,7 @@ const Database = () => {
       let query = supabase.from("theses").select("*").order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
-      if (search.trim()) query = query.or(`title.ilike.%${search}%,author_name.ilike.%${search}%,abstract.ilike.%${search}%`);
+      if (search.trim()) query = query.or(buildIlikeOrFilter(["title", "author_name", "abstract"], search));
 
       const { data } = await query;
       if (!data) { setLoading(false); return; }

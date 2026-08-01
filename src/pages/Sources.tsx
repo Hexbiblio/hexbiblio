@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import SourceCard from "@/components/SourceCard";
 import { Search } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+import { buildIlikeOrFilter } from "@/lib/searchFilter";
 
 interface SourceWithThesis {
   id: string;
@@ -44,7 +45,7 @@ const Sources = () => {
       if (fieldFilter !== "All Fields") query = query.eq("theses.field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("theses.degree_type", degreeFilter);
       if (search.trim()) {
-        query = query.or(`raw_citation.ilike.%${search}%,title.ilike.%${search}%,authors.ilike.%${search}%`);
+        query = query.or(buildIlikeOrFilter(["raw_citation", "title", "authors"], search));
       }
 
       const { data } = await query;

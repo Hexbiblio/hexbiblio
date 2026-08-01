@@ -39,7 +39,9 @@ function sanitizeFileName(name: string): string {
 
 const SubmitThesis = () => {
   const [title, setTitle] = useState("");
-  const [authorName, setAuthorName] = useState("");
+  const [profileFirstName, setProfileFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [lastNameFromProfile, setLastNameFromProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [abstract, setAbstract] = useState("");
   const [field, setField] = useState("");
@@ -76,8 +78,12 @@ const SubmitThesis = () => {
     return () => clearInterval(interval);
   }, [verifying]);
 
-  // Author identity is locked to the submitter's own profile first/last name —
-  // never a free-text field the user can type someone else's name into.
+  // Author identity comes from the submitter's own profile — never a free-text
+  // field they could type someone else's name into. Onboarding collects the
+  // first name; the last name is optional there, so it's asked for here, inline,
+  // the one moment it's actually required (the author-name trigger composes the
+  // public author from both). Asking here rather than bouncing to /profile keeps
+  // the student on the page they came to use.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
@@ -88,15 +94,19 @@ const SubmitThesis = () => {
       .single()
       .then(({ data }) => {
         if (cancelled) return;
-        const firstName = (data as any)?.first_name?.trim();
-        const lastName = (data as any)?.last_name?.trim();
-        setAuthorName(firstName && lastName ? `${firstName} ${lastName}` : "");
+        setProfileFirstName((data as any)?.first_name?.trim() || "");
+        const storedLastName = (data as any)?.last_name?.trim() || "";
+        setLastName(storedLastName);
+        setLastNameFromProfile(Boolean(storedLastName));
         setProfileLoading(false);
       });
     return () => {
       cancelled = true;
     };
   }, [user]);
+
+  const authorName =
+    profileFirstName && lastName.trim() ? `${profileFirstName} ${lastName.trim()}` : "";
 
   const addKeyword = () => {
     const kw = keywordInput.trim().toLowerCase();
@@ -115,6 +125,21 @@ const SubmitThesis = () => {
     if (!authorName) {
       toast({ title: t("common.error"), description: t("submit.authorMissing"), variant: "destructive" });
       return;
+    }
+
+    // Persist a last name typed in here before anything else — the author-name
+    // trigger reads it straight from the profile when the row is inserted, so
+    // it has to be saved first, and saving it means we won't ask again.
+    if (!lastNameFromProfile) {
+      const { error: nameError } = await supabase
+        .from("profiles")
+        .update({ last_name: lastName.trim() } as any)
+        .eq("user_id", user.id);
+      if (nameError) {
+        toast({ title: t("common.error"), description: nameError.message, variant: "destructive" });
+        return;
+      }
+      setLastNameFromProfile(true);
     }
 
     if (!file) {
@@ -216,12 +241,30 @@ const SubmitThesis = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="author">{t("submit.authorLabel")} *</Label>
-              <Input id="author" value={authorName} disabled placeholder={t("submit.authorPlaceholder")} />
-              {!profileLoading && !authorName ? (
+              {!profileLoading && !lastNameFromProfile ? (
+                // Profile has no last name yet — ask for it here rather than
+                // sending the student off to /profile mid-submission.
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Input value={profileFirstName} disabled placeholder={t("profile.firstName")} />
+                  <Input
+                    id="author"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder={t("onboarding.lastNamePlaceholder")}
+                    maxLength={100}
+                    required
+                  />
+                </div>
+              ) : (
+                <Input id="author" value={authorName} disabled placeholder={t("submit.authorPlaceholder")} />
+              )}
+              {!profileLoading && !profileFirstName ? (
                 <p className="text-xs text-destructive">
                   {t("submit.authorMissing")}{" "}
                   <Link to="/profile" className="underline">{t("submit.authorMissingLink")}</Link>
                 </p>
+              ) : !profileLoading && !lastNameFromProfile ? (
+                <p className="text-xs text-muted-foreground">{t("submit.lastNameNeeded")}</p>
               ) : (
                 <p className="text-xs text-muted-foreground">{t("submit.authorLocked")}</p>
               )}
