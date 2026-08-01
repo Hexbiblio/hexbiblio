@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SourceCard from "@/components/SourceCard";
+import FieldEssentials from "@/components/FieldEssentials";
 import { Search } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 import { buildIlikeOrFilter } from "@/lib/searchFilter";
@@ -28,9 +30,21 @@ const Sources = () => {
   const [fieldFilter, setFieldFilter] = useState("All Fields");
   const [degreeFilter, setDegreeFilter] = useState("All Degrees");
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("essentials");
   const { t, language } = useLanguage();
 
+  // Clicking a key work jumps to the full list, pre-searched for that title —
+  // so the ranking is a way into the citations rather than a dead-end list.
+  const exploreCitations = (title: string) => {
+    setSearch(title);
+    setDegreeFilter("All Degrees");
+    setTab("all");
+  };
+
   useEffect(() => {
+    // The key-works tab does its own aggregated query, so don't pull the full
+    // source list until it's actually being shown.
+    if (tab !== "all") return;
     const fetchSources = async () => {
       setLoading(true);
       // theses!inner (not the plain embed) so filtering on theses.field/degree_type
@@ -53,7 +67,7 @@ const Sources = () => {
       setLoading(false);
     };
     fetchSources();
-  }, [search, fieldFilter, degreeFilter]);
+  }, [search, fieldFilter, degreeFilter, tab]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -62,43 +76,60 @@ const Sources = () => {
         <p className="text-muted-foreground mt-1">{t("sources.subtitle")}</p>
       </div>
 
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("sources.searchPlaceholder")} className="pl-9" />
-        </div>
-        <Select value={fieldFilter} onValueChange={setFieldFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All Fields">{t("db.allFields")}</SelectItem>
-            {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={degreeFilter} onValueChange={setDegreeFilter}>
-          <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All Degrees">{t("db.allDegrees")}</SelectItem>
-            {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="essentials">{t("sources.essentialsTab")}</TabsTrigger>
+          <TabsTrigger value="all">{t("sources.allTab")}</TabsTrigger>
+        </TabsList>
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        {/* Field applies to both views, so it sits outside them. */}
+        <div className="my-4">
+          <Select value={fieldFilter} onValueChange={setFieldFilter}>
+            <SelectTrigger className="w-full sm:w-[220px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Fields">{t("db.allFields")}</SelectItem>
+              {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
-      ) : sources.length === 0 ? (
-        <div className="py-12 text-center text-muted-foreground">
-          <p className="text-lg">{t("sources.noSources")}</p>
-          <p className="text-sm">{t("sources.tryAdjusting")}</p>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sources.map((source) => (
-            <SourceCard key={source.id} {...source} />
-          ))}
-        </div>
-      )}
+
+        <TabsContent value="essentials">
+          <FieldEssentials field={fieldFilter} onExplore={exploreCitations} />
+        </TabsContent>
+
+        <TabsContent value="all" className="space-y-6">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("sources.searchPlaceholder")} className="pl-9" />
+            </div>
+            <Select value={degreeFilter} onValueChange={setDegreeFilter}>
+              <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All Degrees">{t("db.allDegrees")}</SelectItem>
+                {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : sources.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              <p className="text-lg">{t("sources.noSources")}</p>
+              <p className="text-sm">{t("sources.tryAdjusting")}</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {sources.map((source) => (
+                <SourceCard key={source.id} {...source} />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

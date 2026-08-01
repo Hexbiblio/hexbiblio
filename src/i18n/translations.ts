@@ -91,6 +91,18 @@ export const translations = {
   "sources.title": { en: "Sources", fr: "Sources" },
   "sources.subtitle": { en: "Citations pulled from the work already online", fr: "Citations extraites des travaux déjà en ligne" },
   "sources.searchPlaceholder": { en: "Search by citation, title, or author...", fr: "Rechercher par citation, titre ou auteur..." },
+  "sources.essentialsTab": { en: "Key works", fr: "Les incontournables" },
+  "sources.allTab": { en: "All sources", fr: "Toutes les sources" },
+  "sources.essentialsIntroAll": {
+    en: "The most cited works, across every field.",
+    fr: "Les travaux les plus cités, tous domaines confondus.",
+  },
+  "sources.seeCitations": { en: "See the citations", fr: "Voir les citations" },
+  "sources.noEssentials": { en: "Nothing stands out yet", fr: "Rien ne ressort encore" },
+  "sources.noEssentialsHint": {
+    en: "A work shows up here once at least two theses cite it. Pick another field, or come back when more work has been put online.",
+    fr: "Un travail apparaît ici dès que deux mémoires au moins le citent. Essaie un autre domaine, ou reviens quand plus de travaux auront été mis en ligne.",
+  },
   "sources.noSources": { en: "No results found", fr: "Aucun résultat" },
   "sources.tryAdjusting": { en: "Try different keywords or filters.", fr: "Essaie d'autres mots-clés ou filtres." },
   "sources.fromThesis": { en: "From", fr: "Issu de" },
