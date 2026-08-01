@@ -9,7 +9,7 @@ const BookmarkButton = ({ thesisId }: { thesisId: string }) => {
   const [bookmarked, setBookmarked] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (!user) return;
@@ -40,7 +40,15 @@ const BookmarkButton = ({ thesisId }: { thesisId: string }) => {
   if (!user) return null;
 
   return (
-    <button onClick={toggle} className="rounded-full p-1.5 hover:bg-muted transition-colors">
+    <button
+      onClick={toggle}
+      className="rounded-full p-1.5 hover:bg-muted transition-colors"
+      aria-label={
+        bookmarked
+          ? (language === "fr" ? "Retirer des favoris" : "Remove bookmark")
+          : (language === "fr" ? "Ajouter aux favoris" : "Add bookmark")
+      }
+    >
       <Bookmark className={`h-4 w-4 ${bookmarked ? "fill-primary text-primary" : "text-muted-foreground"}`} />
     </button>
   );

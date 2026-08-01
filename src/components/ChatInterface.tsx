@@ -310,6 +310,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
               disabled={!input.trim() || isLoading}
               size="icon"
               className="shrink-0 rounded-full h-10 w-10"
+              aria-label={language === "fr" ? "Envoyer" : "Send"}
             >
               <Send className="h-4 w-4" />
             </Button>
@@ -379,6 +380,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
           disabled={!input.trim() || isLoading}
           size="icon"
           className="shrink-0 rounded-full h-10 w-10"
+          aria-label={language === "fr" ? "Envoyer" : "Send"}
         >
           <Send className="h-4 w-4" />
         </Button>

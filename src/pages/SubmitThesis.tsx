@@ -315,7 +315,12 @@ const SubmitThesis = () => {
                   {keywords.map((kw) => (
                     <Badge key={kw} variant="secondary" className="gap-1 pr-1">
                       {kw}
-                      <button type="button" onClick={() => removeKeyword(kw)} className="ml-0.5 hover:text-destructive">
+                      <button
+                        type="button"
+                        onClick={() => removeKeyword(kw)}
+                        className="ml-0.5 hover:text-destructive"
+                        aria-label={language === "fr" ? `Retirer ${kw}` : `Remove ${kw}`}
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
@@ -347,7 +352,12 @@ const SubmitThesis = () => {
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <FileText className="h-4 w-4 shrink-0" />
                     <span className="truncate max-w-[220px]">{file.name}</span>
-                    <button type="button" onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="hover:text-destructive">
+                    <button
+                      type="button"
+                      onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                      className="hover:text-destructive"
+                      aria-label={language === "fr" ? "Retirer le fichier" : "Remove file"}
+                    >
                       <X className="h-3.5 w-3.5" />
                     </button>
                   </span>

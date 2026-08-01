@@ -211,7 +211,7 @@ const AdminDashboard = () => {
                       </Link>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" aria-label={t("admin.deleteThesisTitle")}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
@@ -281,7 +281,7 @@ const AdminDashboard = () => {
                         {!isSelf && (
                           <AlertDialog onOpenChange={(open) => { if (!open) setConfirmInput(""); }}>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" aria-label={t("admin.deleteAccountTitle")}>
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>

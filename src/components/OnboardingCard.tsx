@@ -166,7 +166,11 @@ const OnboardingCard = ({ userId, firstName, lastName, onSaved }: OnboardingCard
               {interests.map((i) => (
                 <Badge key={i} variant="secondary" className="gap-1">
                   {i}
-                  <button onClick={() => setInterests(interests.filter((x) => x !== i))} className="hover:text-destructive">
+                  <button
+                    onClick={() => setInterests(interests.filter((x) => x !== i))}
+                    className="hover:text-destructive"
+                    aria-label={language === "fr" ? `Retirer ${i}` : `Remove ${i}`}
+                  >
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>

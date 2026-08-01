@@ -37,6 +37,7 @@ const StarRow = ({
   noRatingsLabel: string;
 }) => {
   const [hovered, setHovered] = useState(0);
+  const { language } = useLanguage();
 
   return (
     <div className="flex items-center gap-3">
@@ -50,6 +51,7 @@ const StarRow = ({
             onMouseLeave={() => setHovered(0)}
             onClick={() => onRate(star)}
             className="p-0.5 transition-transform hover:scale-110"
+            aria-label={language === "fr" ? `${label} : ${star} sur 5` : `${label}: ${star} out of 5`}
           >
             <Star
               className={`h-4 w-4 ${

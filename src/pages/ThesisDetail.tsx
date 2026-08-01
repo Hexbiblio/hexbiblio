@@ -304,7 +304,12 @@ const ThesisDetail = () => {
                   {editKeywords.map((kw) => (
                     <Badge key={kw} variant="secondary" className="gap-1 pr-1 text-xs">
                       {kw}
-                      <button type="button" onClick={() => removeEditKeyword(kw)} className="ml-0.5 hover:text-destructive">
+                      <button
+                        type="button"
+                        onClick={() => removeEditKeyword(kw)}
+                        className="ml-0.5 hover:text-destructive"
+                        aria-label={language === "fr" ? `Retirer ${kw}` : `Remove ${kw}`}
+                      >
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>

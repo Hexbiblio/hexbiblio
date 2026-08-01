@@ -21,7 +21,7 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const fetchComments = async () => {
     const { data } = await supabase
@@ -93,7 +93,11 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
                 <span className="text-muted-foreground">{new Date(comment.created_at).toLocaleDateString()}</span>
               </div>
               {user?.id === comment.user_id && (
-                <button onClick={() => handleDelete(comment.id)} className="text-muted-foreground hover:text-destructive">
+                <button
+                  onClick={() => handleDelete(comment.id)}
+                  className="text-muted-foreground hover:text-destructive"
+                  aria-label={language === "fr" ? "Supprimer le commentaire" : "Delete comment"}
+                >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               )}

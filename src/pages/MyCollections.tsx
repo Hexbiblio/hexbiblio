@@ -31,7 +31,7 @@ const MyCollections = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const fetchBookmarks = async () => {
     if (!user) return;
@@ -98,7 +98,7 @@ const MyCollections = () => {
         ))}
         <div className="flex items-center gap-1">
           <Input value={newCollection} onChange={(e) => setNewCollection(e.target.value)} placeholder={t("collections.newPlaceholder")} className="h-8 w-36 text-sm" onKeyDown={(e) => e.key === "Enter" && handleAddCollection()} />
-          <Button size="sm" variant="ghost" onClick={handleAddCollection}><Plus className="h-4 w-4" /></Button>
+          <Button size="sm" variant="ghost" onClick={handleAddCollection} aria-label={language === "fr" ? "Ajouter la collection" : "Add collection"}><Plus className="h-4 w-4" /></Button>
         </div>
       </div>
 
@@ -116,7 +116,11 @@ const MyCollections = () => {
           {filtered.map(bookmark => (
             <div key={bookmark.id} className="relative">
               <ThesisCard {...bookmark.thesis} />
-              <button onClick={() => handleRemoveBookmark(bookmark.id)} className="absolute bottom-3 right-3 rounded-full bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20">
+              <button
+                onClick={() => handleRemoveBookmark(bookmark.id)}
+                className="absolute bottom-3 right-3 rounded-full bg-destructive/10 p-1.5 text-destructive hover:bg-destructive/20"
+                aria-label={language === "fr" ? "Retirer des favoris" : "Remove bookmark"}
+              >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
