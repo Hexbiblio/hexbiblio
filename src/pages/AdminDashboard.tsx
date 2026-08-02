@@ -24,6 +24,7 @@ import {
 import { Search, Trash2 } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 import { buildIlikeOrFilter } from "@/lib/searchFilter";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const ADMIN_DELETE_USER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`;
 
@@ -64,12 +65,14 @@ const AdminDashboard = () => {
 
   const [theses, setTheses] = useState<AdminThesis[]>([]);
   const [thesisSearch, setThesisSearch] = useState("");
+  const debouncedThesisSearch = useDebouncedValue(thesisSearch, 300);
   const [fieldFilter, setFieldFilter] = useState("All Fields");
   const [degreeFilter, setDegreeFilter] = useState("All Degrees");
   const [thesesLoading, setThesesLoading] = useState(true);
 
   const [accounts, setAccounts] = useState<AdminProfile[]>([]);
   const [accountSearch, setAccountSearch] = useState("");
+  const debouncedAccountSearch = useDebouncedValue(accountSearch, 300);
   const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
   const [accountsLoading, setAccountsLoading] = useState(true);
   const [confirmInput, setConfirmInput] = useState("");
@@ -83,13 +86,13 @@ const AdminDashboard = () => {
         .order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
-      if (thesisSearch.trim()) query = query.or(buildIlikeOrFilter(["title", "author_name"], thesisSearch));
+      if (debouncedThesisSearch.trim()) query = query.or(buildIlikeOrFilter(["title", "author_name"], debouncedThesisSearch));
       const { data } = await query;
       setTheses(data || []);
       setThesesLoading(false);
     };
     fetchTheses();
-  }, [thesisSearch, fieldFilter, degreeFilter]);
+  }, [debouncedThesisSearch, fieldFilter, degreeFilter]);
 
   useEffect(() => {
     const fetchAccounts = async () => {
@@ -97,8 +100,8 @@ const AdminDashboard = () => {
       let query = supabase.from("profiles")
         .select("id, user_id, username, first_name, last_name, university, field_of_study")
         .order("created_at", { ascending: false });
-      if (accountSearch.trim()) {
-        query = query.or(buildIlikeOrFilter(["username", "first_name", "last_name"], accountSearch));
+      if (debouncedAccountSearch.trim()) {
+        query = query.or(buildIlikeOrFilter(["username", "first_name", "last_name"], debouncedAccountSearch));
       }
       const [{ data: profilesData }, { data: rolesData }] = await Promise.all([
         query,
@@ -109,7 +112,7 @@ const AdminDashboard = () => {
       setAccountsLoading(false);
     };
     fetchAccounts();
-  }, [accountSearch]);
+  }, [debouncedAccountSearch]);
 
   const deleteThesis = async (id: string) => {
     const { error } = await supabase.from("theses").delete().eq("id", id);

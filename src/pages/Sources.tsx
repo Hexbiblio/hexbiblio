@@ -10,6 +10,7 @@ import PageControls from "@/components/PageControls";
 import { Search } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 import { buildIlikeOrFilter } from "@/lib/searchFilter";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Same grid as /database, same reasoning: 24 divides evenly by 2 and 3 columns.
 const PAGE_SIZE = 24;
@@ -33,6 +34,7 @@ const Sources = () => {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 300);
   const [fieldFilter, setFieldFilter] = useState("All Fields");
   const [degreeFilter, setDegreeFilter] = useState("All Degrees");
   const [loading, setLoading] = useState(true);
@@ -73,8 +75,8 @@ const Sources = () => {
 
       if (fieldFilter !== "All Fields") query = query.eq("theses.field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("theses.degree_type", degreeFilter);
-      if (search.trim()) {
-        query = query.or(buildIlikeOrFilter(["raw_citation", "title", "authors"], search));
+      if (debouncedSearch.trim()) {
+        query = query.or(buildIlikeOrFilter(["raw_citation", "title", "authors"], debouncedSearch));
       }
       const from = (page - 1) * PAGE_SIZE;
       query = query.range(from, from + PAGE_SIZE - 1);
@@ -85,7 +87,7 @@ const Sources = () => {
       setLoading(false);
     };
     fetchSources();
-  }, [search, fieldFilter, degreeFilter, tab, page]);
+  }, [debouncedSearch, fieldFilter, degreeFilter, tab, page]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
