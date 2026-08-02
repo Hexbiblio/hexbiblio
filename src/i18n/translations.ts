@@ -247,6 +247,11 @@ export const translations = {
   "report.submitting": { en: "Sending…", fr: "Envoi…" },
   "report.submitted": { en: "Thanks, we'll take a look.", fr: "Merci, on va regarder ça." },
 
+  // Notifications
+  "notifications.title": { en: "Notifications", fr: "Notifications" },
+  "notifications.empty": { en: "Nothing yet.", fr: "Rien pour l'instant." },
+  "notifications.someone": { en: "Someone", fr: "Quelqu'un" },
+
   // NotFound
   "notFound.title": { en: "404", fr: "404" },
   "notFound.message": { en: "Oops! Page not found", fr: "Oups ! Page introuvable" },

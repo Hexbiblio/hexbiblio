@@ -6,6 +6,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import NotificationBell from "@/components/NotificationBell";
 import { Search, Upload, Bookmark, User, LogOut, Globe, Menu, Check, BookOpen, Moon, Sun, ShieldCheck } from "lucide-react";
 import type { Language } from "@/i18n/translations";
 
@@ -60,6 +61,8 @@ const Navbar = () => {
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+
+          <NotificationBell />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
