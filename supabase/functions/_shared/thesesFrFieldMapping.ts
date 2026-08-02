@@ -52,3 +52,17 @@ export function mapThesesFrDiscipline(discipline: string | null | undefined): st
   }
   return "Other";
 }
+
+// theses.fr's dateSoutenance is "DD/MM/YYYY" (confirmed live against both the
+// search and detail endpoints — e.g. "15/12/2020"), not ISO/YYYY-first. A
+// previous version of this import read `.slice(0, 4)`, which on that format
+// grabs "15/1" instead of the year and silently stored garbage as
+// graduation_year for every imported thesis. Splitting on "/" and taking the
+// last segment gets the year regardless of day/month, including placeholder
+// dates like "01/01/1994" where only the year is meaningful.
+export function parseTheseFrDefenseYear(dateSoutenance: string | null | undefined): number | null {
+  const parts = (dateSoutenance ?? "").split("/");
+  if (parts.length !== 3) return null;
+  const year = parseInt(parts[2], 10);
+  return Number.isFinite(year) && year > 1900 && year < 2100 ? year : null;
+}

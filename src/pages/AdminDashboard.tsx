@@ -124,9 +124,14 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchTheses = async () => {
       setThesesLoading(true);
+      // Same reasoning as Database.tsx/Sources.tsx: theses_fr-origin rows are
+      // a backing corpus for les incontournables/mémoires proches only, not
+      // real community submissions to moderate — excluded here too so the
+      // admin's own thesis list isn't mixed with bulk-imported seed data.
       let query = supabase
         .from("theses")
         .select("id, title, author_name, field, degree_type, created_at")
+        .eq("origin", "community")
         .order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);

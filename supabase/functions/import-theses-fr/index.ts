@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { extractAndStoreSources } from "../_shared/extractSources.ts";
-import { mapThesesFrDiscipline } from "../_shared/thesesFrFieldMapping.ts";
+import { mapThesesFrDiscipline, parseTheseFrDefenseYear } from "../_shared/thesesFrFieldMapping.ts";
 import { detectAndTranslateTitle } from "../_shared/languageDetection.ts";
 
 const corsHeaders = {
@@ -186,7 +186,7 @@ serve(async (req) => {
         const title = detail.titrePrincipal?.trim() ?? "";
         const abstract = (detail.resumes?.fr ?? detail.resumes?.en ?? "").trim();
         const authorName = formatAuthorName(detail.auteurs);
-        const defenseYear = parseInt((detail.dateSoutenance ?? "").slice(0, 4), 10);
+        const defenseYear = parseTheseFrDefenseYear(detail.dateSoutenance);
 
         if (title.length < 5 || abstract.length < MIN_ABSTRACT_LENGTH || !authorName) {
           results.push({ nnt, skipped: "insufficient metadata (title/abstract/author)" });
@@ -224,7 +224,7 @@ serve(async (req) => {
             field,
             file_url: publicUrlData.publicUrl,
             degree_type: "PhD",
-            graduation_year: Number.isFinite(defenseYear) ? defenseYear : null,
+            graduation_year: defenseYear,
             origin: "theses_fr",
             external_id: nnt,
             external_url: `https://theses.fr/${nnt}`,
