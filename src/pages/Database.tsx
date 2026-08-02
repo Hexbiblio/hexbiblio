@@ -36,7 +36,14 @@ const Database = () => {
   const debouncedSearch = useDebouncedValue(search, 300);
   const [fieldFilter, setFieldFilter] = useState("All Fields");
   const [degreeFilter, setDegreeFilter] = useState("All Degrees");
-  const [yearFilter, setYearFilter] = useState("All Years");
+  // Two independent bounds rather than one exact-year dropdown — covers
+  // "avant 2010" (yearTo only), "après 2020" (yearFrom only), and "entre
+  // 2001 et 2003" (both) with a single pair of controls instead of a mode
+  // selector. "Any" is a sentinel, not a real year — Radix Select rejects an
+  // empty-string item value, same reason the other filters use "All Fields"
+  // etc. instead of "".
+  const [yearFrom, setYearFrom] = useState("Any");
+  const [yearTo, setYearTo] = useState("Any");
   const [loading, setLoading] = useState(true);
   const { t, language } = useLanguage();
 
@@ -46,7 +53,8 @@ const Database = () => {
   const handleSearch = (v: string) => { setSearch(v); setPage(1); };
   const handleFieldFilter = (v: string) => { setFieldFilter(v); setPage(1); };
   const handleDegreeFilter = (v: string) => { setDegreeFilter(v); setPage(1); };
-  const handleYearFilter = (v: string) => { setYearFilter(v); setPage(1); };
+  const handleYearFrom = (v: string) => { setYearFrom(v); setPage(1); };
+  const handleYearTo = (v: string) => { setYearTo(v); setPage(1); };
   const goToPage = (p: number) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   useEffect(() => {
@@ -55,7 +63,8 @@ const Database = () => {
       let query = supabase.from("theses").select("*", { count: "exact" }).order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
-      if (yearFilter !== "All Years") query = query.eq("graduation_year", parseInt(yearFilter, 10));
+      if (yearFrom !== "Any") query = query.gte("graduation_year", parseInt(yearFrom, 10));
+      if (yearTo !== "Any") query = query.lte("graduation_year", parseInt(yearTo, 10));
       if (debouncedSearch.trim()) {
         query = query.textSearch("search_vector", foldAccents(debouncedSearch), { type: "websearch", config: "french" });
       }
@@ -93,7 +102,7 @@ const Database = () => {
       setLoading(false);
     };
     fetchTheses();
-  }, [debouncedSearch, fieldFilter, degreeFilter, yearFilter, page]);
+  }, [debouncedSearch, fieldFilter, degreeFilter, yearFrom, yearTo, page]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -121,10 +130,17 @@ const Database = () => {
             {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={yearFilter} onValueChange={handleYearFilter}>
-          <SelectTrigger className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
+        <Select value={yearFrom} onValueChange={handleYearFrom}>
+          <SelectTrigger className="w-full sm:w-[130px]"><SelectValue placeholder={t("db.yearFrom")} /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="All Years">{t("db.allYears")}</SelectItem>
+            <SelectItem value="Any">{t("db.yearFrom")}</SelectItem>
+            {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={yearTo} onValueChange={handleYearTo}>
+          <SelectTrigger className="w-full sm:w-[130px]"><SelectValue placeholder={t("db.yearTo")} /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Any">{t("db.yearTo")}</SelectItem>
             {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
           </SelectContent>
         </Select>

@@ -84,7 +84,8 @@ export const translations = {
   "db.searchPlaceholder": { en: "Search by title, author, or keyword...", fr: "Rechercher par titre, auteur ou mot-clé..." },
   "db.allFields": { en: "All Fields", fr: "Tous les domaines" },
   "db.allDegrees": { en: "All Degrees", fr: "Tous les diplômes" },
-  "db.allYears": { en: "All Years", fr: "Toutes les années" },
+  "db.yearFrom": { en: "From year", fr: "À partir de" },
+  "db.yearTo": { en: "To year", fr: "Jusqu'à" },
   "db.noTheses": { en: "No results found", fr: "Aucun résultat" },
   "db.tryAdjusting": { en: "Try different keywords, or be the first to explore this topic here.", fr: "Essaie d'autres mots-clés, ou sois le premier à explorer ce sujet ici." },
 
