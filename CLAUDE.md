@@ -2,7 +2,7 @@
 
 Academic thesis-sharing platform: submission, browsing, comments/ratings, an AI research-advisor chatbot, and personal collections. React + TypeScript + Vite frontend, Supabase backend (Postgres, Auth, Storage, Edge Functions).
 
-## Current infrastructure (as of 2026-08-01)
+## Current infrastructure (as of 2026-08-02)
 
 - **Frontend hosting**: Vercel, auto-deploys from the `main` branch on GitHub (`Hexbiblio/hexbiblio`). Live at `https://www.hexbiblio.vercel.app`. No custom domain yet.
 - **Backend**: Supabase project ref `lstlboldqghczcomgxvv` — this is the user's own project, fully independent. **Do not confuse with `xyfsajxypbjgtceoqbkh`**, an old Lovable Cloud-managed project that is no longer used and should be treated as decommissioned.
