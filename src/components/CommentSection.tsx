@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import ReportButton from "@/components/ReportButton";
 import { MessageSquare, Trash2 } from "lucide-react";
 
 interface Comment {
@@ -92,7 +93,7 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
                 <span className="text-muted-foreground">·</span>
                 <span className="text-muted-foreground">{new Date(comment.created_at).toLocaleDateString()}</span>
               </div>
-              {user?.id === comment.user_id && (
+              {user?.id === comment.user_id ? (
                 <button
                   onClick={() => handleDelete(comment.id)}
                   className="text-muted-foreground hover:text-destructive"
@@ -100,6 +101,8 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
+              ) : (
+                <ReportButton commentId={comment.id} />
               )}
             </div>
             <p className="mt-1 text-sm">{comment.content}</p>

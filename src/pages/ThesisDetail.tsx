@@ -25,6 +25,7 @@ import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
 import RelatedTheses from "@/components/RelatedTheses";
 import CitationExport from "@/components/CitationExport";
+import ReportButton from "@/components/ReportButton";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2 } from "lucide-react";
 import { fieldLabel, degreeLabel, FIELDS, DEGREE_TYPES } from "@/i18n/fields";
@@ -265,6 +266,7 @@ const ThesisDetail = () => {
                       </AlertDialogContent>
                     </AlertDialog>
                   )}
+                  {!isOwner && <ReportButton thesisId={thesis.id} />}
                 </div>
               )}
               {editing && isAdmin ? (

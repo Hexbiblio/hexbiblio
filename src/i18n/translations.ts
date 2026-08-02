@@ -210,6 +210,15 @@ export const translations = {
   "admin.confirmDelete": { en: "Delete permanently", fr: "Supprimer définitivement" },
   "admin.thesisDeleted": { en: "Thesis deleted", fr: "Mémoire supprimé" },
   "admin.accountDeleted": { en: "Account deleted", fr: "Compte supprimé" },
+  "admin.reportsTab": { en: "Reports", fr: "Signalements" },
+  "admin.reportOpen": { en: "Open", fr: "Ouvert" },
+  "admin.reportResolved": { en: "Resolved", fr: "Résolu" },
+  "admin.reportDismissed": { en: "Dismissed", fr: "Rejeté" },
+  "admin.reportOnThesis": { en: "on a thesis", fr: "sur un mémoire" },
+  "admin.reportOnComment": { en: "on a comment", fr: "sur un commentaire" },
+  "admin.reportedBy": { en: "Reported by", fr: "Signalé par" },
+  "admin.reportResolve": { en: "Resolve", fr: "Résoudre" },
+  "admin.reportDismiss": { en: "Dismiss", fr: "Rejeter" },
 
   // Rating
   "rating.quality": { en: "Quality", fr: "Qualité" },
@@ -227,6 +236,16 @@ export const translations = {
   // Bookmark
   "bookmark.added": { en: "Bookmarked!", fr: "Ajouté aux signets !" },
   "bookmark.removed": { en: "Removed from bookmarks", fr: "Retiré des signets" },
+
+  // Report
+  "report.action": { en: "Report", fr: "Signaler" },
+  "report.alreadyReported": { en: "Reported", fr: "Signalé" },
+  "report.dialogTitle": { en: "Report this", fr: "Signaler" },
+  "report.reasonPlaceholder": { en: "Select a reason", fr: "Choisis une raison" },
+  "report.detailsPlaceholder": { en: "Add details (optional)", fr: "Précise si besoin (facultatif)" },
+  "report.submit": { en: "Submit", fr: "Envoyer" },
+  "report.submitting": { en: "Sending…", fr: "Envoi…" },
+  "report.submitted": { en: "Thanks, we'll take a look.", fr: "Merci, on va regarder ça." },
 
   // NotFound
   "notFound.title": { en: "404", fr: "404" },

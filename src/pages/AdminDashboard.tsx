@@ -21,8 +21,8 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { Search, Trash2 } from "lucide-react";
-import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+import { Search, Trash2, Check, X as XIcon } from "lucide-react";
+import { FIELDS, DEGREE_TYPES, reportReasonLabel } from "@/i18n/fields";
 import { buildIlikeOrFilter, foldAccents } from "@/lib/searchFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
@@ -45,6 +45,20 @@ interface AdminProfile {
   last_name: string | null;
   university: string | null;
   field_of_study: string | null;
+}
+
+interface AdminReport {
+  id: string;
+  reason: string;
+  details: string | null;
+  status: "open" | "resolved" | "dismissed";
+  created_at: string;
+  reporter_id: string;
+  thesis_id: string | null;
+  comment_id: string | null;
+  theses: { id: string; title: string } | null;
+  comments: { id: string; content: string; thesis_id: string; theses: { id: string; title: string } | null } | null;
+  reporterName?: string;
 }
 
 const displayName = (a: AdminProfile) => {
@@ -76,6 +90,36 @@ const AdminDashboard = () => {
   const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
   const [accountsLoading, setAccountsLoading] = useState(true);
   const [confirmInput, setConfirmInput] = useState("");
+
+  const [reports, setReports] = useState<AdminReport[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(true);
+
+  const fetchReports = async () => {
+    setReportsLoading(true);
+    const { data } = await supabase
+      .from("reports")
+      .select(
+        "id, reason, details, status, created_at, reporter_id, thesis_id, comment_id, theses:thesis_id(id, title), comments:comment_id(id, content, thesis_id, theses:thesis_id(id, title))"
+      )
+      .order("created_at", { ascending: false });
+    const rows = (data as unknown as AdminReport[]) || [];
+    const reporterIds = [...new Set(rows.map((r) => r.reporter_id))];
+    const { data: profiles } = await supabase.from("profiles").select("user_id, username").in("user_id", reporterIds);
+    const nameMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
+    setReports(rows.map((r) => ({ ...r, reporterName: nameMap.get(r.reporter_id) || undefined })));
+    setReportsLoading(false);
+  };
+
+  useEffect(() => { fetchReports(); }, []);
+
+  const updateReportStatus = async (id: string, status: "resolved" | "dismissed") => {
+    const { error } = await supabase.from("reports").update({ status }).eq("id", id);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      return;
+    }
+    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+  };
 
   useEffect(() => {
     const fetchTheses = async () => {
@@ -155,6 +199,14 @@ const AdminDashboard = () => {
         <TabsList>
           <TabsTrigger value="theses">{t("admin.thesesTab")}</TabsTrigger>
           <TabsTrigger value="accounts">{t("admin.accountsTab")}</TabsTrigger>
+          <TabsTrigger value="reports">
+            {t("admin.reportsTab")}
+            {reports.some((r) => r.status === "open") && (
+              <Badge variant="destructive" className="ml-1.5 h-4 min-w-4 justify-center px-1 text-[10px]">
+                {reports.filter((r) => r.status === "open").length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="theses" className="space-y-4">
@@ -320,6 +372,59 @@ const AdminDashboard = () => {
                 })}
               </TableBody>
             </Table>
+          )}
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-4">
+          {reportsLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : reports.length === 0 ? (
+            <p className="py-12 text-center text-muted-foreground">{t("admin.noResults")}</p>
+          ) : (
+            <div className="space-y-3">
+              {reports.map((r) => {
+                const targetTitle = r.thesis_id ? r.theses?.title : r.comments?.theses?.title;
+                const targetThesisId = r.thesis_id || r.comments?.thesis_id;
+                return (
+                  <div key={r.id} className="rounded-lg border p-3">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2 text-sm">
+                          <Badge variant={r.status === "open" ? "destructive" : "secondary"}>
+                            {r.status === "open" ? t("admin.reportOpen") : r.status === "resolved" ? t("admin.reportResolved") : t("admin.reportDismissed")}
+                          </Badge>
+                          <span className="font-medium">{reportReasonLabel(r.reason, language)}</span>
+                          <span className="text-muted-foreground">·</span>
+                          <span className="text-muted-foreground">{r.comment_id ? t("admin.reportOnComment") : t("admin.reportOnThesis")}</span>
+                        </div>
+                        {targetThesisId && (
+                          <Link to={`/database/${targetThesisId}`} className="text-sm text-primary hover:underline">
+                            {targetTitle || t("admin.view")}
+                          </Link>
+                        )}
+                        {r.comments && <p className="text-sm text-muted-foreground italic">« {r.comments.content} »</p>}
+                        {r.details && <p className="text-sm">{r.details}</p>}
+                        <p className="text-xs text-muted-foreground">
+                          {t("admin.reportedBy")} {r.reporterName || t("comments.anonymous")} · {new Date(r.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      {r.status === "open" && (
+                        <div className="flex shrink-0 gap-1">
+                          <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => updateReportStatus(r.id, "resolved")}>
+                            <Check className="h-3.5 w-3.5" /> {t("admin.reportResolve")}
+                          </Button>
+                          <Button variant="ghost" size="sm" className="gap-1 text-xs text-muted-foreground" onClick={() => updateReportStatus(r.id, "dismissed")}>
+                            <XIcon className="h-3.5 w-3.5" /> {t("admin.reportDismiss")}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </TabsContent>
       </Tabs>

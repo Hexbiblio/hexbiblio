@@ -55,6 +55,14 @@ export const ACADEMIC_LEVELS: FieldOption[] = [
   { value: "Other", en: "Other", fr: "Autre" },
 ];
 
+export const REPORT_REASONS: FieldOption[] = [
+  { value: "Plagiarism", en: "Plagiarism", fr: "Plagiat" },
+  { value: "Inappropriate", en: "Inappropriate content", fr: "Contenu inapproprié" },
+  { value: "Spam", en: "Spam", fr: "Spam" },
+  { value: "Incorrect", en: "Incorrect information", fr: "Information incorrecte" },
+  { value: "Other", en: "Other", fr: "Autre" },
+];
+
 const buildLookup = (options: FieldOption[]) => {
   const map = new Map(options.map((o) => [o.value, o]));
   return (value: string | null | undefined, language: Language): string => {
@@ -66,3 +74,4 @@ const buildLookup = (options: FieldOption[]) => {
 
 export const fieldLabel = buildLookup(FIELDS);
 export const degreeLabel = buildLookup(DEGREE_TYPES);
+export const reportReasonLabel = buildLookup(REPORT_REASONS);
