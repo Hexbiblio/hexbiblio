@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/integrations/supabase/client";
 
 export type QuestId =
   | "discipline"
@@ -131,67 +132,60 @@ export function extractQuestValue(id: QuestId, userMessage: string): string {
   return text.length > MAX_STORED_VALUE_LENGTH ? `${text.slice(0, MAX_STORED_VALUE_LENGTH).trim()}…` : text;
 }
 
-const storageKey = (uid: string) => `hexbiblio:quests:${uid}`;
+// Every quest maps to a profile column (QUEST_PROFILE_FIELD above) that's
+// already written there the moment the quest completes — so "is this quest
+// done" is just "is that column non-empty." Deriving completion from the
+// profile itself, instead of a separately-synced flag, is what makes
+// progress follow the student across devices/browsers: the value was always
+// server-side, only the completion checkmark used to live in localStorage.
+export const deriveCompleted = (profile: Record<string, unknown> | null): Set<QuestId> => {
+  const next = new Set<QuestId>();
+  if (!profile) return next;
+  for (const id of Object.keys(QUEST_PROFILE_FIELD) as QuestId[]) {
+    if (profile[QUEST_PROFILE_FIELD[id]]) next.add(id);
+  }
+  return next;
+};
+
+const QUEST_FIELDS_SELECT = Object.values(QUEST_PROFILE_FIELD).join(", ");
 
 export function useQuestProgress() {
   const { user } = useAuth();
   const [completed, setCompleted] = useState<Set<QuestId>>(new Set());
-  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
 
-  // Load synchronously during render (not in an effect) the first time we see
-  // this user, so `completed` is already correct before any effect — e.g. a
-  // sibling replaying a restored guest chat — can call complete() and clobber
-  // it with a set that hasn't been loaded from storage yet.
-  if (user && user.id !== loadedUserId) {
-    setLoadedUserId(user.id);
-    let loaded = new Set<QuestId>();
-    try {
-      const raw = localStorage.getItem(storageKey(user.id));
-      if (raw) loaded = new Set(JSON.parse(raw));
-    } catch { /* ignore */ }
-    setCompleted(loaded);
-  }
-
-  const persist = (next: Set<QuestId>) => {
-    if (!user) return;
-    try {
-      localStorage.setItem(storageKey(user.id), JSON.stringify([...next]));
-    } catch { /* ignore */ }
+  const refetch = async () => {
+    if (!user) {
+      setCompleted(new Set());
+      return;
+    }
+    const { data } = await supabase.from("profiles").select(QUEST_FIELDS_SELECT).eq("user_id", user.id).maybeSingle();
+    setCompleted(deriveCompleted(data as Record<string, unknown> | null));
   };
 
+  useEffect(() => { refetch(); }, [user?.id]);
+
+  // Optimistic local update so the UI checks off a quest the instant it's
+  // detected in chat, without waiting on the round trip that writes the
+  // actual value (and thus the real source of truth) to the profile — the
+  // caller is expected to roll this back via uncomplete() if that write
+  // fails, and to call refetch() once it succeeds to stay honest.
   const complete = (ids: QuestId[]) => {
-    if (!user || ids.length === 0) return [] as QuestId[];
-    const added: QuestId[] = [];
     setCompleted((prev) => {
       const next = new Set(prev);
-      for (const id of ids) if (!next.has(id)) { next.add(id); added.push(id); }
-      if (added.length) persist(next);
-      return next;
-    });
-    return added;
-  };
-
-  const toggle = (id: QuestId) => {
-    setCompleted((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      persist(next);
+      for (const id of ids) next.add(id);
       return next;
     });
   };
 
   const uncomplete = (ids: QuestId[]) => {
-    if (!user || ids.length === 0) return;
     setCompleted((prev) => {
-      let changed = false;
       const next = new Set(prev);
-      for (const id of ids) if (next.delete(id)) changed = true;
-      if (changed) persist(next);
-      return changed ? next : prev;
+      for (const id of ids) next.delete(id);
+      return next;
     });
   };
 
-  return { completed, complete, toggle, uncomplete };
+  return { completed, complete, uncomplete, refetch };
 }
 
 interface Props {

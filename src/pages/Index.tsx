@@ -20,40 +20,47 @@ import type { TablesUpdate } from "@/integrations/supabase/types";
 const Index = () => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
-  const { completed, complete } = useQuestProgress();
+  const { completed, complete, uncomplete, refetch: refetchQuests } = useQuestProgress();
   const { toast } = useToast();
   const [justCompleted, setJustCompleted] = useState<QuestId | null>(null);
 
   const handleUserMessage = (text: string) => {
     const ids = detectCompletedQuests(text, completed);
     if (!ids.length) return;
-    const added = complete(ids);
-    if (added.length > 0) {
-      const last = added[added.length - 1];
-      setJustCompleted(last);
-      toast({
-        title: language === "fr" ? "🎉 Quête accomplie !" : "🎉 Quest complete!",
-        description:
-          language === "fr"
-            ? `+${added.length} étape${added.length > 1 ? "s" : ""} validée${added.length > 1 ? "s" : ""}`
-            : `+${added.length} step${added.length > 1 ? "s" : ""} unlocked`,
-      });
-      setTimeout(() => setJustCompleted(null), 1500);
 
-      // Remember what the user told the assistant — editable later from the profile page.
-      if (user) {
-        const updates: Record<string, string> = {};
-        for (const id of added) {
-          updates[QUEST_PROFILE_FIELD[id]] = extractQuestValue(id, text);
-        }
-        supabase
-          .from("profiles")
-          .update(updates as Partial<TablesUpdate<"profiles">>)
-          .eq("user_id", user.id)
-          .then(({ error }) => {
-            if (error) console.error("Failed to save quest progress to profile:", error);
-          });
+    complete(ids); // optimistic — see useQuestProgress
+    const last = ids[ids.length - 1];
+    setJustCompleted(last);
+    toast({
+      title: language === "fr" ? "🎉 Quête accomplie !" : "🎉 Quest complete!",
+      description:
+        language === "fr"
+          ? `+${ids.length} étape${ids.length > 1 ? "s" : ""} validée${ids.length > 1 ? "s" : ""}`
+          : `+${ids.length} step${ids.length > 1 ? "s" : ""} unlocked`,
+    });
+    setTimeout(() => setJustCompleted(null), 1500);
+
+    // Remember what the user told the assistant — editable later from the profile page.
+    // This write is also what makes the quest "really" complete (see
+    // useQuestProgress): if it fails, the optimistic checkmark above must
+    // roll back rather than silently disagree with the server.
+    if (user) {
+      const updates: Record<string, string> = {};
+      for (const id of ids) {
+        updates[QUEST_PROFILE_FIELD[id]] = extractQuestValue(id, text);
       }
+      supabase
+        .from("profiles")
+        .update(updates as Partial<TablesUpdate<"profiles">>)
+        .eq("user_id", user.id)
+        .then(({ error }) => {
+          if (error) {
+            console.error("Failed to save quest progress to profile:", error);
+            uncomplete(ids);
+          } else {
+            refetchQuests();
+          }
+        });
     }
   };
 

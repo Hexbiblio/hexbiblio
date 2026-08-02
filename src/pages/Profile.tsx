@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import ThesisCard from "@/components/ThesisCard";
 import { useToast } from "@/hooks/use-toast";
 import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library } from "lucide-react";
-import { useQuestProgress, QuestId } from "@/components/ThesisQuests";
+import { useQuestProgress } from "@/components/ThesisQuests";
 import { ACADEMIC_LEVELS } from "@/i18n/fields";
 
 const Profile = () => {
@@ -41,7 +41,7 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const { uncomplete } = useQuestProgress();
+  const { refetch: refetchQuests } = useQuestProgress();
 
   useEffect(() => {
     if (!user) return;
@@ -128,18 +128,12 @@ const Profile = () => {
       return;
     }
 
-    // A cleared field means the assistant no longer knows it — un-complete the
-    // matching quest so it can be detected and re-filled through chat again.
-    const questFieldValues: Record<QuestId, string> = {
-      discipline: fieldOfStudy.trim(),
-      theme: researchTheme.trim(),
-      question: researchQuestion.trim(),
-      thesis: thesisStatement.trim(),
-      method: methodology.trim(),
-      sources: researchSources.trim(),
-    };
-    const clearedQuests = (Object.keys(questFieldValues) as QuestId[]).filter((id) => !questFieldValues[id]);
-    if (clearedQuests.length) uncomplete(clearedQuests);
+    // Quest completion is derived from these same profile fields (see
+    // useQuestProgress) — clearing one un-completes its quest so the
+    // assistant can re-detect it through chat; filling one in directly here
+    // completes it the same way a chat detection would. Either way, a
+    // refetch is what keeps the quest sidebar honest.
+    refetchQuests();
 
     toast({ title: t("profile.updated") });
   };
