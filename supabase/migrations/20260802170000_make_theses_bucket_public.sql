@@ -1,0 +1,25 @@
+-- ============================================================
+-- Fix PDF downloads: the `theses` storage bucket was private
+-- ============================================================
+-- Root cause of "Bucket not found" (NoSuchBucket) on every PDF download
+-- link, tracked down 2026-08-02: `select id, public from storage.buckets
+-- where id = 'theses'` returned public = false. The very first migration
+-- (20260413224509) created the bucket with public = true, but a second
+-- migration 19 seconds later (20260413224528) flipped it to false and
+-- nothing since ever reverted that — yet every part of this app that
+-- touches thesis PDFs (SubmitThesis.tsx's upload, submit-thesis's and
+-- import-theses-fr's getPublicUrl() calls, every "Télécharger le PDF" link)
+-- has always assumed a public bucket. Supabase's public-object route
+-- filters on `public = true` internally, so on a private bucket it finds no
+-- matching row and reports "Bucket not found" — misleading, but consistent
+-- with what was observed (the Supabase dashboard, which uses an
+-- authenticated path instead of the public route, could open the same file
+-- fine).
+--
+-- This isn't reopening anything: storage.objects already restricts
+-- INSERT/UPDATE/DELETE to a user's own folder (auth.uid() = folder name),
+-- and every thesis is already readable by any authenticated user via the
+-- `theses` table's own RLS — a public, unguessable-UUID-path PDF URL is the
+-- same exposure the app was always designed around, just actually working
+-- this time.
+UPDATE storage.buckets SET public = true WHERE id = 'theses';
