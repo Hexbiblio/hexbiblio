@@ -69,7 +69,7 @@ const RelatedTheses = ({ thesisId }: RelatedThesesProps) => {
             <p className="mt-0.5 text-xs text-muted-foreground">
               {r.author_name} · {fieldLabel(r.field, language)}
             </p>
-            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary-text">
               <Link2 className="h-3 w-3" />
               {sharedLabel(r.shared_sources)}
             </span>

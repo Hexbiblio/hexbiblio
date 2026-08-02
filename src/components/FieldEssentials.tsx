@@ -97,7 +97,7 @@ const FieldEssentials = ({ field, onExplore }: FieldEssentialsProps) => {
                 {[item.authors, item.year].filter(Boolean).join(" · ") || "—"}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary-text">
                   <Quote className="h-3 w-3" />
                   {citedIn(Number(item.thesis_count))}
                 </span>

@@ -105,8 +105,8 @@ const RatingWidget = ({
 
   return (
     <div className="space-y-2">
-      <StarRow label={t("rating.quality")} icon={Star} current={currentRating} avg={avgRating} total={totalRatings} onRate={handleRate} colorClass="text-accent" noRatingsLabel={t("rating.noRatings")} />
-      <StarRow label={t("rating.accuracy")} icon={Target} current={currentAccuracy} avg={avgAccuracy} total={totalAccuracy} onRate={handleAccuracy} colorClass="text-primary" noRatingsLabel={t("rating.noRatings")} />
+      <StarRow label={t("rating.quality")} icon={Star} current={currentRating} avg={avgRating} total={totalRatings} onRate={handleRate} colorClass="text-accent-text" noRatingsLabel={t("rating.noRatings")} />
+      <StarRow label={t("rating.accuracy")} icon={Target} current={currentAccuracy} avg={avgAccuracy} total={totalAccuracy} onRate={handleAccuracy} colorClass="text-primary-text" noRatingsLabel={t("rating.noRatings")} />
     </div>
   );
 };

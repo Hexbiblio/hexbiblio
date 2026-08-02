@@ -349,7 +349,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   const renderInputArea = () => {
     if (isGuestLimitReached) {
       return (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card/90 backdrop-blur-md px-5 py-4 shadow-sm">
+        <div className="flex flex-col items-center gap-3 rounded-lg border bg-card/90 backdrop-blur-md px-5 py-4 shadow-sm">
           <p className="text-sm text-foreground text-center max-w-md">
             {language === "fr"
               ? "Connectez-vous pour continuer la conversation. Votre échange sera conservé."

@@ -86,7 +86,7 @@ const Index = () => {
             className="space-y-4"
           >
             {!user && (
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/20">
                 <Sparkles className="h-7 w-7 text-primary" />
               </div>
             )}
@@ -150,10 +150,10 @@ const Index = () => {
                   transition={{ duration: 0.4, delay: i * 0.1 }}
                 >
                   <Link to="/auth" className="group block h-full">
-                    <div className={`relative h-full overflow-hidden rounded-2xl border bg-card p-6 transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-1`}>
+                    <div className={`relative h-full overflow-hidden rounded-lg border bg-card p-6 transition-all duration-300 hover:shadow-lg hover:border-primary/30 hover:-translate-y-1`}>
                       <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 transition-opacity group-hover:opacity-100`} />
                       <div className="relative">
-                        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 ring-1 ring-primary/10">
+                        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/10">
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
                         <h3 className="font-semibold text-base mb-1.5">{title}</h3>

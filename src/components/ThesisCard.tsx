@@ -66,13 +66,13 @@ const ThesisCard = ({ id, title, author_name, field, abstract, created_at, avgRa
             </span>
             <div className="flex items-center gap-2">
               {avgAccuracy !== undefined && avgAccuracy > 0 && (
-                <span className="flex items-center gap-0.5 text-primary" title="Accuracy">
+                <span className="flex items-center gap-0.5 text-primary-text" title={t("rating.accuracy")}>
                   <Target className="h-3 w-3" />
                   {avgAccuracy.toFixed(1)}
                 </span>
               )}
               {avgRating !== undefined && avgRating > 0 && (
-                <span className="flex items-center gap-0.5 text-accent" title="Quality">
+                <span className="flex items-center gap-0.5 text-accent-text" title={t("rating.quality")}>
                   <Star className="h-3 w-3 fill-current" />
                   {avgRating.toFixed(1)}
                 </span>

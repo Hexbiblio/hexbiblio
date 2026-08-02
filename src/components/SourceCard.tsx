@@ -48,7 +48,7 @@ const SourceCard = ({ raw_citation, title, authors, year, theses }: SourceCardPr
         {theses && (
           <Link
             to={`/database/${theses.id}`}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary-text transition-colors"
           >
             <BookOpen className="h-3 w-3 shrink-0" />
             <span className="truncate">{t("sources.fromThesis")}: {theses.title}</span>

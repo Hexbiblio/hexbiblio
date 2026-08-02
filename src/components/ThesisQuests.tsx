@@ -202,7 +202,7 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
   const nextQuest = useMemo(() => getNextQuest(completed), [completed]);
 
   return (
-    <div className="rounded-2xl border bg-card/80 backdrop-blur-sm p-5 shadow-sm">
+    <div className="rounded-lg border bg-card/80 backdrop-blur-sm p-5 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -247,7 +247,7 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
             <motion.div
               initial={{ scale: 0, rotate: -20 }}
               animate={{ scale: 1, rotate: 0 }}
-              className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary"
+              className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary-text"
             >
               <Sparkles className="h-3 w-3" />
               {language === "fr" ? "Bravo !" : "Complete!"}
@@ -260,7 +260,7 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
       <Progress value={pct} className="mb-3 h-1.5" />
 
       {/* Bot helper banner — makes it obvious quests are unlocked through chat */}
-      <div className="mb-4 flex items-start gap-2 rounded-xl border border-primary/20 bg-primary/5 p-2.5">
+      <div className="mb-4 flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 p-2.5">
         <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15">
           <Bot className="h-3.5 w-3.5 text-primary" />
         </div>

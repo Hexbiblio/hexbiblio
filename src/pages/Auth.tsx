@@ -103,7 +103,7 @@ const Auth = () => {
           </form>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {isSignUp ? t("auth.alreadyHaveAccount") : t("auth.dontHaveAccount")}{" "}
-            <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary hover:underline font-medium">
+            <button onClick={() => setIsSignUp(!isSignUp)} className="text-primary-text hover:underline font-medium">
               {isSignUp ? t("auth.signInBtn") : t("auth.signUp")}
             </button>
           </div>

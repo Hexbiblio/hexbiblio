@@ -39,8 +39,18 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
+  // Keep in sync with the .theme-switching transition duration in index.css.
+  const THEME_TRANSITION_MS = 300;
+
   const toggleTheme = () => {
     const next: Theme = theme === "dark" ? "light" : "dark";
+    // The slow global color transition only exists for this moment — see the
+    // .theme-switching rule in index.css. Leaving it on permanently made every
+    // hover and focus state inherit a 400ms fade.
+    const root = document.documentElement;
+    root.classList.add("theme-switching");
+    window.setTimeout(() => root.classList.remove("theme-switching"), THEME_TRANSITION_MS + 20);
+
     setTheme(next);
     localStorage.setItem("theme", next);
   };

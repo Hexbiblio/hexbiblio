@@ -47,7 +47,7 @@ const components: Components = {
   ),
   p: ({ children }) => <p className="text-sm leading-relaxed mb-2">{children}</p>,
   ul: ({ children }) => <ul className="my-2 space-y-1 pl-1">{children}</ul>,
-  ol: ({ children }) => <ol className="my-2 space-y-1 pl-5 list-decimal marker:text-primary marker:font-semibold">{children}</ol>,
+  ol: ({ children }) => <ol className="my-2 space-y-1 pl-5 list-decimal marker:text-primary-text marker:font-semibold">{children}</ol>,
   li: ({ children }) => (
     <li className="relative pl-5 text-sm leading-relaxed before:content-[''] before:absolute before:left-1 before:top-2 before:h-1.5 before:w-1.5 before:rounded-full before:bg-primary/60">
       {children}
@@ -73,7 +73,7 @@ const components: Components = {
   },
   hr: () => <hr className="my-3 border-border/60" />,
   a: ({ children, href }) => (
-    <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">
+    <a href={href} target="_blank" rel="noreferrer" className="text-primary-text underline underline-offset-2 hover:text-primary-text/80">
       {children}
     </a>
   ),

@@ -23,6 +23,9 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          // `text-primary-text` — for glyphs only. See index.css for why the
+          // brand purple can't be used directly on text.
+          text: "hsl(var(--primary-text))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -39,6 +42,7 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          text: "hsl(var(--accent-text))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -59,10 +63,15 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+      // `lg` is the surface radius (Card, panels, empty states), `md` the
+      // control radius (Button, Input, Select) — driven by two separate
+      // tokens rather than one, so surfaces can get rounder without dragging
+      // every form control along. shadcn already uses lg/md along exactly
+      // that split, so this needs no component changes.
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "var(--radius-control)",
+        sm: "calc(var(--radius-control) - 2px)",
       },
       keyframes: {
         "accordion-down": {

@@ -17,6 +17,11 @@
 
     --primary: 270 50% 65%;
     --primary-foreground: 0 0% 100%;
+    /* Text-only variant of the brand purple. --primary itself is 3.4:1 on
+       white — fine for icons and borders (3:1 threshold) but below AA for
+       text (4.5:1). Never swap the two: --primary is what the mascot, the
+       og-image and every filled surface are built on. */
+    --primary-text: 270 55% 45%;
 
     --secondary: 40 30% 92%;
     --secondary-foreground: 220 25% 12%;
@@ -26,6 +31,9 @@
 
     --accent: 280 40% 75%;
     --accent-foreground: 0 0% 100%;
+    /* --accent is 2.1:1 on white — it fails even the non-text threshold, so
+       this variant is the only one safe for glyphs of any kind. */
+    --accent-text: 280 45% 42%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -34,7 +42,13 @@
     --input: 220 15% 88%;
     --ring: 270 50% 65%;
 
-    --radius: 0.5rem;
+    /* Two-level radius scale: --radius drives content surfaces (rounded-lg),
+       --radius-control drives form controls (rounded-md), so a card and the
+       input sitting inside it stay visually distinct. Fully-round shapes
+       (rounded-full) are a third, deliberate family — see the chat composer
+       and the speech bubbles. */
+    --radius: 0.75rem;
+    --radius-control: 0.5rem;
 
     --sidebar-background: 270 20% 12%;
     --sidebar-foreground: 40 20% 92%;
@@ -58,6 +72,9 @@
 
     --primary: 270 50% 70%;
     --primary-foreground: 0 0% 100%;
+    /* On the dark background the ratio is already comfortable, so these only
+       need to exist so the utility resolves — they lighten rather than darken. */
+    --primary-text: 270 50% 74%;
 
     --secondary: 220 20% 18%;
     --secondary-foreground: 40 20% 92%;
@@ -67,6 +84,7 @@
 
     --accent: 280 40% 70%;
     --accent-foreground: 0 0% 100%;
+    --accent-text: 280 40% 74%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
@@ -101,10 +119,23 @@
   }
 }
 
+/* The light/dark switch is the one moment a slow, global color transition is
+   right — it's a rare, whole-page event. Applying it to `*` permanently also
+   caught every hover and focus state that had no `transition-*` utility of its
+   own (inputs, textareas, select items), making them feel sluggish at 400ms.
+   So it's scoped to the switch itself: ThemeContext adds the class, flips the
+   theme, and removes it once the animation is done. Everything else keeps
+   Tailwind's 150ms default. */
 @media (prefers-reduced-motion: no-preference) {
-  * {
+  html.theme-switching,
+  html.theme-switching * {
+    /* `color` only — never `fill` or `stroke`. lucide icons use
+       stroke="currentColor", and the rating stars use `fill-current`, so both
+       already follow the color fade for free. Animating them as well starts a
+       second transition chasing a target that is itself still moving, which
+       makes the icons visibly desync from their own text mid-switch. */
     transition-property: background-color, border-color, color;
-    transition-duration: 400ms;
+    transition-duration: 300ms;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
