@@ -131,6 +131,44 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          read: boolean
+          thesis_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          read?: boolean
+          thesis_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          read?: boolean
+          thesis_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           academic_level: string | null
@@ -226,12 +264,61 @@ export type Database = {
           },
         ]
       }
+      reports: {
+        Row: {
+          comment_id: string | null
+          created_at: string
+          details: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          status: string
+          thesis_id: string | null
+        }
+        Insert: {
+          comment_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          status?: string
+          thesis_id?: string | null
+        }
+        Update: {
+          comment_id?: string | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          status?: string
+          thesis_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sources: {
         Row: {
           authors: string | null
           created_at: string
           id: string
           raw_citation: string
+          search_vector: unknown
           thesis_id: string
           title: string | null
           year: number | null
@@ -241,6 +328,7 @@ export type Database = {
           created_at?: string
           id?: string
           raw_citation: string
+          search_vector?: unknown
           thesis_id: string
           title?: string | null
           year?: number | null
@@ -250,6 +338,7 @@ export type Database = {
           created_at?: string
           id?: string
           raw_citation?: string
+          search_vector?: unknown
           thesis_id?: string
           title?: string | null
           year?: number | null
@@ -270,12 +359,18 @@ export type Database = {
           author_name: string
           created_at: string
           degree_type: string | null
+          detected_language: string | null
+          external_id: string | null
+          external_url: string | null
           field: string
           file_url: string | null
           graduation_year: number | null
           id: string
           keywords: string[] | null
+          origin: string
+          search_vector: unknown
           title: string
+          title_translated: string | null
           updated_at: string
           user_id: string
         }
@@ -284,12 +379,18 @@ export type Database = {
           author_name: string
           created_at?: string
           degree_type?: string | null
+          detected_language?: string | null
+          external_id?: string | null
+          external_url?: string | null
           field: string
           file_url?: string | null
           graduation_year?: number | null
           id?: string
           keywords?: string[] | null
+          origin?: string
+          search_vector?: unknown
           title: string
+          title_translated?: string | null
           updated_at?: string
           user_id: string
         }
@@ -298,12 +399,18 @@ export type Database = {
           author_name?: string
           created_at?: string
           degree_type?: string | null
+          detected_language?: string | null
+          external_id?: string | null
+          external_url?: string | null
           field?: string
           file_url?: string | null
           graduation_year?: number | null
           id?: string
           keywords?: string[] | null
+          origin?: string
+          search_vector?: unknown
           title?: string
+          title_translated?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -361,6 +468,11 @@ export type Database = {
       get_thesis_avg_rating: { Args: { thesis_uuid: string }; Returns: number }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       normalize_citation_title: { Args: { _title: string }; Returns: string }
+      notify_thesis_owner: {
+        Args: { _actor_id: string; _thesis_id: string; _type: string }
+        Returns: undefined
+      }
+      unaccent_immutable: { Args: { _text: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

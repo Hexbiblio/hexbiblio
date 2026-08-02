@@ -14,6 +14,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "npm:unpdf": path.resolve(__dirname, "./src/test/stubs/unpdf.ts"),
+      "npm:franc": "franc",
     },
   },
 });

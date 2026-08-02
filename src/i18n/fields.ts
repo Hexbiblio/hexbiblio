@@ -63,6 +63,27 @@ export const REPORT_REASONS: FieldOption[] = [
   { value: "Other", en: "Other", fr: "Autre" },
 ];
 
+// Keyed by ISO 639-1 — theses.detected_language is normalized to this format
+// regardless of origin (see supabase/functions/_shared/languageDetection.ts):
+// franc's native 639-3 output is mapped down to 639-1 for community
+// submissions, and theses.fr's own `langues` field is already 639-1 for
+// imports. Only the languages actually expected in this corpus — the
+// detector itself recognizes ~400 regardless, this is purely a display label
+// table, so an unmapped code just falls back to showing itself as-is.
+export const LANGUAGES: FieldOption[] = [
+  { value: "fr", en: "French", fr: "français" },
+  { value: "en", en: "English", fr: "anglais" },
+  { value: "es", en: "Spanish", fr: "espagnol" },
+  { value: "de", en: "German", fr: "allemand" },
+  { value: "it", en: "Italian", fr: "italien" },
+  { value: "pt", en: "Portuguese", fr: "portugais" },
+  { value: "nl", en: "Dutch", fr: "néerlandais" },
+  { value: "ar", en: "Arabic", fr: "arabe" },
+  { value: "zh", en: "Chinese", fr: "chinois" },
+  { value: "ru", en: "Russian", fr: "russe" },
+  { value: "ja", en: "Japanese", fr: "japonais" },
+];
+
 const buildLookup = (options: FieldOption[]) => {
   const map = new Map(options.map((o) => [o.value, o]));
   return (value: string | null | undefined, language: Language): string => {
@@ -75,3 +96,4 @@ const buildLookup = (options: FieldOption[]) => {
 export const fieldLabel = buildLookup(FIELDS);
 export const degreeLabel = buildLookup(DEGREE_TYPES);
 export const reportReasonLabel = buildLookup(REPORT_REASONS);
+export const languageLabel = buildLookup(LANGUAGES);

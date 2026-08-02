@@ -35,6 +35,22 @@ describe("findBibliographySection", () => {
     expect(text).not.toContain("Annexes");
   });
 
+  it("locates the ToC entry even with a long Word-style dot-leader before the page number", async () => {
+    // Reproduces a real failure seen on a theses.fr import: a Word-generated
+    // ToC put 100+ dots between "References" and its page number, well past
+    // what a small fixed non-digit character cap would tolerate — without
+    // the [.\s]-specific match in findTocPageNumber, this ToC entry is
+    // invisible and the section is never found at page 6.
+    const pages: string[][] = Array.from({ length: 12 }, () => ["Filler content."]);
+    pages[0] = [`References ${".".repeat(120)} 6`];
+    pages[5] = ["References", "Smith, A. (2018). A title. A press."];
+
+    const { text, source } = await findBibliographySection(fakePdf(pages), 20000);
+
+    expect(source).toBe("toc");
+    expect(text).toContain("Smith, A.");
+  });
+
   it("falls back to scanning backward from the end when there's no usable ToC entry", async () => {
     // The heading sits on the very last page, outside the 20-page ToC scan
     // window (TOC_SCAN_PAGES) entirely, so there's no year-next-to-a-heading

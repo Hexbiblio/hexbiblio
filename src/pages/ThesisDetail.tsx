@@ -27,8 +27,8 @@ import RelatedTheses from "@/components/RelatedTheses";
 import CitationExport from "@/components/CitationExport";
 import ReportButton from "@/components/ReportButton";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2 } from "lucide-react";
-import { fieldLabel, degreeLabel, FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2, Languages } from "lucide-react";
+import { fieldLabel, degreeLabel, languageLabel, FIELDS, DEGREE_TYPES } from "@/i18n/fields";
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 30 }, (_, i) => currentYear - i);
@@ -276,7 +276,16 @@ const ThesisDetail = () => {
                   className="text-xl font-bold h-auto py-1.5"
                 />
               ) : (
-                <h1 className="text-2xl font-bold leading-tight">{thesis.title}</h1>
+                <h1 className="flex items-start gap-2 text-2xl font-bold leading-tight">
+                  <span>{thesis.title_translated || thesis.title}</span>
+                  {thesis.title_translated && (
+                    <Languages
+                      className="mt-1 h-5 w-5 shrink-0 text-muted-foreground"
+                      aria-label={`${t("thesis.translatedTitlePrefix")} ${languageLabel(thesis.detected_language, language)}`}
+                      title={`${t("thesis.translatedTitlePrefix")} ${languageLabel(thesis.detected_language, language)}`}
+                    />
+                  )}
+                </h1>
               )}
             </div>
             <BookmarkButton thesisId={thesis.id} />

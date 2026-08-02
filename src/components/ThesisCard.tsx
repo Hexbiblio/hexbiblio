@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Calendar, Target, GraduationCap } from "lucide-react";
+import { Star, Calendar, Target, GraduationCap, Languages } from "lucide-react";
 import BookmarkButton from "./BookmarkButton";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { fieldLabel, degreeLabel } from "@/i18n/fields";
+import { fieldLabel, degreeLabel, languageLabel } from "@/i18n/fields";
 
 interface ThesisCardProps {
   id: string;
@@ -18,10 +18,13 @@ interface ThesisCardProps {
   degree_type?: string | null;
   graduation_year?: number | null;
   keywords?: string[] | null;
+  detected_language?: string | null;
+  title_translated?: string | null;
 }
 
-const ThesisCard = ({ id, title, author_name, field, abstract, created_at, avgRating, avgAccuracy, degree_type, graduation_year, keywords }: ThesisCardProps) => {
-  const { language } = useLanguage();
+const ThesisCard = ({ id, title, author_name, field, abstract, created_at, avgRating, avgAccuracy, degree_type, graduation_year, keywords, detected_language, title_translated }: ThesisCardProps) => {
+  const { language, t } = useLanguage();
+  const displayTitle = title_translated || title;
   return (
     <Card className="group relative transition-shadow hover:shadow-lg">
       <div className="absolute right-3 top-3 z-10">
@@ -34,8 +37,15 @@ const ThesisCard = ({ id, title, author_name, field, abstract, created_at, avgRa
             {degree_type && <Badge variant="outline" className="text-xs">{degreeLabel(degree_type, language)}</Badge>}
             {graduation_year && <Badge variant="outline" className="text-xs">{graduation_year}</Badge>}
           </div>
-          <CardTitle className="line-clamp-2 text-lg leading-snug group-hover:text-primary transition-colors">
-            {title}
+          <CardTitle className="flex items-start gap-1.5 line-clamp-2 text-lg leading-snug group-hover:text-primary-text transition-colors">
+            <span className="line-clamp-2">{displayTitle}</span>
+            {title_translated && (
+              <Languages
+                className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                aria-label={`${t("thesis.translatedTitlePrefix")} ${languageLabel(detected_language, language)}`}
+                title={`${t("thesis.translatedTitlePrefix")} ${languageLabel(detected_language, language)}`}
+              />
+            )}
           </CardTitle>
           <p className="text-sm text-muted-foreground">{author_name}</p>
         </CardHeader>

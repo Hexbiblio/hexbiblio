@@ -220,6 +220,14 @@ export const translations = {
   "admin.reportResolve": { en: "Resolve", fr: "Résoudre" },
   "admin.reportDismiss": { en: "Dismiss", fr: "Rejeter" },
 
+  // Thesis (concatenated with a language name from i18n/fields.ts's
+  // languageLabel — this app's t() has no placeholder interpolation, so
+  // these are written to read naturally with a language name appended)
+  "thesis.translatedTitlePrefix": {
+    en: "Title automatically translated — original in",
+    fr: "Titre traduit automatiquement — original en",
+  },
+
   // Rating
   "rating.quality": { en: "Quality", fr: "Qualité" },
   "rating.accuracy": { en: "Accuracy", fr: "Précision" },

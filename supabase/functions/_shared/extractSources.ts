@@ -3,6 +3,7 @@
 // already-submitted theses). Kept in one place so a future prompt/parsing fix
 // doesn't have to be applied twice.
 import { getDocumentProxy } from "npm:unpdf";
+import { callGemini } from "./geminiClient.ts";
 
 // Real theses can carry a huge annex (interview transcripts, survey data —
 // one seen in this project ran 140+ pages of a 227-page document) directly
@@ -68,14 +69,19 @@ function hasHeadingMatch(items: string[], headings: string[]): boolean {
 
 // Table-of-contents lines look like "D.Bibliographie   82" or
 // "Webographie:  84" — a known heading word followed (same reconstructed
-// page text, so section-numbering prefixes and dot-leaders in between don't
-// break this) by a page number before the next entry starts. Returns the
-// smallest page number found across every matching entry on the page (the
-// true section start, since sub-entries like "Webographie" / "Bibliographie
-// secondaire" only ever point at the same section or slightly after it).
+// page text, so section-numbering prefixes in between don't break this) by a
+// page number before the next entry starts. The gap is matched as dot-leader
+// characters specifically ([.\s], not "any non-digit") — found live on a real
+// thesis where a Word-generated ToC put 100+ dots between "References" and
+// its page number, well past what a small fixed character cap would allow,
+// which silently sent every downstream strategy looking in the wrong place.
+// Returns the smallest page number found across every matching entry on the
+// page (the true section start, since sub-entries like "Webographie" /
+// "Bibliographie secondaire" only ever point at the same section or slightly
+// after it).
 function findTocPageNumber(pageText: string): number | null {
   const normalized = normalize(pageText);
-  const pattern = new RegExp(`\\b(${BIBLIOGRAPHY_HEADINGS.join("|")})\\b[^0-9]{0,30}?(\\d{1,4})\\b`, "g");
+  const pattern = new RegExp(`\\b(${BIBLIOGRAPHY_HEADINGS.join("|")})\\b[.\\s]{0,300}?(\\d{1,4})\\b`, "g");
   let match: RegExpExecArray | null;
   let best: number | null = null;
   while ((match = pattern.exec(normalized)) !== null) {
@@ -220,27 +226,7 @@ Extract every distinct citation you can identify. Respond with ONLY a JSON objec
 
 "raw" is the citation as it appears (cleaned of line-break artifacts). "title"/"authors"/"year" are your best-effort parse of that citation (per the APA field order — author(s), year, title — when the entry follows that shape), or null if you can't confidently extract them. If no real citations are found, return {"sources": []}.`;
 
-  const geminiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${geminiApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gemini-flash-latest",
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-      stream: false,
-    }),
-  });
-
-  if (!geminiResponse.ok) {
-    const text = await geminiResponse.text();
-    throw new Error(`Gemini error ${geminiResponse.status} extracting sources for thesis ${thesisId}: ${text}`);
-  }
-
-  const geminiData = await geminiResponse.json();
-  const rawContent = geminiData?.choices?.[0]?.message?.content;
+  const rawContent = await callGemini(prompt, geminiApiKey, `extracting sources for thesis ${thesisId}`);
 
   let parsed: { sources?: ParsedSource[] } = {};
   try {

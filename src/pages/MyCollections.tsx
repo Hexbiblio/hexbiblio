@@ -44,7 +44,7 @@ const MyCollections = () => {
     const thesisIds = data.map(b => b.thesis_id);
     const { data: thesesData } = await supabase
       .from("theses")
-      .select("id, title, author_name, field, abstract, created_at")
+      .select("id, title, author_name, field, abstract, created_at, detected_language, title_translated")
       .in("id", thesisIds);
 
     const thesisMap = new Map(thesesData?.map(t => [t.id, t]) || []);

@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { getDocumentProxy } from "npm:unpdf";
 import { extractAndStoreSources } from "../_shared/extractSources.ts";
+import { detectAndTranslateTitle } from "../_shared/languageDetection.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -346,6 +347,20 @@ Set "consistent" to false if the document is off-topic, unrelated, gibberish, or
       extractAndStoreSources(supabase, inserted.id, filePath, title, field, GEMINI_API_KEY).catch((e) =>
         console.error("submit-thesis: background source extraction failed:", e)
       ),
+    );
+
+    // Same reasoning as above — language detection is cheap but the
+    // translation call (only when the thesis isn't French) hits Gemini, so
+    // it runs after the response too rather than adding latency to submission.
+    EdgeRuntime.waitUntil(
+      detectAndTranslateTitle(title, abstract, GEMINI_API_KEY)
+        .then(({ detectedLanguage, titleTranslated }) =>
+          supabase
+            .from("theses")
+            .update({ detected_language: detectedLanguage, title_translated: titleTranslated })
+            .eq("id", inserted.id)
+        )
+        .catch((e) => console.error("submit-thesis: background language detection failed:", e)),
     );
 
     return jsonResponse({ success: true, thesisId: inserted.id });
