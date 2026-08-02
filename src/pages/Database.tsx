@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ThesisCard from "@/components/ThesisCard";
 import PageControls from "@/components/PageControls";
 import { Search } from "lucide-react";
-import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+import { FIELDS, DEGREE_TYPES, YEARS } from "@/i18n/fields";
 import { foldAccents } from "@/lib/searchFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
@@ -36,6 +36,7 @@ const Database = () => {
   const debouncedSearch = useDebouncedValue(search, 300);
   const [fieldFilter, setFieldFilter] = useState("All Fields");
   const [degreeFilter, setDegreeFilter] = useState("All Degrees");
+  const [yearFilter, setYearFilter] = useState("All Years");
   const [loading, setLoading] = useState(true);
   const { t, language } = useLanguage();
 
@@ -45,6 +46,7 @@ const Database = () => {
   const handleSearch = (v: string) => { setSearch(v); setPage(1); };
   const handleFieldFilter = (v: string) => { setFieldFilter(v); setPage(1); };
   const handleDegreeFilter = (v: string) => { setDegreeFilter(v); setPage(1); };
+  const handleYearFilter = (v: string) => { setYearFilter(v); setPage(1); };
   const goToPage = (p: number) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
   useEffect(() => {
@@ -53,6 +55,7 @@ const Database = () => {
       let query = supabase.from("theses").select("*", { count: "exact" }).order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
+      if (yearFilter !== "All Years") query = query.eq("graduation_year", parseInt(yearFilter, 10));
       if (debouncedSearch.trim()) {
         query = query.textSearch("search_vector", foldAccents(debouncedSearch), { type: "websearch", config: "french" });
       }
@@ -90,7 +93,7 @@ const Database = () => {
       setLoading(false);
     };
     fetchTheses();
-  }, [debouncedSearch, fieldFilter, degreeFilter, page]);
+  }, [debouncedSearch, fieldFilter, degreeFilter, yearFilter, page]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -116,6 +119,13 @@ const Database = () => {
           <SelectContent>
             <SelectItem value="All Degrees">{t("db.allDegrees")}</SelectItem>
             {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={yearFilter} onValueChange={handleYearFilter}>
+          <SelectTrigger className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All Years">{t("db.allYears")}</SelectItem>
+            {YEARS.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>

@@ -84,6 +84,11 @@ export const LANGUAGES: FieldOption[] = [
   { value: "ja", en: "Japanese", fr: "japonais" },
 ];
 
+// A rolling 30-year window, most recent first — plenty of headroom for a
+// still-young archive. Shared here rather than redeclared per page (it was
+// previously duplicated in SubmitThesis.tsx and ThesisDetail.tsx).
+export const YEARS: number[] = Array.from({ length: 30 }, (_, i) => new Date().getFullYear() - i);
+
 const buildLookup = (options: FieldOption[]) => {
   const map = new Map(options.map((o) => [o.value, o]));
   return (value: string | null | undefined, language: Language): string => {

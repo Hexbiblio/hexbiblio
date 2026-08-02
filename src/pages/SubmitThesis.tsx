@@ -13,11 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Upload, X } from "lucide-react";
-import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
+import { FIELDS, DEGREE_TYPES, YEARS } from "@/i18n/fields";
 import { validateThesisTitle, validateThesisAbstract } from "@/lib/thesisValidation";
 
-const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 30 }, (_, i) => currentYear - i);
 const SUBMIT_THESIS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-thesis`;
 
 // French distinguishes "mémoire" (Bachelor's/Master's) from "thèse" (PhD) —

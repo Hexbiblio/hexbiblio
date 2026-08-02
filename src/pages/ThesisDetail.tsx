@@ -28,10 +28,7 @@ import CitationExport from "@/components/CitationExport";
 import ReportButton from "@/components/ReportButton";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2, Languages } from "lucide-react";
-import { fieldLabel, degreeLabel, languageLabel, FIELDS, DEGREE_TYPES } from "@/i18n/fields";
-
-const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 30 }, (_, i) => currentYear - i);
+import { fieldLabel, degreeLabel, languageLabel, FIELDS, DEGREE_TYPES, YEARS } from "@/i18n/fields";
 
 const ThesisDetail = () => {
   const { id } = useParams<{ id: string }>();
