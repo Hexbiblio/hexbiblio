@@ -159,6 +159,15 @@ export const translations = {
   "detail.edit": { en: "Edit details", fr: "Modifier les infos" },
   "detail.editCancel": { en: "Cancel", fr: "Annuler" },
   "detail.editSaved": { en: "Details updated.", fr: "Infos mises à jour." },
+  "detail.cite": { en: "Cite", fr: "Citer" },
+  "detail.citeTitle": { en: "Cite this thesis", fr: "Citer ce mémoire" },
+  "detail.citeCopy": { en: "Copy", fr: "Copier" },
+  "detail.citeCopied": { en: "Citation copied.", fr: "Citation copiée." },
+  "detail.citeDownload": { en: "Download", fr: "Télécharger" },
+  "detail.citeRisHint": {
+    en: "Import this file directly into Zotero, Mendeley or EndNote.",
+    fr: "Importe ce fichier directement dans Zotero, Mendeley ou EndNote.",
+  },
 
   // Collections
   "collections.title": { en: "My Collections", fr: "Mes collections" },

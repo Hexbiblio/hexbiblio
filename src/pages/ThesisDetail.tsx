@@ -24,6 +24,7 @@ import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
 import RelatedTheses from "@/components/RelatedTheses";
+import CitationExport from "@/components/CitationExport";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2 } from "lucide-react";
 import { fieldLabel, degreeLabel, FIELDS, DEGREE_TYPES } from "@/i18n/fields";
@@ -373,13 +374,16 @@ const ThesisDetail = () => {
             <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{thesis.abstract}</p>
           </div>
 
-          {thesis.file_url && (
-            <a href={thesis.file_url} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" className="gap-2">
-                <Download className="h-4 w-4" /> {t("detail.downloadPdf")}
-              </Button>
-            </a>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {thesis.file_url && (
+              <a href={thesis.file_url} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" /> {t("detail.downloadPdf")}
+                </Button>
+              </a>
+            )}
+            <CitationExport thesis={thesis} />
+          </div>
 
           {sources.length > 0 && (
             <div>
