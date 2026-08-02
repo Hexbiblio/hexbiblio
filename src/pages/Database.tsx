@@ -50,10 +50,7 @@ const Database = () => {
   useEffect(() => {
     const fetchTheses = async () => {
       setLoading(true);
-      // theses_fr-origin rows are a backing corpus for the sources-derived
-      // features only (see 20260802100000_theses_fr_import_support.sql) —
-      // not yet meant to appear as browsable community content.
-      let query = supabase.from("theses").select("*", { count: "exact" }).eq("origin", "community").order("created_at", { ascending: false });
+      let query = supabase.from("theses").select("*", { count: "exact" }).order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
       if (debouncedSearch.trim()) {

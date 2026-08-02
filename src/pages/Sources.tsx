@@ -68,13 +68,9 @@ const Sources = () => {
       // below actually excludes non-matching sources — PostgREST's default
       // left-join embed only filters *which* nested thesis is returned, not
       // whether the source row itself is included.
-      // theses_fr-origin rows are a backing corpus for les incontournables /
-      // mémoires proches only (see 20260802100000_theses_fr_import_support.sql)
-      // — excluded here so "Toutes les sources" stays community-only for now.
       let query = supabase
         .from("sources")
         .select("id, raw_citation, title, authors, year, theses!inner(id, title, field, degree_type)", { count: "exact" })
-        .eq("theses.origin", "community")
         .order("created_at", { ascending: false });
 
       if (fieldFilter !== "All Fields") query = query.eq("theses.field", fieldFilter);
