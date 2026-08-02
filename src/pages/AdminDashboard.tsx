@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Search, Trash2 } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
-import { buildIlikeOrFilter } from "@/lib/searchFilter";
+import { buildIlikeOrFilter, foldAccents } from "@/lib/searchFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const ADMIN_DELETE_USER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-delete-user`;
@@ -86,7 +86,9 @@ const AdminDashboard = () => {
         .order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
-      if (debouncedThesisSearch.trim()) query = query.or(buildIlikeOrFilter(["title", "author_name"], debouncedThesisSearch));
+      if (debouncedThesisSearch.trim()) {
+        query = query.textSearch("search_vector", foldAccents(debouncedThesisSearch), { type: "websearch", config: "french" });
+      }
       const { data } = await query;
       setTheses(data || []);
       setThesesLoading(false);

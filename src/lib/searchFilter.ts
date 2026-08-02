@@ -23,3 +23,13 @@ export function buildIlikeOrFilter(columns: string[], search: string): string {
   const value = escapeFilterValue(search.trim());
   return columns.map((column) => `${column}.ilike."%${value}%"`).join(",");
 }
+
+// The full-text search_vector columns (theses, sources) are built from
+// accent-folded text via unaccent_immutable() in Postgres, so a query for
+// "memoire" can match a stored "mémoire" — but only if the query sent to
+// websearch_to_tsquery is folded the same way. Same NFD-normalize +
+// strip-combining-marks trick already used for filenames in
+// SubmitThesis.tsx's sanitizeFileName.
+export function foldAccents(text: string): string {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}

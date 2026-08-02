@@ -7,7 +7,7 @@ import ThesisCard from "@/components/ThesisCard";
 import PageControls from "@/components/PageControls";
 import { Search } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
-import { buildIlikeOrFilter } from "@/lib/searchFilter";
+import { foldAccents } from "@/lib/searchFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // 24 divides evenly by both the 2- and 3-column grid breakpoints below, so a
@@ -53,7 +53,9 @@ const Database = () => {
       let query = supabase.from("theses").select("*", { count: "exact" }).order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
-      if (debouncedSearch.trim()) query = query.or(buildIlikeOrFilter(["title", "author_name", "abstract"], debouncedSearch));
+      if (debouncedSearch.trim()) {
+        query = query.textSearch("search_vector", foldAccents(debouncedSearch), { type: "websearch", config: "french" });
+      }
       const from = (page - 1) * PAGE_SIZE;
       query = query.range(from, from + PAGE_SIZE - 1);
 

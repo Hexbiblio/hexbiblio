@@ -9,7 +9,7 @@ import FieldEssentials from "@/components/FieldEssentials";
 import PageControls from "@/components/PageControls";
 import { Search } from "lucide-react";
 import { FIELDS, DEGREE_TYPES } from "@/i18n/fields";
-import { buildIlikeOrFilter } from "@/lib/searchFilter";
+import { foldAccents } from "@/lib/searchFilter";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Same grid as /database, same reasoning: 24 divides evenly by 2 and 3 columns.
@@ -76,7 +76,7 @@ const Sources = () => {
       if (fieldFilter !== "All Fields") query = query.eq("theses.field", fieldFilter);
       if (degreeFilter !== "All Degrees") query = query.eq("theses.degree_type", degreeFilter);
       if (debouncedSearch.trim()) {
-        query = query.or(buildIlikeOrFilter(["raw_citation", "title", "authors"], debouncedSearch));
+        query = query.textSearch("search_vector", foldAccents(debouncedSearch), { type: "websearch", config: "french" });
       }
       const from = (page - 1) * PAGE_SIZE;
       query = query.range(from, from + PAGE_SIZE - 1);

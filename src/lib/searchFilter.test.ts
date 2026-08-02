@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildIlikeOrFilter } from "./searchFilter";
+import { buildIlikeOrFilter, foldAccents } from "./searchFilter";
 
 describe("buildIlikeOrFilter", () => {
   it("builds one ilike condition per column", () => {
@@ -24,5 +24,23 @@ describe("buildIlikeOrFilter", () => {
 
   it("trims surrounding whitespace", () => {
     expect(buildIlikeOrFilter(["title"], "  histoire  ")).toBe('title.ilike."%histoire%"');
+  });
+});
+
+describe("foldAccents", () => {
+  // Must match unaccent_immutable() in the 20260802090000 migration exactly —
+  // this is what makes a typed "memoire" find a stored "mémoire" via
+  // websearch_to_tsquery on both sides of the comparison.
+  it("strips common French accents", () => {
+    expect(foldAccents("mémoire")).toBe("memoire");
+    expect(foldAccents("société éducative à Noël")).toBe("societe educative a Noel");
+  });
+
+  it("leaves unaccented text untouched", () => {
+    expect(foldAccents("machine learning finance")).toBe("machine learning finance");
+  });
+
+  it("preserves websearch operators (quotes, hyphen exclusion) so they still parse server-side", () => {
+    expect(foldAccents('"réseaux sociaux" -éducation')).toBe('"reseaux sociaux" -education');
   });
 });
