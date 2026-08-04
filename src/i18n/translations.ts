@@ -185,6 +185,7 @@ export const translations = {
   "detail.backToDb": { en: "Back", fr: "Retour" },
   "detail.abstract": { en: "Abstract", fr: "Résumé" },
   "detail.downloadPdf": { en: "Download PDF", fr: "Télécharger le PDF" },
+  "detail.downloading": { en: "Downloading...", fr: "Téléchargement..." },
   "detail.notFound": { en: "We couldn't find this.", fr: "Ce travail est introuvable." },
   "detail.sources": { en: "Sources", fr: "Sources" },
   "detail.relatedTheses": { en: "Related theses", fr: "Mémoires proches" },

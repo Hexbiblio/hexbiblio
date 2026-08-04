@@ -30,6 +30,18 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2, Languages } from "lucide-react";
 import { fieldLabel, degreeLabel, languageLabel, FIELDS, DEGREE_TYPES, YEARS } from "@/i18n/fields";
 
+// LEGAL-04: the "theses" bucket is private now (20260804210000), so
+// file_url — still stored as the old public-URL shape from getPublicUrl()
+// — no longer resolves directly. Pull the storage path back out of it so
+// the authenticated download() call below can fetch it. Returns null for
+// anything that isn't a Hexbiblio-hosted path (e.g. an admin-set external
+// URL via the edit form below), which falls back to a plain link.
+const extractThesisStoragePath = (fileUrl: string): string | null => {
+  const marker = "/object/public/theses/";
+  const i = fileUrl.indexOf(marker);
+  return i === -1 ? null : fileUrl.slice(i + marker.length);
+};
+
 const ThesisDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -45,6 +57,7 @@ const ThesisDetail = () => {
   const [totalAccuracy, setTotalAccuracy] = useState(0);
   const [sources, setSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
 
   // Only field/degree_type/graduation_year/keywords are editable post-submission —
   // title/abstract/author/PDF stay exactly what Phase 2's AI check verified.
@@ -183,6 +196,33 @@ const ThesisDetail = () => {
     }
     toast({ title: t("admin.thesisDeleted") });
     navigate("/database");
+  };
+
+  // LEGAL-04: fetches the PDF through the authenticated storage API instead
+  // of linking straight to a public URL, so the download genuinely requires
+  // a session rather than just hiding the button behind one in the UI.
+  const handleDownload = async () => {
+    if (!thesis?.file_url) return;
+    const path = extractThesisStoragePath(thesis.file_url);
+    if (!path) {
+      window.open(thesis.file_url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    setDownloading(true);
+    const { data, error } = await supabase.storage.from("theses").download(path);
+    setDownloading(false);
+    if (error || !data) {
+      toast({ title: t("common.error"), description: error?.message, variant: "destructive" });
+      return;
+    }
+    const blobUrl = URL.createObjectURL(data);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = path.split("/").pop() || "thesis.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
   };
 
   if (loading) {
@@ -396,11 +436,9 @@ const ThesisDetail = () => {
             <>
               <div className="flex flex-wrap gap-2">
                 {thesis.file_url && (
-                  <a href={thesis.file_url} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" className="gap-2">
-                      <Download className="h-4 w-4" /> {t("detail.downloadPdf")}
-                    </Button>
-                  </a>
+                  <Button variant="outline" className="gap-2" onClick={handleDownload} disabled={downloading}>
+                    <Download className="h-4 w-4" /> {downloading ? t("detail.downloading") : t("detail.downloadPdf")}
+                  </Button>
                 )}
                 <CitationExport thesis={thesis} />
               </div>
