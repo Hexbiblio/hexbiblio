@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AdminRoute from "@/components/AdminRoute";
 // Index stays eager — it's the landing page most visitors hit first, and
@@ -25,6 +26,9 @@ const SubmitThesis = lazy(() => import("./pages/SubmitThesis"));
 const MyCollections = lazy(() => import("./pages/MyCollections"));
 const Profile = lazy(() => import("./pages/Profile"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const MentionsLegales = lazy(() => import("./pages/MentionsLegales"));
+const Confidentialite = lazy(() => import("./pages/Confidentialite"));
+const CGU = lazy(() => import("./pages/CGU"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const RouteFallback = () => (
@@ -57,9 +61,13 @@ const App = () => (
                 <Route path="/my-collections" element={<ProtectedRoute><MyCollections /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                <Route path="/mentions-legales" element={<MentionsLegales />} />
+                <Route path="/confidentialite" element={<Confidentialite />} />
+                <Route path="/cgu" element={<CGU />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <Footer />
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

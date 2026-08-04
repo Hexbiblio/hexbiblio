@@ -11,6 +11,11 @@ export const translations = {
   "nav.signIn": { en: "Sign In", fr: "Connexion" },
   "nav.signOut": { en: "Sign Out", fr: "Se déconnecter" },
 
+  // Footer
+  "footer.legalNotice": { en: "Legal notice", fr: "Mentions légales" },
+  "footer.privacy": { en: "Privacy", fr: "Confidentialité" },
+  "footer.terms": { en: "Terms", fr: "CGU" },
+
   // Auth
   "auth.createAccount": { en: "Keep moving on your thesis", fr: "Avance sur ton travail" },
   "auth.welcomeBack": { en: "Good to see you again", fr: "Content de te revoir" },
