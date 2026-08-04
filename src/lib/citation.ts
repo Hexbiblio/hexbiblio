@@ -9,7 +9,7 @@ export interface CitableThesis {
   created_at: string;
 }
 
-const THESIS_URL_BASE = "https://hexbiblio.vercel.app/database";
+const THESIS_URL_BASE = "https://www.hexbiblio.fr/database";
 
 // graduation_year is optional metadata; created_at (submission date) always
 // exists, so a citation never ends up with a blank year.

@@ -14,7 +14,7 @@ describe("buildApaCitation", () => {
   it("includes author, year, title, degree bracket and a link back to the thesis", () => {
     const citation = buildApaCitation(thesis, "Master");
     expect(citation).toBe(
-      "Marie Dupont. (2024). L'impact des réseaux sociaux sur la mémoire collective [Master]. Hexbiblio. https://hexbiblio.vercel.app/database/abc-123",
+      "Marie Dupont. (2024). L'impact des réseaux sociaux sur la mémoire collective [Master]. Hexbiblio. https://www.hexbiblio.fr/database/abc-123",
     );
   });
 
@@ -37,7 +37,7 @@ describe("buildBibtexCitation", () => {
     expect(citation).toContain("title = {L'impact des réseaux sociaux sur la mémoire collective},");
     expect(citation).toContain("year = {2024},");
     expect(citation).toContain("type = {Master},");
-    expect(citation).toContain("url = {https://hexbiblio.vercel.app/database/abc-123},");
+    expect(citation).toContain("url = {https://www.hexbiblio.fr/database/abc-123},");
   });
 
   it("uses @phdthesis for a PhD", () => {
@@ -65,7 +65,7 @@ describe("buildRisCitation", () => {
         "TI  - L'impact des réseaux sociaux sur la mémoire collective",
         "PY  - 2024",
         "M3  - Master",
-        "UR  - https://hexbiblio.vercel.app/database/abc-123",
+        "UR  - https://www.hexbiblio.fr/database/abc-123",
         "ER  - ",
       ].join("\n"),
     );
