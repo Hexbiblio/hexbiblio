@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ThesisCard from "@/components/ThesisCard";
 import PageControls from "@/components/PageControls";
@@ -46,6 +49,10 @@ const Database = () => {
   const [yearTo, setYearTo] = useState("Any");
   const [loading, setLoading] = useState(true);
   const { t, language } = useLanguage();
+  // SEO-02: logged-out visitors get theses_public (masked to author/title/
+  // abstract/field/year/date, no degree_type — see the migration) instead
+  // of the full `theses` table, which their RLS can't read anyway.
+  const { user } = useAuth();
 
   // Any change to what's being filtered/searched invalidates the current page —
   // going through these instead of the raw setters keeps that from needing a
@@ -60,9 +67,13 @@ const Database = () => {
   useEffect(() => {
     const fetchTheses = async () => {
       setLoading(true);
-      let query = supabase.from("theses").select("*", { count: "exact" }).order("created_at", { ascending: false });
+      // theses_public has no degree_type column — see the migration — so an
+      // anon degree filter would error against it; the dropdown itself is
+      // hidden below for the same reason.
+      const table = user ? "theses" : "theses_public";
+      let query = supabase.from(table).select("*", { count: "exact" }).order("created_at", { ascending: false });
       if (fieldFilter !== "All Fields") query = query.eq("field", fieldFilter);
-      if (degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
+      if (user && degreeFilter !== "All Degrees") query = query.eq("degree_type", degreeFilter);
       if (yearFrom !== "Any") query = query.gte("graduation_year", parseInt(yearFrom, 10));
       if (yearTo !== "Any") query = query.lte("graduation_year", parseInt(yearTo, 10));
       if (debouncedSearch.trim()) {
@@ -75,12 +86,6 @@ const Database = () => {
       setTotal(count ?? 0);
       if (!data) { setLoading(false); return; }
 
-      const ids = data.map(t => t.id);
-      const [{ data: ratings }, { data: accRatings }] = await Promise.all([
-        supabase.from("ratings").select("thesis_id, score").in("thesis_id", ids),
-        supabase.from("accuracy_ratings").select("thesis_id, score").in("thesis_id", ids),
-      ]);
-
       const avgMap = (arr: any[] | null) => {
         const map: Record<string, { total: number; count: number }> = {};
         for (const r of arr || []) {
@@ -91,10 +96,21 @@ const Database = () => {
         return map;
       };
 
-      const rMap = avgMap(ratings);
-      const aMap = avgMap(accRatings);
+      // Ratings/accuracy_ratings are authenticated-only (RLS) — skip the
+      // round trip entirely for anon rather than fetch something empty.
+      let rMap: Record<string, { total: number; count: number }> = {};
+      let aMap: Record<string, { total: number; count: number }> = {};
+      if (user) {
+        const ids = data.map((t: any) => t.id);
+        const [{ data: ratings }, { data: accRatings }] = await Promise.all([
+          supabase.from("ratings").select("thesis_id, score").in("thesis_id", ids),
+          supabase.from("accuracy_ratings").select("thesis_id, score").in("thesis_id", ids),
+        ]);
+        rMap = avgMap(ratings);
+        aMap = avgMap(accRatings);
+      }
 
-      setTheses(data.map(t => ({
+      setTheses(data.map((t: any) => ({
         ...t,
         avgRating: rMap[t.id] ? rMap[t.id].total / rMap[t.id].count : 0,
         avgAccuracy: aMap[t.id] ? aMap[t.id].total / aMap[t.id].count : 0,
@@ -102,7 +118,7 @@ const Database = () => {
       setLoading(false);
     };
     fetchTheses();
-  }, [debouncedSearch, fieldFilter, degreeFilter, yearFrom, yearTo, page]);
+  }, [debouncedSearch, fieldFilter, degreeFilter, yearFrom, yearTo, page, user]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -110,6 +126,13 @@ const Database = () => {
         <h1 className="text-3xl font-bold">{t("db.title")}</h1>
         <p className="text-muted-foreground mt-1">{t("db.subtitle")}</p>
       </div>
+
+      {!user && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+          <span>{t("db.publicBanner")}</span>
+          <Link to="/auth"><Button size="sm">{t("db.publicBannerButton")}</Button></Link>
+        </div>
+      )}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <div className="relative flex-1">
@@ -123,13 +146,15 @@ const Database = () => {
             {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={degreeFilter} onValueChange={handleDegreeFilter}>
-          <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All Degrees">{t("db.allDegrees")}</SelectItem>
-            {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {user && (
+          <Select value={degreeFilter} onValueChange={handleDegreeFilter}>
+            <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Degrees">{t("db.allDegrees")}</SelectItem>
+              {DEGREE_TYPES.map((d) => <SelectItem key={d.value} value={d.value}>{language === "fr" ? d.fr : d.en}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={yearFrom} onValueChange={handleYearFrom}>
           <SelectTrigger className="w-full sm:w-[130px]"><SelectValue placeholder={t("db.yearFrom")} /></SelectTrigger>
           <SelectContent>

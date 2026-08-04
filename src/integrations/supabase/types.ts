@@ -44,6 +44,13 @@ export type Database = {
             referencedRelation: "theses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "accuracy_ratings_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       bookmarks: {
@@ -74,6 +81,13 @@ export type Database = {
             columns: ["thesis_id"]
             isOneToOne: false
             referencedRelation: "theses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses_public"
             referencedColumns: ["id"]
           },
         ]
@@ -129,6 +143,13 @@ export type Database = {
             referencedRelation: "theses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "comments_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       notifications: {
@@ -165,6 +186,13 @@ export type Database = {
             columns: ["thesis_id"]
             isOneToOne: false
             referencedRelation: "theses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses_public"
             referencedColumns: ["id"]
           },
         ]
@@ -262,6 +290,13 @@ export type Database = {
             referencedRelation: "theses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ratings_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       reports: {
@@ -310,6 +345,13 @@ export type Database = {
             referencedRelation: "theses"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reports_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sources: {
@@ -349,6 +391,13 @@ export type Database = {
             columns: ["thesis_id"]
             isOneToOne: false
             referencedRelation: "theses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sources_thesis_id_fkey"
+            columns: ["thesis_id"]
+            isOneToOne: false
+            referencedRelation: "theses_public"
             referencedColumns: ["id"]
           },
         ]
@@ -439,7 +488,39 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      theses_public: {
+        Row: {
+          abstract: string | null
+          author_name: string | null
+          created_at: string | null
+          field: string | null
+          graduation_year: number | null
+          id: string | null
+          search_vector: unknown
+          title: string | null
+        }
+        Insert: {
+          abstract?: string | null
+          author_name?: string | null
+          created_at?: string | null
+          field?: string | null
+          graduation_year?: number | null
+          id?: string | null
+          search_vector?: unknown
+          title?: string | null
+        }
+        Update: {
+          abstract?: string | null
+          author_name?: string | null
+          created_at?: string | null
+          field?: string | null
+          graduation_year?: number | null
+          id?: string | null
+          search_vector?: unknown
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_old_chat_logs: { Args: never; Returns: undefined }

@@ -156,9 +156,25 @@ const Navbar = () => {
           )}
 
           {!user && (
-            <Link to="/auth">
-              <Button size="sm" className="rounded-full px-5 shadow-sm">{t("nav.signIn")}</Button>
-            </Link>
+            <>
+              {/* SEO-02: /database is public now — give guests a way to reach
+                  it from the nav instead of only the full authed link list. */}
+              <Link to="/database">
+                <Button
+                  variant={isActive("/database") ? "default" : "ghost"}
+                  size="sm"
+                  className={`gap-1.5 text-xs sm:text-sm rounded-full ${
+                    isActive("/database") ? "shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="hidden md:inline">{t("nav.database")}</span>
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button size="sm" className="rounded-full px-5 shadow-sm">{t("nav.signIn")}</Button>
+              </Link>
+            </>
           )}
         </div>
       </div>

@@ -71,33 +71,41 @@ const ThesisDetail = () => {
 
   const fetchThesis = async () => {
     if (!id) return;
-    const { data } = await supabase.from("theses").select("*").eq("id", id).single();
+    // SEO-02: logged-out visitors read theses_public (masked to author/
+    // title/abstract/field/year/date — see the migration) instead of the
+    // full `theses` table, which their RLS can't read anyway.
+    const { data } = user
+      ? await supabase.from("theses").select("*").eq("id", id).single()
+      : await supabase.from("theses_public").select("*").eq("id", id).single();
     setThesis(data);
     setLoading(false);
   };
 
+  // Ratings, accuracy ratings and sources are all authenticated-only (RLS) —
+  // and by product decision (SEO-02) sit behind the sign-up CTA regardless,
+  // alongside the PDF. Skip the round trips entirely for anon.
   const fetchRatings = async () => {
-    if (!id) return;
+    if (!id || !user) return;
     const { data } = await supabase.from("ratings").select("*").eq("thesis_id", id);
     if (data) {
       setTotalRatings(data.length);
       setAvgRating(data.length ? data.reduce((s, r) => s + r.score, 0) / data.length : 0);
-      if (user) setUserRating(data.find((r) => r.user_id === user.id)?.score);
+      setUserRating(data.find((r) => r.user_id === user.id)?.score);
     }
   };
 
   const fetchAccuracy = async () => {
-    if (!id) return;
+    if (!id || !user) return;
     const { data } = await supabase.from("accuracy_ratings").select("*").eq("thesis_id", id);
     if (data) {
       setTotalAccuracy(data.length);
       setAvgAccuracy(data.length ? data.reduce((s, r) => s + r.score, 0) / data.length : 0);
-      if (user) setUserAccuracy(data.find((r) => r.user_id === user.id)?.score);
+      setUserAccuracy(data.find((r) => r.user_id === user.id)?.score);
     }
   };
 
   const fetchSources = async () => {
-    if (!id) return;
+    if (!id || !user) return;
     const { data } = await supabase
       .from("sources")
       .select("id, raw_citation, title, authors, year")
@@ -365,63 +373,74 @@ const ThesisDetail = () => {
             )
           )}
 
-          <RatingWidget
-            thesisId={thesis.id}
-            currentRating={userRating}
-            avgRating={avgRating}
-            totalRatings={totalRatings}
-            onRated={fetchRatings}
-            currentAccuracy={userAccuracy}
-            avgAccuracy={avgAccuracy}
-            totalAccuracy={totalAccuracy}
-            onAccuracyRated={fetchAccuracy}
-          />
+          {user && (
+            <RatingWidget
+              thesisId={thesis.id}
+              currentRating={userRating}
+              avgRating={avgRating}
+              totalRatings={totalRatings}
+              onRated={fetchRatings}
+              currentAccuracy={userAccuracy}
+              avgAccuracy={avgAccuracy}
+              totalAccuracy={totalAccuracy}
+              onAccuracyRated={fetchAccuracy}
+            />
+          )}
 
           <div>
             <h2 className="mb-2 text-lg font-semibold">{t("detail.abstract")}</h2>
             <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{thesis.abstract}</p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {thesis.file_url && (
-              <a href={thesis.file_url} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" className="gap-2">
-                  <Download className="h-4 w-4" /> {t("detail.downloadPdf")}
-                </Button>
-              </a>
-            )}
-            <CitationExport thesis={thesis} />
-          </div>
+          {user ? (
+            <>
+              <div className="flex flex-wrap gap-2">
+                {thesis.file_url && (
+                  <a href={thesis.file_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="gap-2">
+                      <Download className="h-4 w-4" /> {t("detail.downloadPdf")}
+                    </Button>
+                  </a>
+                )}
+                <CitationExport thesis={thesis} />
+              </div>
 
-          {sources.length > 0 && (
-            <div>
-              <h2 className="mb-2 text-lg font-semibold">{t("detail.sources")} ({sources.length})</h2>
-              <ol className="space-y-1.5">
-                {sources.map((source, i) => (
-                  <li key={source.id} className="flex gap-2 text-sm text-muted-foreground leading-snug">
-                    <span className="shrink-0 text-xs tabular-nums">{i + 1}.</span>
-                    <span>
-                      {source.title ? (
-                        <>
-                          {source.authors && `${source.authors} `}
-                          {source.year && `(${source.year}). `}
-                          <span className="text-foreground">{source.title}</span>
-                        </>
-                      ) : (
-                        source.raw_citation
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ol>
+              {sources.length > 0 && (
+                <div>
+                  <h2 className="mb-2 text-lg font-semibold">{t("detail.sources")} ({sources.length})</h2>
+                  <ol className="space-y-1.5">
+                    {sources.map((source, i) => (
+                      <li key={source.id} className="flex gap-2 text-sm text-muted-foreground leading-snug">
+                        <span className="shrink-0 text-xs tabular-nums">{i + 1}.</span>
+                        <span>
+                          {source.title ? (
+                            <>
+                              {source.authors && `${source.authors} `}
+                              {source.year && `(${source.year}). `}
+                              <span className="text-foreground">{source.title}</span>
+                            </>
+                          ) : (
+                            source.raw_citation
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              <RelatedTheses thesisId={thesis.id} />
+
+              <hr className="border-border" />
+
+              <CommentSection thesisId={thesis.id} />
+            </>
+          ) : (
+            <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center">
+              <p className="text-sm text-muted-foreground">{t("detail.signupCtaBody")}</p>
+              <Link to="/auth"><Button>{t("detail.signupCtaButton")}</Button></Link>
             </div>
           )}
-
-          <RelatedTheses thesisId={thesis.id} />
-
-          <hr className="border-border" />
-
-          <CommentSection thesisId={thesis.id} />
         </CardContent>
       </Card>
     </div>
