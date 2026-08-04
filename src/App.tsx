@@ -17,6 +17,7 @@ import AdminRoute from "@/components/AdminRoute";
 // ever open it.
 import Index from "./pages/Index";
 const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Database = lazy(() => import("./pages/Database"));
 const Sources = lazy(() => import("./pages/Sources"));
 const ThesisDetail = lazy(() => import("./pages/ThesisDetail"));
@@ -45,8 +46,11 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/database" element={<ProtectedRoute><Database /></ProtectedRoute>} />
-                <Route path="/database/:id" element={<ProtectedRoute><ThesisDetail /></ProtectedRoute>} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                {/* SEO-02: public on purpose — masked to author/title/abstract/field/year/date
+                    for anonymous visitors so Google can index them, see theses_public view */}
+                <Route path="/database" element={<Database />} />
+                <Route path="/database/:id" element={<ThesisDetail />} />
                 <Route path="/sources" element={<ProtectedRoute><Sources /></ProtectedRoute>} />
                 <Route path="/chat" element={<Navigate to="/" replace />} />
                 <Route path="/submit" element={<ProtectedRoute><SubmitThesis /></ProtectedRoute>} />

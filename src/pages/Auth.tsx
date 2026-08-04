@@ -13,11 +13,13 @@ import { Separator } from "@/components/ui/separator";
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetLinkSent, setResetLinkSent] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, resetPasswordForEmail } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -40,6 +42,27 @@ const Auth = () => {
     }
   };
 
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Supabase never reveals whether the email exists (avoids account
+      // enumeration), so the same confirmation shows regardless of outcome.
+      await resetPasswordForEmail(email);
+      setResetLinkSent(true);
+    } catch (error: any) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const backToSignIn = () => {
+    setShowForgotPassword(false);
+    setResetLinkSent(false);
+    setPassword("");
+  };
+
   const handleOAuth = async (provider: "google" | "apple") => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -55,6 +78,51 @@ const Auth = () => {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     }
   };
+
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-start sm:justify-center bg-background px-4 pt-10 pb-8 sm:py-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+              <BookOpen className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-2xl">
+              {resetLinkSent ? t("auth.resetLinkSent") : t("auth.resetPasswordTitle")}
+            </CardTitle>
+            <CardDescription>
+              {resetLinkSent ? t("auth.resetLinkSentDescription") : t("auth.resetPasswordDescription")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!resetLinkSent && (
+              <form onSubmit={handleResetRequest} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">{t("auth.email")}</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? t("auth.loading") : t("auth.sendResetLink")}
+                </Button>
+              </form>
+            )}
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              <button onClick={backToSignIn} className="text-primary-text hover:underline font-medium">
+                {t("auth.backToSignIn")}
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start sm:justify-center bg-background px-4 pt-10 pb-8 sm:py-4">
@@ -94,7 +162,18 @@ const Auth = () => {
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{t("auth.password")}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t("auth.password")}</Label>
+                {!isSignUp && (
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-xs text-muted-foreground hover:text-primary-text hover:underline"
+                  >
+                    {t("auth.forgotPassword")}
+                  </button>
+                )}
+              </div>
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

@@ -27,6 +27,33 @@ export const translations = {
   "auth.dontHaveAccount": { en: "Don't have an account?", fr: "Tu n'as pas de compte ?" },
   "auth.accountCreated": { en: "Account created!", fr: "Compte créé !" },
   "auth.checkEmail": { en: "Check your email to confirm your account.", fr: "Vérifie ton e-mail pour confirmer ton compte." },
+  "auth.forgotPassword": { en: "Forgot password?", fr: "Mot de passe oublié ?" },
+  "auth.resetPasswordTitle": { en: "Reset your password", fr: "Réinitialise ton mot de passe" },
+  "auth.resetPasswordDescription": {
+    en: "Enter your email and we'll send you a link to reset your password.",
+    fr: "Indique ton e-mail, on t'envoie un lien pour réinitialiser ton mot de passe.",
+  },
+  "auth.sendResetLink": { en: "Send reset link", fr: "Envoyer le lien" },
+  "auth.resetLinkSent": { en: "Check your email", fr: "Vérifie ta boîte mail" },
+  "auth.resetLinkSentDescription": {
+    en: "If an account exists for that email, we've sent a link to reset your password.",
+    fr: "Si un compte existe avec cette adresse, un lien de réinitialisation vient d'être envoyé.",
+  },
+  "auth.backToSignIn": { en: "Back to sign in", fr: "Retour à la connexion" },
+  "auth.newPassword": { en: "New password", fr: "Nouveau mot de passe" },
+  "auth.confirmPassword": { en: "Confirm password", fr: "Confirmer le mot de passe" },
+  "auth.passwordsDontMatch": { en: "Passwords don't match", fr: "Les mots de passe ne correspondent pas" },
+  "auth.setNewPassword": { en: "Set new password", fr: "Définir le nouveau mot de passe" },
+  "auth.passwordUpdated": { en: "Password updated", fr: "Mot de passe mis à jour" },
+  "auth.passwordUpdatedDescription": {
+    en: "You can now sign in with your new password.",
+    fr: "Tu peux maintenant te connecter avec ton nouveau mot de passe.",
+  },
+  "auth.invalidResetLink": {
+    en: "This reset link is invalid or has expired.",
+    fr: "Ce lien de réinitialisation est invalide ou a expiré.",
+  },
+  "auth.requestNewLink": { en: "Request a new link", fr: "Demander un nouveau lien" },
 
   // Index / Landing
   "landing.title": { en: "Hexbiblio", fr: "Hexbiblio" },
@@ -88,6 +115,8 @@ export const translations = {
   "db.yearTo": { en: "To year", fr: "Jusqu'à" },
   "db.noTheses": { en: "No results found", fr: "Aucun résultat" },
   "db.tryAdjusting": { en: "Try different keywords, or be the first to explore this topic here.", fr: "Essaie d'autres mots-clés, ou sois le premier à explorer ce sujet ici." },
+  "db.publicBanner": { en: "You're browsing in open access. Create an account to unlock the PDF, extracted bibliography, related theses and discussions.", fr: "Tu parcours en accès libre. Crée un compte pour débloquer le PDF, la bibliographie extraite, les mémoires proches et les discussions." },
+  "db.publicBannerButton": { en: "Create an account", fr: "Créer un compte" },
 
   // Sources
   "sources.title": { en: "Sources", fr: "Sources" },
@@ -161,6 +190,8 @@ export const translations = {
   "detail.edit": { en: "Edit details", fr: "Modifier les infos" },
   "detail.editCancel": { en: "Cancel", fr: "Annuler" },
   "detail.editSaved": { en: "Details updated.", fr: "Infos mises à jour." },
+  "detail.signupCtaBody": { en: "Create a free account to download the PDF, browse the extracted bibliography, see related theses, rate this work, and join the discussion.", fr: "Crée un compte gratuit pour télécharger le PDF, consulter la bibliographie extraite, découvrir les mémoires proches, noter ce travail et rejoindre la discussion." },
+  "detail.signupCtaButton": { en: "Create an account", fr: "Créer un compte" },
   "detail.cite": { en: "Cite", fr: "Citer" },
   "detail.citeTitle": { en: "Cite this thesis", fr: "Citer ce mémoire" },
   "detail.citeCopy": { en: "Copy", fr: "Copier" },
