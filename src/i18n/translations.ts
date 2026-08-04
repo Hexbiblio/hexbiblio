@@ -229,6 +229,18 @@ export const translations = {
   "profile.save": { en: "Save", fr: "Enregistrer" },
   "profile.updated": { en: "Profile updated!", fr: "Profil mis à jour !" },
   "profile.myTheses": { en: "My Work", fr: "Mon travail" },
+  "profile.deleteAccountTitle": { en: "Delete my account", fr: "Supprimer mon compte" },
+  "profile.deleteAccountDescription": {
+    en: "Your profile, comments, ratings and bookmarks are permanently deleted. Any thesis you've submitted stays on Hexbiblio, still attributed to your name, so the work you and others cited it for isn't lost — it's just no longer linked to an account.",
+    fr: "Ton profil, tes commentaires, tes notes et tes favoris sont supprimés définitivement. Les mémoires que tu as déposés restent sur Hexbiblio, toujours attribués à ton nom, pour que le travail que toi et d'autres avez cité ne disparaisse pas — il n'est simplement plus rattaché à un compte.",
+  },
+  "profile.deleteAccountConfirmTitle": { en: "This can't be undone", fr: "Cette action est irréversible" },
+  "profile.deleteAccountConfirmBody": {
+    en: "Type your email address below to confirm. Your account, profile and personal activity will be gone for good — any thesis you've submitted stays published.",
+    fr: "Tape ton adresse e-mail ci-dessous pour confirmer. Ton compte, ton profil et ton activité personnelle disparaissent définitivement — les mémoires que tu as déposés restent publiés.",
+  },
+  "profile.deleteAccountConfirmButton": { en: "Delete my account", fr: "Supprimer mon compte" },
+  "profile.typeEmailToConfirm": { en: "Type your email to confirm", fr: "Tape ton e-mail pour confirmer" },
   "profile.noTheses": { en: "You haven't put anything online yet — whenever you're ready.", fr: "Tu n'as encore rien mis en ligne — quand tu es prêt." },
 
   // Admin (moderation dashboard — internal surface, only the site owner sees this)

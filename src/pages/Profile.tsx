@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -10,14 +11,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import ThesisCard from "@/components/ThesisCard";
 import { useToast } from "@/hooks/use-toast";
-import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library } from "lucide-react";
+import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library, Trash2 } from "lucide-react";
 import { useQuestProgress } from "@/components/ThesisQuests";
 import { ACADEMIC_LEVELS } from "@/i18n/fields";
 
+const DELETE_OWN_ACCOUNT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-own-account`;
+
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, session, signOut } = useAuth();
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
@@ -38,6 +53,8 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [myTheses, setMyTheses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirmInput, setDeleteConfirmInput] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -136,6 +153,32 @@ const Profile = () => {
     refetchQuests();
 
     toast({ title: t("profile.updated") });
+  };
+
+  // LEX-04: theses.user_id is ON DELETE SET NULL, not CASCADE — a deposited
+  // thesis stays public and attributed after its author's account is gone,
+  // it just stops being editable by anyone but an admin. See the
+  // 20260804230000 migration.
+  const handleDeleteAccount = async () => {
+    if (!session) return;
+    setDeletingAccount(true);
+    try {
+      const resp = await fetch(DELETE_OWN_ACCOUNT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ language }),
+      });
+      const result = await resp.json().catch(() => null);
+      if (!resp.ok) throw new Error(result?.error || `Error ${resp.status}`);
+      await signOut();
+      navigate("/");
+    } catch (error: any) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      setDeletingAccount(false);
+    }
   };
 
   if (loading) {
@@ -321,6 +364,42 @@ const Profile = () => {
           </div>
         )}
       </div>
+
+      <Card className="border-destructive/40">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive"><Trash2 className="h-5 w-5" /> {t("profile.deleteAccountTitle")}</CardTitle>
+          <CardDescription>{t("profile.deleteAccountDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog onOpenChange={(open) => { if (!open) setDeleteConfirmInput(""); }}>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">{t("profile.deleteAccountTitle")}</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("profile.deleteAccountConfirmTitle")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("profile.deleteAccountConfirmBody")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              <p className="rounded bg-muted px-2 py-1 font-mono text-sm">{user?.email}</p>
+              <Input
+                value={deleteConfirmInput}
+                onChange={(e) => setDeleteConfirmInput(e.target.value)}
+                placeholder={t("profile.typeEmailToConfirm")}
+              />
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t("detail.editCancel")}</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={deleteConfirmInput !== user?.email || deletingAccount}
+                  onClick={handleDeleteAccount}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {deletingAccount ? t("auth.loading") : t("profile.deleteAccountConfirmButton")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
     </div>
   );
 };

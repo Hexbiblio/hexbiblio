@@ -21,6 +21,12 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+// LEX-04: self-service account deletion for a student deleting their own
+// account — distinct from admin-delete-user, which is for an admin
+// deleting someone else's and explicitly refuses a self-target. No admin
+// role check here: the target is never taken from the request body, only
+// ever derived from the caller's own JWT, so this can only ever delete the
+// caller's own account, never anyone else's.
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,20 +34,13 @@ serve(async (req) => {
 
   let language = "en";
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     language = body.language ?? "en";
-    const { targetUserId } = body;
-
-    if (!targetUserId || typeof targetUserId !== "string") {
-      return jsonResponse({ error: "Missing target account" }, 400);
-    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // ---- Resolve the caller's own identity from their JWT — never trust
-    // anything the client claims about itself in the request body. ----
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
     if (!token) return jsonResponse({ error: "Authentication required" }, 401);
@@ -50,45 +49,19 @@ serve(async (req) => {
     const callerId = userData?.user?.id;
     if (authError || !callerId) return jsonResponse({ error: "Authentication required" }, 401);
 
-    // ---- Re-derive admin status server-side. Never trust an "isAdmin"
-    // flag from the client — this is the only thing standing between any
-    // authenticated caller and deleting an arbitrary account. ----
-    const { data: roleRow } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", callerId)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    if (!roleRow) {
-      return jsonResponse({ error: msg(language, "You don't have access to this.", "Tu n'as pas accès à ceci.") }, 403);
-    }
-
-    // ---- Refuse self-deletion via this path — an accidental self-lockout
-    // has no recovery route short of another admin or direct DB access. ----
-    if (targetUserId === callerId) {
-      return jsonResponse(
-        { error: msg(language, "You can't delete your own account this way.", "Tu ne peux pas supprimer ton propre compte de cette façon.") },
-        400,
-      );
-    }
-
-    // ---- The actual deletion. profiles.user_id, comments.user_id,
-    // ratings.user_id and bookmarks.user_id all still ON DELETE CASCADE to
-    // auth.users(id) — a single Admin API call is enough to clean those up.
-    // theses.user_id is deliberately NOT among them (LEX-04, 2026-08-04):
-    // it's ON DELETE SET NULL, so a deleted account's theses stay in the
-    // corpus — with the sources already extracted from them — just no
-    // longer linked to an account. ----
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(targetUserId);
+    // ---- The actual deletion. profiles.user_id still cascades, so the
+    // profile row is gone; theses.user_id is ON DELETE SET NULL (LEX-04) —
+    // theses stay in the corpus, with the author_name they already had,
+    // just no longer linked to an account. ----
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(callerId);
     if (deleteError) {
-      console.error("admin-delete-user: deleteUser failed:", deleteError);
+      console.error("delete-own-account: deleteUser failed:", deleteError);
       return jsonResponse({ error: msg(language, GENERIC_ERROR_EN, GENERIC_ERROR_FR) }, 500);
     }
 
     return jsonResponse({ success: true });
   } catch (e) {
-    console.error("admin-delete-user error:", e);
+    console.error("delete-own-account error:", e);
     return jsonResponse({ error: msg(language, GENERIC_ERROR_EN, GENERIC_ERROR_FR) }, 500);
   }
 });
