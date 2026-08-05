@@ -20,6 +20,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
+import DisciplineSelect from "@/components/DisciplineSelect";
 import RatingWidget from "@/components/RatingWidget";
 import CommentSection from "@/components/CommentSection";
 import BookmarkButton from "@/components/BookmarkButton";
@@ -28,7 +29,7 @@ import CitationExport from "@/components/CitationExport";
 import ReportButton from "@/components/ReportButton";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Download, Calendar, User, GraduationCap, Tag, Pencil, X, Trash2, Languages } from "lucide-react";
-import { fieldLabel, degreeLabel, languageLabel, FIELDS, DEGREE_TYPES, YEARS } from "@/i18n/fields";
+import { fieldLabel, degreeLabel, languageLabel, DEGREE_TYPES, YEARS } from "@/i18n/fields";
 
 // LEGAL-04: the "theses" bucket is private now (20260804210000), so
 // file_url — still stored as the old public-URL shape from getPublicUrl()
@@ -257,12 +258,7 @@ const ThesisDetail = () => {
             <div className="space-y-2 flex-1">
               {editing ? (
                 <div className="grid gap-2 sm:grid-cols-3 max-w-md">
-                  <Select value={editField} onValueChange={setEditField}>
-                    <SelectTrigger><SelectValue placeholder={t("submit.selectField")} /></SelectTrigger>
-                    <SelectContent>
-                      {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <DisciplineSelect value={editField} onChange={setEditField} placeholder={t("submit.selectField")} />
                   <Select value={editDegree} onValueChange={setEditDegree}>
                     <SelectTrigger><SelectValue placeholder={t("submit.selectDegree")} /></SelectTrigger>
                     <SelectContent>

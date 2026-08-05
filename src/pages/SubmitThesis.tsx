@@ -11,9 +11,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import DisciplineSelect from "@/components/DisciplineSelect";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Upload, X } from "lucide-react";
-import { FIELDS, DEGREE_TYPES, YEARS } from "@/i18n/fields";
+import { DEGREE_TYPES, YEARS } from "@/i18n/fields";
 import { validateThesisTitle, validateThesisAbstract } from "@/lib/thesisValidation";
 
 const SUBMIT_THESIS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-thesis`;
@@ -270,12 +271,7 @@ const SubmitThesis = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t("submit.fieldLabel")} *</Label>
-                <Select value={field} onValueChange={setField}>
-                  <SelectTrigger><SelectValue placeholder={t("submit.selectField")} /></SelectTrigger>
-                  <SelectContent>
-                    {FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <DisciplineSelect value={field} onChange={setField} placeholder={t("submit.selectField")} />
               </div>
               <div className="space-y-2">
                 <Label>{t("submit.degreeLabel")}</Label>

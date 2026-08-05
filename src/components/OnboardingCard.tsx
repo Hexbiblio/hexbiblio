@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ACADEMIC_LEVELS, FIELDS } from "@/i18n/fields";
+import DisciplineSelect from "@/components/DisciplineSelect";
+import { ACADEMIC_LEVELS } from "@/i18n/fields";
 import MascotAvatar from "@/components/MascotAvatar";
 import { X } from "lucide-react";
 
@@ -131,14 +132,7 @@ const OnboardingCard = ({ userId, firstName, lastName, onSaved }: OnboardingCard
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">{t("onboarding.fieldLabel")}</label>
-            <Select value={fieldOfStudy} onValueChange={setFieldOfStudy}>
-              <SelectTrigger><SelectValue placeholder={t("onboarding.selectField")} /></SelectTrigger>
-              <SelectContent>
-                {FIELDS.map((f) => (
-                  <SelectItem key={f.value} value={f.value}>{language === "fr" ? f.fr : f.en}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <DisciplineSelect value={fieldOfStudy} onChange={setFieldOfStudy} placeholder={t("onboarding.selectField")} />
           </div>
         </div>
 

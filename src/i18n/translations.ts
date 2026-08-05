@@ -156,6 +156,7 @@ export const translations = {
   "submit.authorMissingLink": { en: "Go to my profile", fr: "Aller à mon profil" },
   "submit.fieldLabel": { en: "Field / Discipline", fr: "Domaine / Discipline" },
   "submit.selectField": { en: "Select a field", fr: "Choisir un domaine" },
+  "fields.specifyOther": { en: "Specify your field", fr: "Précise ton domaine" },
   "submit.degreeLabel": { en: "Degree Type", fr: "Type de diplôme" },
   "submit.selectDegree": { en: "Select degree", fr: "Choisir le diplôme" },
   "submit.yearLabel": { en: "Graduation Year", fr: "Année de diplomation" },
