@@ -99,6 +99,21 @@ export const QUEST_PROFILE_FIELD: Record<QuestId, string> = {
   plan: "writing_plan",
 };
 
+// JS's `\b` only treats ASCII letters/digits/underscore as "word" characters,
+// so it silently fails to find a boundary right before a term that STARTS
+// with an accented letter — e.g. `\béconomie\b` matches "l'économie" fine
+// (the accent is mid-word) but `\béconomie\b` never matches when "économie"
+// itself is spelled with the accent on the very first letter, since neither
+// side of that boundary position is a `\w` character. This silently broke
+// the "discipline" cue for économie/éducation from day one. These two
+// fragments are a Unicode-aware drop-in replacement for `\b` wherever a
+// cue's word list includes an accented-first term.
+const WORD_START = "(?<![\\p{L}\\p{N}_])";
+const WORD_END = "(?![\\p{L}\\p{N}_])";
+function wordsCue(words: string[]): RegExp {
+  return new RegExp(`${WORD_START}(?:${words.join("|")})${WORD_END}`, "iu");
+}
+
 // Strict cues that must appear in the USER's own message for a quest to count.
 // Generic chatter ("hello") must NOT trigger anything. Deliberately NOT
 // exhaustive over QuestId — "plan" has no entry, since it's self-report only
@@ -106,11 +121,34 @@ export const QUEST_PROFILE_FIELD: Record<QuestId, string> = {
 // optional chaining for exactly that reason: a missing entry means "this
 // quest can't be completed through chat," not a bug.
 export const USER_CUES: Partial<Record<QuestId, RegExp>> = {
-  discipline: /\b(sociology|psychology|biology|chemistry|physics|economics|history|philosophy|literature|engineering|computer science|medicine|law|anthropology|linguistics|education|political science|mathematics|sociologie|psychologie|biologie|chimie|physique|économie|histoire|philosophie|littérature|ingénierie|informatique|médecine|droit|anthropologie|linguistique|éducation|sciences? politiques?|mathématiques)\b/i,
+  discipline: wordsCue([
+    "sociology", "psychology", "biology", "chemistry", "physics", "economics", "history", "philosophy",
+    "literature", "engineering", "computer science", "medicine", "law", "anthropology", "linguistics",
+    "education", "political science", "mathematics",
+    "sociologie", "psychologie", "biologie", "chimie", "physique", "économie", "histoire", "philosophie",
+    "littérature", "ingénierie", "informatique", "médecine", "droit", "anthropologie", "linguistique",
+    "éducation", "sciences? politiques?", "mathématiques",
+  ]),
   theme: /\b(impact of|effect of|influence of|role of|relationship between|focus on|interested in|my topic|topic is|effet de|influence de|rôle de|relation entre|mon sujet|sujet est|intéress)\b/i,
   question: /\?\s*$|\b(how|why|to what extent|in what ways|comment|pourquoi|dans quelle mesure|en quoi)\b.{5,}\?/i,
   thesis: /\b(i argue|i claim|my hypothesis|my thesis is|i propose that|je soutiens|mon hypothèse|ma thèse est|je propose que)\b/i,
-  method: /\b(qualitative|quantitative|mixed[- ]methods?|survey|interview|case study|ethnograph|experiment|questionnaire|enquête|entretien|étude de cas|expérience|méthode mixte)\b/i,
+  // Naming a method used to be enough on its own ("je ferai du qualitatif")
+  // — but the mentor prompt now pushes for justification, and the quest
+  // shouldn't tick before the student actually gives one. This requires
+  // EITHER a method name plus a justification connector in the same message
+  // ("des entretiens... parce que...") OR a depth-specific term on its own
+  // (échantillon, corpus, biais, validité...) — the latter covers a student
+  // answering a follow-up about sampling/rigor in a later message without
+  // re-naming the method they already stated earlier. Also fixes the same
+  // \b-vs-accent bug as WORD_START/END above ("étude de cas" never matched)
+  // and a second bug where "entretien"/"ethnograph" only matched the bare
+  // singular/stem, never the natural plural or French inflections.
+  method: new RegExp(
+    `(?:(?=[\\s\\S]*${WORD_START}(?:qualitative|quantitative|mixed[- ]methods?|surveys?|interviews?|entretiens?|case study|ethnograph\\w*|experiments?|questionnaires?|enquêtes?|étude de cas|expérience|méthode mixte)${WORD_END})` +
+      `(?=[\\s\\S]*${WORD_START}(?:parce que|car|puisque|afin de|afin d.|dans le but|étant donné|de façon à|because|since|in order to|so that|given that)${WORD_END}))` +
+      `|${WORD_START}(?:échantillon|corpus|critères|biais|validité|fiabilité|triangulation|positionnalité|consentement|rgpd|protocole de recherche|journal d.enquête)${WORD_END}`,
+    "iu"
+  ),
   // "bibliograph" alone never matched the French "bibliographie" — the
   // shared trailing \b needs a boundary right after wherever the alternative
   // ends, and "bibliograph" is followed by "ie" (still a word char), not a

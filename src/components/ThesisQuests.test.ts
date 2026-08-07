@@ -116,3 +116,56 @@ describe("detectCompletedQuests + deriveCompleted integration", () => {
     expect(detectCompletedQuests("Voici ma bibliographie complète pour le mémoire", completed)).toEqual(["sources"]);
   });
 });
+
+describe("detectCompletedQuests: 'method' now requires justification, not just a named method", () => {
+  const completedBeforeMethod = deriveCompleted({
+    field_of_study: "Sociologie",
+    research_theme: "Handicap au travail",
+    research_question: "Comment les organisations (non-)incluent-elles les travailleurs handicapés ?",
+    thesis_statement: "Je soutiens que l'inclusion repose sur la visibilité du handicap.",
+  });
+
+  it("no longer completes on a bare named method with no justification (regression: this used to tick instantly)", () => {
+    expect(detectCompletedQuests("Je pense faire une approche qualitative avec des entretiens", completedBeforeMethod)).toEqual([]);
+  });
+
+  it("completes when a method is named together with a justification connector in the same message", () => {
+    expect(
+      detectCompletedQuests(
+        "Je ferai des entretiens semi-directifs parce que je veux comprendre les trajectoires individuelles",
+        completedBeforeMethod
+      )
+    ).toEqual(["method"]);
+  });
+
+  it("completes on a depth-specific answer alone (sampling/rigor), even without repeating the method name — covers a later-turn follow-up", () => {
+    expect(
+      detectCompletedQuests("Mon échantillon sera composé de 15 cadres sélectionnés selon des critères de mixité", completedBeforeMethod)
+    ).toEqual(["method"]);
+  });
+
+  it("fixes the same accent-boundary bug for 'étude de cas', which never matched before", () => {
+    expect(detectCompletedQuests("Je pense faire une étude de cas", completedBeforeMethod)).toEqual([]); // still needs justification
+    expect(
+      detectCompletedQuests("Une étude de cas approfondie, afin de comprendre le processus en détail", completedBeforeMethod)
+    ).toEqual(["method"]);
+  });
+
+  it("fixes 'entretien'/'ethnograph' only ever matching the bare singular/stem, never the plural or real French inflections", () => {
+    expect(
+      detectCompletedQuests("Je vais faire une ethnographie du groupe, car je veux observer les interactions de près", completedBeforeMethod)
+    ).toEqual(["method"]);
+  });
+
+  it("still leaves generic chatter alone (no false positive)", () => {
+    expect(detectCompletedQuests("Merci beaucoup, à bientôt !", completedBeforeMethod)).toEqual([]);
+  });
+});
+
+describe("USER_CUES.discipline: Unicode word-boundary fix for accented-first terms", () => {
+  it("detects 'économie' and 'éducation', which the old \\b-based regex silently never matched", () => {
+    const completed = deriveCompleted({});
+    expect(detectCompletedQuests("Je suis en économie à l'université", completed)).toEqual(["discipline"]);
+    expect(detectCompletedQuests("Je fais des sciences de l'éducation", completed)).toEqual(["discipline"]);
+  });
+});
