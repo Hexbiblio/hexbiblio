@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { QUESTS, getNextQuest, useQuestProgress } from "@/components/ThesisQuests";
 import { ROADMAP_CONTENT } from "@/data/roadmapContent";
+import MascotAvatar from "@/components/MascotAvatar";
 
 // The one visual "roadmap" surface in the app besides the sidebar quest
 // widget (ThesisQuests.tsx) — same underlying QUESTS order/icons and the
@@ -88,7 +89,19 @@ const Roadmap = () => {
                       )}
                     </div>
                     <p className="text-sm leading-relaxed text-foreground/80">{content.context[language]}</p>
-                    <p className="mt-2 text-sm italic text-muted-foreground">{content.motivation[language]}</p>
+
+                    {/* Mentor tip — same speech-bubble treatment as a real chat
+                        message (see ChatInterface.tsx/OnboardingCard.tsx): the
+                        mascot is personally telling you this, not a stray
+                        italic aside. */}
+                    <div className="mt-3 flex items-start gap-2">
+                      <MascotAvatar className="h-8 w-7" />
+                      <div className="relative flex-1 rounded-2xl rounded-tl-md bg-muted px-3 py-2">
+                        <span className="absolute -left-1 top-2.5 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
+                        <p className="text-sm text-foreground/90">{content.motivation[language]}</p>
+                      </div>
+                    </div>
+
                     <ul className="mt-3 space-y-1.5">
                       {content.tips.map((tip, ti) => (
                         <li key={ti} className="flex gap-2 text-sm text-foreground/80">
