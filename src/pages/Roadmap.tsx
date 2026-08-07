@@ -1,6 +1,10 @@
+import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { QUESTS, getNextQuest, useQuestProgress } from "@/components/ThesisQuests";
 import { ROADMAP_CONTENT } from "@/data/roadmapContent";
 import MascotAvatar from "@/components/MascotAvatar";
@@ -19,12 +23,33 @@ const Roadmap = () => {
   const { t, language } = useLanguage();
   const { completed } = useQuestProgress();
   const nextQuest = getNextQuest(completed);
+  const total = QUESTS.length;
+  const done = completed.size;
+  const pct = useMemo(() => Math.round((done / total) * 100), [done, total]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <div className="mb-12 text-center">
+      <div className="mb-10 text-center">
         <h1 className="text-3xl font-bold sm:text-4xl">{t("roadmap.title")}</h1>
         <p className="mx-auto mt-2 max-w-xl text-muted-foreground">{t("roadmap.subtitle")}</p>
+
+        {/* UX-01: the page used to promise "real-time progress" in its own
+            subtitle without showing any — same counter/%/bar the sidebar
+            widget (ThesisQuests.tsx) already renders, so a visitor doesn't
+            have to scan all 7 cards to know where they stand. */}
+        <div className="mx-auto mt-5 max-w-sm">
+          <div className="mb-1.5 flex items-center justify-between text-sm">
+            <span className="font-medium">
+              {done}/{total} · {pct}%
+            </span>
+            {nextQuest && (
+              <span className="text-muted-foreground">
+                {t("roadmap.currentlyLabel")} {nextQuest.label[language]}
+              </span>
+            )}
+          </div>
+          <Progress value={pct} className="h-1.5" />
+        </div>
       </div>
 
       <div className="relative">
@@ -98,19 +123,44 @@ const Roadmap = () => {
                         </li>
                       ))}
                     </ul>
+
+                    {/* UX-02: the page used to be a dead end — no link out to
+                        actually DO the step. The sources step gets a direct
+                        link to browse them (previously just mentioned in
+                        prose); whichever step is current gets an action
+                        button — to the chat for every chat-detectable step,
+                        or to the profile page for "plan," the one step chat
+                        can't complete. */}
+                    {q.id === "sources" && (
+                      <Button asChild variant="outline" size="sm" className="mt-3 gap-1.5">
+                        <Link to="/sources">
+                          {t("roadmap.sourcesLink")}
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    )}
+                    {isCurrent && (
+                      <Button asChild size="sm" className="mt-3 gap-1.5">
+                        <Link to={q.id === "plan" ? "/profile" : "/"}>
+                          {q.id === "plan" ? t("roadmap.planCTA") : t("roadmap.continueCTA")}
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 </div>
 
                 {/* Mascot mini-tip — lives in the column the zigzag leaves
                     empty opposite the content card (mirrors "onRight": card
                     and mascot always sit on opposite sides), filling what
-                    would otherwise be dead space. Shows the step's first
-                    (usually most load-bearing) tip rather than repeating the
-                    card's own motivation line verbatim. On mobile the grid
-                    collapses so there's no void to fill — it just drops into
-                    the normal stacked flow below the card instead of
-                    disappearing. Same speech-bubble treatment as a real chat
-                    message (see ChatInterface.tsx/OnboardingCard.tsx). */}
+                    would otherwise be dead space. Reads content.mascotTip,
+                    a dedicated "classic pitfall" line — NOT tips[0], which
+                    used to duplicate a bullet already shown right next to it
+                    in the card (BUG-02). On mobile the grid collapses so
+                    there's no void to fill — it just drops into the normal
+                    stacked flow below the card instead of disappearing. Same
+                    speech-bubble treatment as a real chat message (see
+                    ChatInterface.tsx/OnboardingCard.tsx). */}
                 <div
                   className={`mt-4 flex items-start gap-2 md:mt-0 md:row-start-1 md:h-full md:items-center ${
                     onRight ? "md:col-start-1" : "md:col-start-3"
@@ -119,7 +169,7 @@ const Roadmap = () => {
                   <MascotAvatar className="h-8 w-7" />
                   <div className="relative rounded-2xl rounded-tl-md bg-muted px-3 py-2">
                     <span className="absolute -left-1 top-2.5 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
-                    <p className="text-sm text-foreground/90">{content.tips[0][language]}</p>
+                    <p className="text-sm text-foreground/90">{content.mascotTip[language]}</p>
                   </div>
                 </div>
               </motion.li>

@@ -4,6 +4,12 @@ interface RoadmapStepContent {
   context: { en: string; fr: string };
   motivation: { en: string; fr: string };
   tips: { en: string; fr: string }[];
+  // A short, distinct "classic pitfall" for this step — shown in the
+  // mascot's floating bubble outside the content card (see Roadmap.tsx).
+  // Deliberately its own field rather than reusing tips[0]: the two used to
+  // show the exact same sentence twice, once in the card's bullet list and
+  // once in the bubble right next to it (BUG-02).
+  mascotTip: { en: string; fr: string };
 }
 
 // Editorial content for the /roadmap ("Almanach") page — one entry per
@@ -38,6 +44,10 @@ export const ROADMAP_CONTENT: Record<QuestId, RoadmapStepContent> = {
         fr: "Ce choix n'est pas gravé dans le marbre — tu peux le préciser au fil de la conversation.",
       },
     ],
+    mascotTip: {
+      en: "Classic pitfall: switching disciplines partway through without checking with your advisor first — it can upend how you're supervised.",
+      fr: "Piège classique : changer de discipline en cours de route sans en parler à ton directeur ou ta directrice — ça peut remettre en cause l'encadrement.",
+    },
   },
   theme: {
     context: {
@@ -62,6 +72,10 @@ export const ROADMAP_CONTENT: Record<QuestId, RoadmapStepContent> = {
         fr: "Ne cherche pas encore la question exacte — ça vient à l'étape suivante.",
       },
     ],
+    mascotTip: {
+      en: "Classic pitfall: falling for a theme you can't actually access — no fieldwork, no data, no willing interviewees. Check feasibility before you fall in love with it.",
+      fr: "Piège classique : craquer pour un thème passionnant mais pour lequel tu n'as accès à aucun terrain, aucune donnée, aucun·e interviewé·e potentiel·le. Vérifie la faisabilité avant de t'y attacher.",
+    },
   },
   question: {
     context: {
@@ -86,6 +100,10 @@ export const ROADMAP_CONTENT: Record<QuestId, RoadmapStepContent> = {
         fr: "Évite les questions fermées (oui/non) — privilégie « comment », « pourquoi », « dans quelle mesure ».",
       },
     ],
+    mascotTip: {
+      en: "Classic pitfall: a question the literature has already answered. A quick search should turn up debate, not a settled answer — otherwise it's not research.",
+      fr: "Piège classique : une question à laquelle la littérature a déjà répondu. Une recherche rapide devrait faire ressortir un débat, pas une réponse déjà tranchée — sinon ce n'est plus de la recherche.",
+    },
   },
   thesis: {
     context: {
@@ -110,6 +128,10 @@ export const ROADMAP_CONTENT: Record<QuestId, RoadmapStepContent> = {
         fr: "Si tu n'arrives pas à formuler une phrase affirmative claire, c'est probablement que la question n'est pas encore assez précise.",
       },
     ],
+    mascotTip: {
+      en: "Classic pitfall: a thesis that just rephrases the question instead of taking a position. If it reads as a summary rather than a stance, it's not a thesis yet.",
+      fr: "Piège classique : une thèse qui reformule juste la question sans prendre position. Si ça se lit comme un résumé plutôt qu'une prise de position, ce n'est pas encore une thèse.",
+    },
   },
   method: {
     context: {
@@ -146,6 +168,10 @@ export const ROADMAP_CONTENT: Record<QuestId, RoadmapStepContent> = {
         fr: "Éthique — consentement, conflits d'intérêt, et pour les entretiens : protection des données (RGPD) — où sont stockés les enregistrements, et toute retranscription assistée par IA doit être relue et corrigée avant usage.",
       },
     ],
+    mascotTip: {
+      en: "Classic pitfall #1: picking a method out of habit rather than because it actually answers your question. Start from the question, not from the method you're most comfortable with.",
+      fr: "Piège n°1 : choisir une méthode par habitude plutôt que parce qu'elle répond vraiment à ta question. Pars de la question, pas de la méthode avec laquelle tu es le plus à l'aise.",
+    },
   },
   sources: {
     context: {
@@ -170,6 +196,10 @@ export const ROADMAP_CONTENT: Record<QuestId, RoadmapStepContent> = {
         fr: "Un gestionnaire bibliographique (Zotero) évite les erreurs de norme — le bouton « Citer » de chaque mémoire sur Hexbiblio exporte directement en APA, BibTeX ou RIS.",
       },
     ],
+    mascotTip: {
+      en: "Classic pitfall: citing only sources in one language, or only ones over 20 years old. Widen the net to recent international literature too.",
+      fr: "Piège classique : ne citer que des sources dans une seule langue, ou datant de plus de 20 ans. Élargis aussi à la littérature internationale récente.",
+    },
   },
   plan: {
     context: {
@@ -202,5 +232,9 @@ export const ROADMAP_CONTENT: Record<QuestId, RoadmapStepContent> = {
         fr: "La conclusion fait le bilan de la démonstration — jamais d'idée nouvelle non développée en amont.",
       },
     ],
+    mascotTip: {
+      en: "Classic pitfall: a plan that quietly drifts away from your original thesis. Check each part against your thesis statement as you go.",
+      fr: "Piège classique : un plan qui s'éloigne peu à peu de ta thèse initiale. Reviens vérifier chaque partie par rapport à ton énoncé de thèse au fil de la rédaction.",
+    },
   },
 };
