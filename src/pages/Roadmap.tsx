@@ -89,19 +89,7 @@ const Roadmap = () => {
                       )}
                     </div>
                     <p className="text-sm leading-relaxed text-foreground/80">{content.context[language]}</p>
-
-                    {/* Mentor tip — same speech-bubble treatment as a real chat
-                        message (see ChatInterface.tsx/OnboardingCard.tsx): the
-                        mascot is personally telling you this, not a stray
-                        italic aside. */}
-                    <div className="mt-3 flex items-start gap-2">
-                      <MascotAvatar className="h-8 w-7" />
-                      <div className="relative flex-1 rounded-2xl rounded-tl-md bg-muted px-3 py-2">
-                        <span className="absolute -left-1 top-2.5 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
-                        <p className="text-sm text-foreground/90">{content.motivation[language]}</p>
-                      </div>
-                    </div>
-
+                    <p className="mt-2 text-sm italic text-muted-foreground">{content.motivation[language]}</p>
                     <ul className="mt-3 space-y-1.5">
                       {content.tips.map((tip, ti) => (
                         <li key={ti} className="flex gap-2 text-sm text-foreground/80">
@@ -110,6 +98,28 @@ const Roadmap = () => {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                </div>
+
+                {/* Mascot mini-tip — lives in the column the zigzag leaves
+                    empty opposite the content card (mirrors "onRight": card
+                    and mascot always sit on opposite sides), filling what
+                    would otherwise be dead space. Shows the step's first
+                    (usually most load-bearing) tip rather than repeating the
+                    card's own motivation line verbatim. On mobile the grid
+                    collapses so there's no void to fill — it just drops into
+                    the normal stacked flow below the card instead of
+                    disappearing. Same speech-bubble treatment as a real chat
+                    message (see ChatInterface.tsx/OnboardingCard.tsx). */}
+                <div
+                  className={`mt-4 flex items-start gap-2 md:mt-0 md:row-start-1 md:h-full md:items-center ${
+                    onRight ? "md:col-start-1" : "md:col-start-3"
+                  }`}
+                >
+                  <MascotAvatar className="h-8 w-7" />
+                  <div className="relative rounded-2xl rounded-tl-md bg-muted px-3 py-2">
+                    <span className="absolute -left-1 top-2.5 h-3 w-3 rotate-45 rounded-[2px] bg-muted" />
+                    <p className="text-sm text-foreground/90">{content.tips[0][language]}</p>
                   </div>
                 </div>
               </motion.li>
