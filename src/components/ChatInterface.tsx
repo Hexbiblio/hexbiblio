@@ -21,6 +21,25 @@ const PENDING_CHAT_TTL_MS = 24 * 60 * 60 * 1000; // discard an abandoned guest d
 
 type PendingChat = { messages: Msg[]; savedAt: number };
 
+// Inactivity nudge: lightweight, client-side only (no new DB column, no
+// pg_cron) — tracks per-browser when the student last engaged with their
+// current open quest, and nudges them on return if it's been a while.
+// Doesn't sync across devices, which is fine here: "you last touched this
+// quest a while ago, on this device" doesn't need to be a durable,
+// server-tracked fact the way quest *completion* does.
+const LAST_QUEST_ACTIVITY_KEY = "hexbiblio:lastQuestActivity";
+const INACTIVITY_NUDGE_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+
+type LastQuestActivity = { questId: string; timestamp: number };
+
+const recordQuestActivity = (questId: string) => {
+  try {
+    localStorage.setItem(LAST_QUEST_ACTIVITY_KEY, JSON.stringify({ questId, timestamp: Date.now() } satisfies LastQuestActivity));
+  } catch {
+    // storage may be full or unavailable — the nudge just won't fire, harmless
+  }
+};
+
 const SUGGESTED_QUESTIONS = {
   en: [
     "How does social media usage affect academic performance among university students?",
@@ -49,6 +68,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   // roadmap is fully done (see allQuestsDone below) — a mock jury needs a
   // real thesis statement/methodology to interrogate.
   const [mode, setMode] = useState<"mentor" | "defense">("mentor");
+  const [showInactivityNudge, setShowInactivityNudge] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { language, t } = useLanguage();
@@ -231,7 +251,17 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
       await streamChat([...messages, userMsg]);
       // Quest detection doesn't apply in defense mode — it's only reachable
       // once every quest is already done (see allQuestsDone below).
-      if (mode === "mentor") onUserMessage?.(messageText);
+      if (mode === "mentor") {
+        onUserMessage?.(messageText);
+        // Mark this quest as freshly engaged with, resetting the inactivity
+        // nudge's clock — recomputed inline rather than via the render's
+        // `nextQuest` to avoid depending on a const declared later in this
+        // component (still correct either way, since closures only see it
+        // once this function actually runs, but this reads more locally).
+        const openQuest = getNextQuest(completed ?? new Set());
+        if (openQuest) recordQuestActivity(openQuest.id);
+        setShowInactivityNudge(false);
+      }
     } catch (e: any) {
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     } finally {
@@ -286,6 +316,30 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   // itself already treats as "nothing left to guide, go deeper."
   const allQuestsDone = Boolean(user && completed && completed.size > 0 && !getNextQuest(completed));
 
+  // Nudge check: fires once per quest (re-runs when nextQuest changes, e.g.
+  // completing one moves to the next) rather than on every render.
+  useEffect(() => {
+    if (!nextQuest) { setShowInactivityNudge(false); return; }
+    try {
+      const raw = localStorage.getItem(LAST_QUEST_ACTIVITY_KEY);
+      if (raw) {
+        const stored = JSON.parse(raw) as LastQuestActivity;
+        if (stored.questId === nextQuest.id && Date.now() - stored.timestamp > INACTIVITY_NUDGE_THRESHOLD_MS) {
+          setShowInactivityNudge(true);
+          return;
+        }
+      }
+    } catch {
+      // corrupted storage — treat as no prior record, no nudge
+    }
+    setShowInactivityNudge(false);
+  }, [nextQuest?.id]);
+
+  const dismissInactivityNudge = () => {
+    setShowInactivityNudge(false);
+    if (nextQuest) recordQuestActivity(nextQuest.id);
+  };
+
   const howItWorks = [
     { icon: MessageSquare, title: t("chat.step1Title"), desc: t("chat.step1Desc") },
     { icon: Sparkles, title: t("chat.step2Title"), desc: t("chat.step2Desc") },
@@ -338,6 +392,24 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
                     : `Ready to dig into your next research question in ${profile.field_of_study}?`)
                 : t("chat.subtitle")}
             </p>
+          </div>
+        )}
+
+        {showInactivityNudge && nextQuest && (
+          <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-2.5 text-sm text-foreground">
+            <span>
+              {language === "fr"
+                ? `Tu en étais à « ${nextQuest.label.fr} ». Envie de reprendre ?`
+                : `You were at "${nextQuest.label.en}." Want to pick back up?`}
+            </span>
+            <button
+              type="button"
+              onClick={dismissInactivityNudge}
+              aria-label={language === "fr" ? "Ignorer" : "Dismiss"}
+              className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
         )}
 
