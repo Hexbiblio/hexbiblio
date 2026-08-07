@@ -217,6 +217,7 @@ export type Database = {
           university: string | null
           user_id: string
           username: string | null
+          writing_plan: string | null
         }
         Insert: {
           academic_level?: string | null
@@ -237,6 +238,7 @@ export type Database = {
           university?: string | null
           user_id: string
           username?: string | null
+          writing_plan?: string | null
         }
         Update: {
           academic_level?: string | null
@@ -257,6 +259,7 @@ export type Database = {
           university?: string | null
           user_id?: string
           username?: string | null
+          writing_plan?: string | null
         }
         Relationships: []
       }
@@ -421,7 +424,7 @@ export type Database = {
           title: string
           title_translated: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           abstract: string
@@ -441,7 +444,7 @@ export type Database = {
           title: string
           title_translated?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           abstract?: string
@@ -461,7 +464,7 @@ export type Database = {
           title?: string
           title_translated?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -488,6 +491,21 @@ export type Database = {
       }
     }
     Views: {
+      profiles_public: {
+        Row: {
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       theses_public: {
         Row: {
           abstract: string | null

@@ -66,7 +66,7 @@ const NotificationBell = () => {
     const rows = (data as unknown as NotificationRow[]) || [];
     const actorIds = [...new Set(rows.map((r) => r.actor_id).filter((id): id is string => !!id))];
     const { data: profiles } = actorIds.length
-      ? await supabase.from("profiles").select("user_id, username").in("user_id", actorIds)
+      ? await supabase.from("profiles_public").select("user_id, username").in("user_id", actorIds)
       : { data: [] as { user_id: string; username: string | null }[] };
     const nameMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
     setNotifications(rows.map((r) => ({ ...r, actorName: (r.actor_id && nameMap.get(r.actor_id)) || undefined })));

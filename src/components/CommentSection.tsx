@@ -33,7 +33,7 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
     if (!data) return;
     const userIds = [...new Set(data.map(c => c.user_id))];
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("profiles_public")
       .select("user_id, username")
       .in("user_id", userIds);
     const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
