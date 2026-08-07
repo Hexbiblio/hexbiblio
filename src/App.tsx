@@ -21,6 +21,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Database = lazy(() => import("./pages/Database"));
 const Sources = lazy(() => import("./pages/Sources"));
+const Roadmap = lazy(() => import("./pages/Roadmap"));
 const ThesisDetail = lazy(() => import("./pages/ThesisDetail"));
 const SubmitThesis = lazy(() => import("./pages/SubmitThesis"));
 const MyCollections = lazy(() => import("./pages/MyCollections"));
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="/database" element={<Database />} />
                 <Route path="/database/:id" element={<ThesisDetail />} />
                 <Route path="/sources" element={<ProtectedRoute><Sources /></ProtectedRoute>} />
+                <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
                 <Route path="/chat" element={<Navigate to="/" replace />} />
                 <Route path="/submit" element={<ProtectedRoute><SubmitThesis /></ProtectedRoute>} />
                 <Route path="/my-collections" element={<ProtectedRoute><MyCollections /></ProtectedRoute>} />

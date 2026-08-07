@@ -7,6 +7,7 @@ export const translations = {
   "nav.submit": { en: "Submit", fr: "Soumettre" },
   "nav.collections": { en: "Collections", fr: "Collections" },
   "nav.profile": { en: "Profile", fr: "Profil" },
+  "nav.roadmap": { en: "Almanac", fr: "Almanach" },
   "nav.admin": { en: "Admin", fr: "Admin" },
   "nav.signIn": { en: "Sign In", fr: "Connexion" },
   "nav.signOut": { en: "Sign Out", fr: "Se déconnecter" },
@@ -128,6 +129,13 @@ export const translations = {
   "db.publicBannerButton": { en: "Create an account", fr: "Créer un compte" },
 
   // Sources
+  "roadmap.title": { en: "Almanac", fr: "Almanach" },
+  "roadmap.subtitle": {
+    en: "The full path through your thesis, step by step — context, what matters, and your live progress.",
+    fr: "Le chemin complet vers ton mémoire, étape par étape — contexte, ce qui compte, et ta progression en direct.",
+  },
+  "roadmap.currentBadge": { en: "You're here", fr: "Tu en es ici" },
+  "roadmap.doneBadge": { en: "Done", fr: "Fait" },
   "sources.title": { en: "Sources", fr: "Sources" },
   "sources.subtitle": { en: "Citations pulled from the work already online", fr: "Citations extraites des travaux déjà en ligne" },
   "sources.searchPlaceholder": { en: "Search by citation, title, or author...", fr: "Rechercher par citation, titre ou auteur..." },

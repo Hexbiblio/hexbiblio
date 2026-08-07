@@ -1,0 +1,111 @@
+import { motion } from "framer-motion";
+import { Check } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { QUESTS, getNextQuest, useQuestProgress } from "@/components/ThesisQuests";
+import { ROADMAP_CONTENT } from "@/data/roadmapContent";
+
+// The one visual "roadmap" surface in the app besides the sidebar quest
+// widget (ThesisQuests.tsx) — same underlying QUESTS order/icons and the
+// same useQuestProgress() source of truth, just laid out as a fuller,
+// alternating (zigzag) almanac instead of a compact checklist. Deliberately
+// shows every step's full content even before it's reached (dimmed, not
+// hidden) — the point of an almanac is to preview the whole journey, not to
+// gate it. No SVG path: this codebase has no existing precedent for one, so
+// the zigzag is expressed purely with a CSS grid alternating content left/
+// right of a shared center icon column, matching the plain-CSS timeline
+// ThesisQuests.tsx's own sidebar already uses.
+const Roadmap = () => {
+  const { t, language } = useLanguage();
+  const { completed } = useQuestProgress();
+  const nextQuest = getNextQuest(completed);
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 py-10">
+      <div className="mb-12 text-center">
+        <h1 className="text-3xl font-bold sm:text-4xl">{t("roadmap.title")}</h1>
+        <p className="mx-auto mt-2 max-w-xl text-muted-foreground">{t("roadmap.subtitle")}</p>
+      </div>
+
+      <div className="relative">
+        {/* Center spine — desktop only. Aligns with the icon column because
+            the grid's side columns are equal (1fr each), so "auto" sits
+            exactly centered regardless of content length. */}
+        <div
+          className="absolute left-1/2 top-2 bottom-2 hidden w-px -translate-x-1/2 bg-border md:block"
+          aria-hidden="true"
+        />
+
+        <ol className="space-y-10 md:space-y-14">
+          {QUESTS.map((q, i) => {
+            const content = ROADMAP_CONTENT[q.id];
+            const isDone = completed.has(q.id);
+            const isCurrent = !isDone && q.id === nextQuest?.id;
+            const onRight = i % 2 === 1;
+            const Icon = q.icon;
+
+            return (
+              <motion.li
+                key={q.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.4 }}
+                className="md:grid md:grid-cols-[1fr_auto_1fr] md:items-start md:gap-6"
+              >
+                <div className="relative z-10 flex flex-col items-center gap-1.5 md:col-start-2 md:row-start-1">
+                  <div
+                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 bg-background transition-colors ${
+                      isDone
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : isCurrent
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground/40"
+                    }`}
+                  >
+                    {isDone ? <Check className="h-6 w-6" strokeWidth={3} /> : <Icon className="h-6 w-6" />}
+                  </div>
+                  {isCurrent && (
+                    <span className="whitespace-nowrap rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      {t("roadmap.currentBadge")}
+                    </span>
+                  )}
+                </div>
+
+                <div
+                  className={`mt-4 min-w-0 md:mt-0 md:row-start-1 ${onRight ? "md:col-start-3" : "md:col-start-1"}`}
+                >
+                  <div
+                    className={`rounded-lg border bg-card/80 p-5 shadow-sm transition-opacity ${
+                      isDone || isCurrent ? "" : "opacity-60"
+                    }`}
+                  >
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-semibold">{q.label[language]}</h2>
+                      {isDone && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                          {t("roadmap.doneBadge")}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm leading-relaxed text-foreground/80">{content.context[language]}</p>
+                    <p className="mt-2 text-sm italic text-muted-foreground">{content.motivation[language]}</p>
+                    <ul className="mt-3 space-y-1.5">
+                      {content.tips.map((tip, ti) => (
+                        <li key={ti} className="flex gap-2 text-sm text-foreground/80">
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary/60" aria-hidden="true" />
+                          <span>{tip[language]}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </motion.li>
+            );
+          })}
+        </ol>
+      </div>
+    </div>
+  );
+};
+
+export default Roadmap;
