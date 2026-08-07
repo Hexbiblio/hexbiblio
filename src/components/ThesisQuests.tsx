@@ -111,7 +111,14 @@ export const USER_CUES: Partial<Record<QuestId, RegExp>> = {
   question: /\?\s*$|\b(how|why|to what extent|in what ways|comment|pourquoi|dans quelle mesure|en quoi)\b.{5,}\?/i,
   thesis: /\b(i argue|i claim|my hypothesis|my thesis is|i propose that|je soutiens|mon hypothèse|ma thèse est|je propose que)\b/i,
   method: /\b(qualitative|quantitative|mixed[- ]methods?|survey|interview|case study|ethnograph|experiment|questionnaire|enquête|entretien|étude de cas|expérience|méthode mixte)\b/i,
-  sources: /\b(literature review|i (have read|found|read) .{0,40}(article|paper|book|thesis)|articles? (by|from) |bibliograph|revue de littérature|j'ai (lu|trouvé) .{0,40}(article|livre|thèse))\b/i,
+  // "bibliograph" alone never matched the French "bibliographie" — the
+  // shared trailing \b needs a boundary right after wherever the alternative
+  // ends, and "bibliograph" is followed by "ie" (still a word char), not a
+  // boundary. Spelling out the actual word forms fixes that. Also covers a
+  // student directly telling the bot their sources are done ("valide mes
+  // sources", "voici mes sources") — a real, common phrasing the original
+  // narration-only cues ("j'ai lu...") never accounted for.
+  sources: /\b(literature review|i (have read|found|read) .{0,40}(article|paper|book|thesis)|articles? (by|from) |bibliographi(e|es|que|ques)|bibliography|bibliographies|revue de littérature|j'ai (lu|trouvé) .{0,40}(article|livre|thèse)|valid\w* .{0,20}sources|voici (mes|toutes mes) sources|mes sources (sont prêtes|sont complètes|sont validées))\b/i,
 };
 
 // Quests reachable through chat detection — i.e. every id with a USER_CUES
@@ -134,7 +141,15 @@ export function detectCompletedQuests(
   const text = (userMessage ?? "").trim();
   if (text.length < 15) return [];
   const next = getNextQuest(completed ?? new Set());
-  if (next && USER_CUES[next.id]?.test(text)) return [next.id];
+  if (!next) return [];
+  if (USER_CUES[next.id]?.test(text)) return [next.id];
+  // A pasted bibliography reads as a reference list, not a narrated sentence
+  // ("j'ai lu l'article de..."), so the phrase-based cue above won't match
+  // it. Three or more "(YYYY)"-shaped years is a strong, language- and
+  // format-independent signal that the message is a list of citations.
+  if (next.id === "sources" && (text.match(/\(\d{4}\)/g)?.length ?? 0) >= 3) {
+    return [next.id];
+  }
   return [];
 }
 

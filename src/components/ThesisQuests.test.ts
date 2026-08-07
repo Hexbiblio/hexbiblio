@@ -61,4 +61,58 @@ describe("detectCompletedQuests + deriveCompleted integration", () => {
     expect(() => detectCompletedQuests("N'importe quel message, même long comme celui-ci", completed)).not.toThrow();
     expect(detectCompletedQuests("N'importe quel message, même long comme celui-ci", completed)).toEqual([]);
   });
+
+  it("detects a pasted bibliography for the 'sources' quest by counting citation years, even with no matching phrase", () => {
+    // Regression for a real bug report: a student pasted a 64-entry
+    // bibliography, then said "Valides mes sources" — neither matched the
+    // old narration-only cue ("j'ai lu... article"), so the quest never
+    // ticked despite the mentor's chat reply saying it was validated.
+    const completed = deriveCompleted({
+      field_of_study: "Management",
+      research_theme: "Sport de haut niveau",
+      research_question: "Comment ?",
+      thesis_statement: "Je soutiens que...",
+      methodology: "Qualitative",
+    });
+    const bibliography =
+      "1. Commission Nationale de l'Athlétisme Professionnel (2019). Le dispositif\n" +
+      "2. Comité International Olympique (2021). Plan 2021-2024 de la solidarité olympique\n" +
+      "3. Cour des comptes (2019). L'école et le sport";
+    expect(detectCompletedQuests(bibliography, completed)).toEqual(["sources"]);
+  });
+
+  it("still requires 3+ citation years for the bibliography-paste fallback, so a single stray year doesn't false-positive", () => {
+    const completed = deriveCompleted({
+      field_of_study: "Management",
+      research_theme: "Sport de haut niveau",
+      research_question: "Comment ?",
+      thesis_statement: "Je soutiens que...",
+      methodology: "Qualitative",
+    });
+    expect(
+      detectCompletedQuests("Mon directeur recommande cet ouvrage (2019) mais je dois encore le consulter.", completed)
+    ).toEqual([]);
+  });
+
+  it("detects a direct validation phrase for 'sources' ('valide mes sources'), not just narration cues", () => {
+    const completed = deriveCompleted({
+      field_of_study: "Management",
+      research_theme: "Sport de haut niveau",
+      research_question: "Comment ?",
+      thesis_statement: "Je soutiens que...",
+      methodology: "Qualitative",
+    });
+    expect(detectCompletedQuests("Valides mes sources", completed)).toEqual(["sources"]);
+  });
+
+  it("matches French inflections of 'bibliographie', which the old bare 'bibliograph' stem never matched", () => {
+    const completed = deriveCompleted({
+      field_of_study: "Management",
+      research_theme: "Sport de haut niveau",
+      research_question: "Comment ?",
+      thesis_statement: "Je soutiens que...",
+      methodology: "Qualitative",
+    });
+    expect(detectCompletedQuests("Voici ma bibliographie complète pour le mémoire", completed)).toEqual(["sources"]);
+  });
 });
