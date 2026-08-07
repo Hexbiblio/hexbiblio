@@ -33,11 +33,15 @@ const SYSTEM_PROMPT = `You are HexBiblio — an expert academic research advisor
 4. **Thesis statement / hypothesis** — help them formulate a defendable claim.
 5. **Methodology** — go beyond a generic qualitative/quantitative/mixed menu: ground the discussion in what's actually standard practice for the student's own discipline (from their profile below, or ask directly if it's not known). A sociology thesis built on interviews faces different questions (sampling strategy, positionality, coding approach) than a computer science thesis proposing an experiment (dataset choice, baselines, evaluation metrics) or a literature thesis built on close reading (corpus selection, theoretical framework). Bring in the specific considerations, common pitfalls, and typical structures that matter for THEIR field — don't default to the generic menu once their discipline is known.
 6. **Sources** — point them to relevant theses from the HexBiblio database and external literature.
+7. **Writing plan** — unlike steps 1–6, this one is NOT something you guide or detect in conversation. It's filled in directly on the student's profile page, not through chat — see the "Self-report step" rule below.
 
 Only move to the next step once the current one feels resolved. If the student is vague, ask a clarifying follow-up rather than guessing.
 
 ## Staying in order — CRITICAL
 The student's real progress is given below in "QUEST STATUS". If their latest message jumps ahead of the current open step (e.g. they state a thesis before a topic is set, or name a methodology before a research question exists), do NOT just follow along with the tangent. Briefly and warmly acknowledge what they shared (you can note it's a great direction for later), then steer them back to the current open step and say in one short sentence why finishing it first will make the later step easier. Only advance once the current step is actually resolved.
+
+## Self-report step — CRITICAL
+If QUEST STATUS below says the current open step is **Writing plan**, this rule REPLACES "Staying in order" for that step: do NOT try to walk the student through building a writing plan in chat, do NOT ask them to describe it to you, and do NOT redirect unrelated messages back to it — chat has no way to complete this step, so doing any of that just corners the student with something they can't resolve here. Mention once, briefly, that they can jot it down on their profile page when they're ready, then keep helping with whatever they actually asked about — refining sources, going deeper on methodology, or anything else. Never try to draft the plan's content yourself, even if asked; that's the student's to write, not yours to hand them.
 
 ## First message
 On your very first reply in a conversation (there is no earlier assistant message in the history), open with a one-sentence self-introduction — who you are and how you help, e.g. "I'm Hexbiblio, your research mentor — I'll help you shape your thesis step by step." / "Je suis Hexbiblio, ton mentor de recherche — je vais t'accompagner pas à pas dans ton mémoire." Never repeat this introduction later in the same conversation.
@@ -288,7 +292,12 @@ serve(async (req) => {
     // as opposed to profileContext above (who they are) or questContext
     // below (which steps are done). This is what a mock jury interrogates,
     // and what lets the regular mentor recall a prior session's answers
-    // instead of only knowing a step's checkbox is ticked.
+    // instead of only knowing a step's checkbox is ticked. Deliberately
+    // excludes profile.writing_plan even once that's filled in: the model
+    // has no reason to read or reference its content — the Self-report step
+    // rule already tells it not to engage with that step in chat at all, so
+    // there's nothing here it should do with the plan's text besides
+    // comment on or edit it, which is exactly what it shouldn't do.
     let researchContext = "";
     if (profile && (profile.research_theme || profile.research_question || profile.thesis_statement || profile.methodology || profile.research_sources)) {
       researchContext = `\n\n---\n## STUDENT'S RESEARCH SO FAR\n`;
@@ -302,7 +311,7 @@ serve(async (req) => {
     // Roadmap step labels, matching the QuestId order defined client-side in
     // src/components/ThesisQuests.tsx — kept in sync manually since the edge
     // function can't import client source.
-    const ROADMAP_ORDER = ["discipline", "theme", "question", "thesis", "method", "sources"];
+    const ROADMAP_ORDER = ["discipline", "theme", "question", "thesis", "method", "sources", "plan"];
     const ROADMAP_LABELS: Record<string, string> = {
       discipline: "Discipline (field of study)",
       theme: "Theme / topic",
@@ -310,6 +319,7 @@ serve(async (req) => {
       thesis: "Thesis statement / hypothesis",
       method: "Methodology",
       sources: "Sources",
+      plan: "Writing plan (self-report only — see the Self-report step rule)",
     };
 
     const doneLabels = (Array.isArray(completedQuests) ? completedQuests : [])
@@ -318,9 +328,13 @@ serve(async (req) => {
 
     let questContext = `\n\n---\n## QUEST STATUS (roadmap progress)\nRoadmap order: ${ROADMAP_ORDER.map((id) => ROADMAP_LABELS[id]).join(" → ")}.\n`;
     questContext += doneLabels.length ? `Already completed: ${doneLabels.join(", ")}.\n` : "Nothing completed yet.\n";
-    questContext += currentQuest && ROADMAP_LABELS[currentQuest]
-      ? `Current open step: **${ROADMAP_LABELS[currentQuest]}**. Focus the conversation here — see the "Staying in order" rule above.\n`
-      : `All roadmap steps are complete — feel free to go deeper on sources or open follow-up questions.\n`;
+    if (currentQuest === "plan") {
+      questContext += `Current open step: **${ROADMAP_LABELS.plan}**. This is the self-report step — see the "Self-report step" rule above, not "Staying in order." Do not try to complete it through chat.\n`;
+    } else {
+      questContext += currentQuest && ROADMAP_LABELS[currentQuest]
+        ? `Current open step: **${ROADMAP_LABELS[currentQuest]}**. Focus the conversation here — see the "Staying in order" rule above.\n`
+        : `All roadmap steps are complete — feel free to go deeper on sources or open follow-up questions.\n`;
+    }
     if (currentQuest === "method") {
       questContext += profile?.field_of_study
         ? `Reminder: the student's declared field is "${profile.field_of_study}" — ground this methodology discussion in what's actually standard practice there, not a generic qualitative/quantitative/mixed menu (see step 5 above).\n`

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import BotMessage from "@/components/BotMessage";
 import MascotAvatar from "@/components/MascotAvatar";
 import OnboardingCard, { OnboardingPatch } from "@/components/OnboardingCard";
-import { getNextQuest, QuestId } from "@/components/ThesisQuests";
+import { getNextQuest, QuestId, CHAT_QUEST_IDS } from "@/components/ThesisQuests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -312,9 +312,10 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   const chatPlaceholder = nextQuest ? nextQuest.placeholder[language] : t("chat.placeholder");
 
   // Defense mode needs a real thesis statement/methodology to interrogate —
-  // gated on the full roadmap being done, the same moment the mentor prompt
-  // itself already treats as "nothing left to guide, go deeper."
-  const allQuestsDone = Boolean(user && completed && completed.size > 0 && !getNextQuest(completed));
+  // gated on the core (chat-detectable) roadmap being done, not on every
+  // QuestId: a self-report-only quest like "plan" can sit open indefinitely
+  // without that meaning defense mode isn't ready to use yet.
+  const allQuestsDone = Boolean(user && completed && CHAT_QUEST_IDS.every((id) => completed!.has(id)));
 
   // Nudge check: fires once per quest (re-runs when nextQuest changes, e.g.
   // completing one moves to the next) rather than on every render.
@@ -398,9 +399,13 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
         {showInactivityNudge && nextQuest && (
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-3 rounded-lg border bg-muted/40 px-4 py-2.5 text-sm text-foreground">
             <span>
-              {language === "fr"
-                ? `Tu en étais à « ${nextQuest.label.fr} ». Envie de reprendre ?`
-                : `You were at "${nextQuest.label.en}." Want to pick back up?`}
+              {nextQuest.id === "plan"
+                ? (language === "fr"
+                    ? "N'oublie pas d'ajouter ton plan de rédaction depuis ton profil quand tu es prêt."
+                    : "Don't forget to add your writing plan from your profile whenever you're ready.")
+                : (language === "fr"
+                    ? `Tu en étais à « ${nextQuest.label.fr} ». Envie de reprendre ?`
+                    : `You were at "${nextQuest.label.en}." Want to pick back up?`)}
             </span>
             <button
               type="button"

@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import ThesisCard from "@/components/ThesisCard";
 import { useToast } from "@/hooks/use-toast";
-import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library, Trash2 } from "lucide-react";
+import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library, Trash2, NotebookPen } from "lucide-react";
 import { useQuestProgress } from "@/components/ThesisQuests";
 import { ACADEMIC_LEVELS } from "@/i18n/fields";
 
@@ -45,6 +45,7 @@ const Profile = () => {
   const [thesisStatement, setThesisStatement] = useState("");
   const [methodology, setMethodology] = useState("");
   const [researchSources, setResearchSources] = useState("");
+  const [writingPlan, setWritingPlan] = useState("");
   const [bio, setBio] = useState("");
   const [interests, setInterests] = useState<string[]>([]);
   const [interestInput, setInterestInput] = useState("");
@@ -77,6 +78,7 @@ const Profile = () => {
         setThesisStatement(profile.thesis_statement || "");
         setMethodology(profile.methodology || "");
         setResearchSources(profile.research_sources || "");
+        setWritingPlan(profile.writing_plan || "");
         setBio(profile.bio || "");
         setInterests(profile.research_interests || []);
         setAvatarUrl(profile.avatar_url || null);
@@ -136,6 +138,7 @@ const Profile = () => {
       thesis_statement: thesisStatement.trim() || null,
       methodology: methodology.trim() || null,
       research_sources: researchSources.trim() || null,
+      writing_plan: writingPlan.trim() || null,
       bio: bio.trim() || null,
       research_interests: interests,
     }).eq("user_id", user.id);
@@ -346,6 +349,21 @@ const Profile = () => {
           <div className="space-y-2">
             <Label className="flex items-center gap-1.5"><Library className="h-3.5 w-3.5" />{fr ? "Sources" : "Sources"}</Label>
             <Textarea value={researchSources} onChange={(e) => setResearchSources(e.target.value)} placeholder={fr ? "Références clés identifiées..." : "Key references identified..."} rows={2} maxLength={500} />
+          </div>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5"><NotebookPen className="h-3.5 w-3.5" />{fr ? "Plan de rédaction" : "Writing plan"}</Label>
+            <Textarea
+              value={writingPlan}
+              onChange={(e) => setWritingPlan(e.target.value)}
+              placeholder={fr ? "Grandes lignes de tes chapitres, dans l'ordre où tu comptes les écrire..." : "Rough outline of your chapters, in the order you plan to write them..."}
+              rows={3}
+              maxLength={1000}
+            />
+            <p className="text-xs text-muted-foreground">
+              {fr
+                ? "C'est le seul endroit où le noter — le mentor n'essaie pas de le deviner dans le chat."
+                : "This is the one place to note it — the mentor doesn't try to guess it from chat."}
+            </p>
           </div>
         </CardContent>
       </Card>

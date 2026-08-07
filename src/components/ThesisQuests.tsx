@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Trophy, Sparkles, Target, BookOpen, FileSearch, Microscope, Library, Lightbulb, Bot, HelpCircle } from "lucide-react";
+import { Check, Trophy, Sparkles, Target, BookOpen, FileSearch, Microscope, Library, Lightbulb, Bot, HelpCircle, NotebookPen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
@@ -13,7 +13,8 @@ export type QuestId =
   | "question"
   | "thesis"
   | "method"
-  | "sources";
+  | "sources"
+  | "plan";
 
 type Quest = {
   id: QuestId;
@@ -67,6 +68,18 @@ export const QUESTS: Quest[] = [
     hint: { en: "Identify key references", fr: "Identifier les références clés" },
     placeholder: { en: "What sources have you identified?", fr: "Quelles sources avez-vous identifiées ?" },
   },
+  {
+    // Pilot: the first step past "sources" (see competitive-analysis
+    // artifact, piste 1). Deliberately self-report, not chat-detected — see
+    // USER_CUES below, which has no entry for this id on purpose. A writing
+    // plan takes shape over days, not one exchange, so there's no single
+    // message a regex could reliably treat as "done."
+    id: "plan",
+    icon: NotebookPen,
+    label: { en: "Draft a writing plan", fr: "Esquisser un plan de rédaction" },
+    hint: { en: "Fill this in on your profile, not here", fr: "À remplir dans ton profil, pas ici" },
+    placeholder: { en: "Keep chatting, or add your plan from your profile", fr: "Continue la discussion, ou ajoute ton plan depuis ton profil" },
+  },
 ];
 
 /** The next open quest, in the fixed roadmap order above — or undefined once all are done. */
@@ -83,11 +96,16 @@ export const QUEST_PROFILE_FIELD: Record<QuestId, string> = {
   thesis: "thesis_statement",
   method: "methodology",
   sources: "research_sources",
+  plan: "writing_plan",
 };
 
 // Strict cues that must appear in the USER's own message for a quest to count.
-// Generic chatter ("hello") must NOT trigger anything.
-export const USER_CUES: Record<QuestId, RegExp> = {
+// Generic chatter ("hello") must NOT trigger anything. Deliberately NOT
+// exhaustive over QuestId — "plan" has no entry, since it's self-report only
+// (filled in on Profile.tsx). detectCompletedQuests below reads this with
+// optional chaining for exactly that reason: a missing entry means "this
+// quest can't be completed through chat," not a bug.
+export const USER_CUES: Partial<Record<QuestId, RegExp>> = {
   discipline: /\b(sociology|psychology|biology|chemistry|physics|economics|history|philosophy|literature|engineering|computer science|medicine|law|anthropology|linguistics|education|political science|mathematics|sociologie|psychologie|biologie|chimie|physique|économie|histoire|philosophie|littérature|ingénierie|informatique|médecine|droit|anthropologie|linguistique|éducation|sciences? politiques?|mathématiques)\b/i,
   theme: /\b(impact of|effect of|influence of|role of|relationship between|focus on|interested in|my topic|topic is|effet de|influence de|rôle de|relation entre|mon sujet|sujet est|intéress)\b/i,
   question: /\?\s*$|\b(how|why|to what extent|in what ways|comment|pourquoi|dans quelle mesure|en quoi)\b.{5,}\?/i,
@@ -95,6 +113,13 @@ export const USER_CUES: Record<QuestId, RegExp> = {
   method: /\b(qualitative|quantitative|mixed[- ]methods?|survey|interview|case study|ethnograph|experiment|questionnaire|enquête|entretien|étude de cas|expérience|méthode mixte)\b/i,
   sources: /\b(literature review|i (have read|found|read) .{0,40}(article|paper|book|thesis)|articles? (by|from) |bibliograph|revue de littérature|j'ai (lu|trouvé) .{0,40}(article|livre|thèse))\b/i,
 };
+
+// Quests reachable through chat detection — i.e. every id with a USER_CUES
+// entry. Used to gate features that mean "the core roadmap is done" (like
+// ChatInterface.tsx's mock-defense CTA) on something narrower than "every
+// QuestId is complete," since a self-report-only quest like "plan" can sit
+// open indefinitely without that meaning the core roadmap isn't finished.
+export const CHAT_QUEST_IDS: QuestId[] = QUESTS.filter((q) => USER_CUES[q.id]).map((q) => q.id);
 
 /**
  * Detect whether the user's latest message completes the *next* open quest —
@@ -109,7 +134,7 @@ export function detectCompletedQuests(
   const text = (userMessage ?? "").trim();
   if (text.length < 15) return [];
   const next = getNextQuest(completed ?? new Set());
-  if (next && USER_CUES[next.id].test(text)) return [next.id];
+  if (next && USER_CUES[next.id]?.test(text)) return [next.id];
   return [];
 }
 

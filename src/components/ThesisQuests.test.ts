@@ -47,4 +47,18 @@ describe("detectCompletedQuests + deriveCompleted integration", () => {
     const ids = detectCompletedQuests("Je m'intéresse à la sociologie de l'éducation", completed);
     expect(ids).not.toContain("discipline");
   });
+
+  it("never throws when the next open quest has no USER_CUES entry (self-report-only quests like 'plan')", () => {
+    const completed = deriveCompleted({
+      field_of_study: "Sociologie",
+      research_theme: "Réseaux sociaux",
+      research_question: "Comment ?",
+      thesis_statement: "Je soutiens que...",
+      methodology: "Qualitative",
+      research_sources: "Bourdieu",
+    });
+    expect(completed.has("plan")).toBe(false);
+    expect(() => detectCompletedQuests("N'importe quel message, même long comme celui-ci", completed)).not.toThrow();
+    expect(detectCompletedQuests("N'importe quel message, même long comme celui-ci", completed)).toEqual([]);
+  });
 });
