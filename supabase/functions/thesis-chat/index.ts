@@ -31,7 +31,7 @@ const SYSTEM_PROMPT = `You are HexBiblio — an expert academic research advisor
 2. **Theme / topic** — help them narrow to a specific area.
 3. **Research question** — co-craft a clear, focused question.
 4. **Thesis statement / hypothesis** — help them formulate a defendable claim.
-5. **Methodology** — discuss qualitative / quantitative / mixed approaches.
+5. **Methodology** — go beyond a generic qualitative/quantitative/mixed menu: ground the discussion in what's actually standard practice for the student's own discipline (from their profile below, or ask directly if it's not known). A sociology thesis built on interviews faces different questions (sampling strategy, positionality, coding approach) than a computer science thesis proposing an experiment (dataset choice, baselines, evaluation metrics) or a literature thesis built on close reading (corpus selection, theoretical framework). Bring in the specific considerations, common pitfalls, and typical structures that matter for THEIR field — don't default to the generic menu once their discipline is known.
 6. **Sources** — point them to relevant theses from the HexBiblio database and external literature.
 
 Only move to the next step once the current one feels resolved. If the student is vague, ask a clarifying follow-up rather than guessing.
@@ -51,6 +51,35 @@ You will receive matching theses from the HexBiblio database in context. Only pr
 - Never repeat the same question twice in a row.
 - Stay academically rigorous but conversational.`;
 
+// Mock-defense mode: a distinct persona, not the mentor. Only reachable once
+// the student has finished the roadmap above (see ChatInterface.tsx's gate),
+// so there's always a real thesis statement/methodology to interrogate —
+// this prompt assumes STUDENT'S RESEARCH below is populated. Deliberately
+// never writes or improves the student's own material (see
+// mentor_positioning_boundaries in project memory: the mentor draws answers
+// out of the student, it doesn't hand them over or edit their work) — a mock
+// jury pushes and probes, it doesn't co-author.
+const DEFENSE_SYSTEM_PROMPT = `You are a doctoral jury member conducting a practice thesis defense (soutenance) for a student, based on the research they've already defined with their mentor (given below in STUDENT'S RESEARCH). Your job is to ask the kind of probing, sometimes uncomfortable questions a real jury would ask — not to teach or guide them toward answers.
+
+## Persona — CRITICAL
+- Professional, direct, and rigorous — like a real academic examiner. Not the warm, encouraging mentor voice used elsewhere in HexBiblio.
+- Ask ONE tough question at a time, grounded in their actual research question, thesis statement, methodology, and sources.
+- Push on real weak points: unclear scope, unjustified methodology choices, gaps in the literature, alternative explanations they haven't addressed, generalizability, ethical considerations.
+- Do not soften questions or hint at the "right" answer — this is a realistic rehearsal, not a lesson.
+- After each answer, react briefly and honestly — a real examiner says if an answer was solid or if it dodged the question — then ask the next question. Don't lecture at length.
+- Vary the angle of your questions across the exchange rather than drilling the same weakness repeatedly.
+
+## Boundaries — CRITICAL
+- Never write, phrase, or suggest actual thesis content or answers for the student — you are testing them, not writing for them. If they ask you to answer for them, decline in character (a real jury wouldn't) and redirect the question back to them.
+- If the student seems genuinely stuck rather than just thinking, you may ask a smaller clarifying question, the way a real examiner would — but still don't supply the answer.
+- Stay in character as an examiner for the whole conversation. No meta-commentary about being an AI or a mentor.
+
+## Opening
+Your very first reply should explain the format in one sentence, then ask your first question directly, grounded in their research question and thesis statement below.
+
+## Style
+- Plain prose. Short exchanges — one question, wait for the answer.`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -63,7 +92,8 @@ serve(async (req) => {
   try {
     const body = await req.json();
     language = body.language ?? "en";
-    const { messages, currentQuest = null, completedQuests = [] } = body;
+    const { messages, currentQuest = null, completedQuests = [], mode = "mentor" } = body;
+    const isDefenseMode = mode === "defense";
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -164,11 +194,17 @@ serve(async (req) => {
     await supabase.from("chat_logs").insert({ identifier, user_id: userId });
 
     // ---- Load the caller's own profile server-side (never trust a client-supplied profile) ----
+    // Includes the quest-captured research fields (research_theme through
+    // research_sources) alongside the demographic ones — previously only the
+    // latter were fetched, so the mentor had no memory of what the student's
+    // actual thesis statement/methodology were beyond "that quest is done",
+    // only re-deriving it from the live conversation. Also what makes
+    // defense mode possible: the mock jury needs to know what to interrogate.
     let profile: any = null;
     if (userId) {
       const { data } = await supabase
         .from("profiles")
-        .select("first_name, academic_level, country, university, field_of_study, research_interests, bio")
+        .select("first_name, academic_level, country, university, field_of_study, research_interests, bio, research_theme, research_question, thesis_statement, methodology, research_sources")
         .eq("user_id", userId)
         .maybeSingle();
       profile = data;
@@ -177,9 +213,10 @@ serve(async (req) => {
     // Extract the latest user message to search the database
     const lastUserMessage = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
 
-    // Search the thesis database for relevant sources
+    // Search the thesis database for relevant sources — skipped in defense
+    // mode, where the mock jury has no use for database recommendations.
     let databaseContext = "";
-    if (lastUserMessage.length > 5) {
+    if (!isDefenseMode && lastUserMessage.length > 5) {
       // Split user message into keywords for search
       const keywords = lastUserMessage
         .toLowerCase()
@@ -247,6 +284,21 @@ serve(async (req) => {
       if (profile.bio) profileContext += `- Bio: ${profile.bio}\n`;
     }
 
+    // What the student has actually said for each completed roadmap step —
+    // as opposed to profileContext above (who they are) or questContext
+    // below (which steps are done). This is what a mock jury interrogates,
+    // and what lets the regular mentor recall a prior session's answers
+    // instead of only knowing a step's checkbox is ticked.
+    let researchContext = "";
+    if (profile && (profile.research_theme || profile.research_question || profile.thesis_statement || profile.methodology || profile.research_sources)) {
+      researchContext = `\n\n---\n## STUDENT'S RESEARCH SO FAR\n`;
+      if (profile.research_theme) researchContext += `- Theme/topic: ${profile.research_theme}\n`;
+      if (profile.research_question) researchContext += `- Research question: ${profile.research_question}\n`;
+      if (profile.thesis_statement) researchContext += `- Thesis statement/hypothesis: ${profile.thesis_statement}\n`;
+      if (profile.methodology) researchContext += `- Methodology: ${profile.methodology}\n`;
+      if (profile.research_sources) researchContext += `- Sources identified: ${profile.research_sources}\n`;
+    }
+
     // Roadmap step labels, matching the QuestId order defined client-side in
     // src/components/ThesisQuests.tsx — kept in sync manually since the edge
     // function can't import client source.
@@ -269,8 +321,19 @@ serve(async (req) => {
     questContext += currentQuest && ROADMAP_LABELS[currentQuest]
       ? `Current open step: **${ROADMAP_LABELS[currentQuest]}**. Focus the conversation here — see the "Staying in order" rule above.\n`
       : `All roadmap steps are complete — feel free to go deeper on sources or open follow-up questions.\n`;
+    if (currentQuest === "method") {
+      questContext += profile?.field_of_study
+        ? `Reminder: the student's declared field is "${profile.field_of_study}" — ground this methodology discussion in what's actually standard practice there, not a generic qualitative/quantitative/mixed menu (see step 5 above).\n`
+        : `Reminder: their field isn't set in their profile — ask what it is if the conversation hasn't made it clear, so you can ground the methodology discussion in real disciplinary practice rather than a generic menu.\n`;
+    }
 
-    const fullSystemPrompt = SYSTEM_PROMPT + profileContext + questContext + databaseContext + langInstruction;
+    // Defense mode gets its own persona and STUDENT'S RESEARCH context, but
+    // skips questContext (no roadmap to track — the mock jury isn't
+    // detecting quests) and databaseContext (already skipped above, not
+    // relevant to a mock jury).
+    const fullSystemPrompt = isDefenseMode
+      ? DEFENSE_SYSTEM_PROMPT + researchContext + langInstruction
+      : SYSTEM_PROMPT + profileContext + researchContext + questContext + databaseContext + langInstruction;
 
     const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",

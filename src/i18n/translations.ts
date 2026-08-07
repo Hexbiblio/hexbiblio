@@ -94,6 +94,10 @@ export const translations = {
   "chat.step2Desc": { en: "Discipline and key themes surface instantly.", fr: "Discipline et thèmes clés identifiés instantanément." },
   "chat.step3Title": { en: "You get guided", fr: "Tu es guidé" },
   "chat.step3Desc": { en: "Refine your question, thesis, and methodology step by step.", fr: "Affine question, thèse et méthodologie pas à pas." },
+  "chat.defenseCta": { en: "Ready to practice defending your thesis?", fr: "Prêt à t'entraîner à défendre ton mémoire ?" },
+  "chat.defenseCtaButton": { en: "Start the mock defense", fr: "Commencer la simulation" },
+  "chat.defenseModeLabel": { en: "Mock defense mode", fr: "Mode simulation de soutenance" },
+  "chat.defenseModeExit": { en: "Exit", fr: "Quitter" },
 
   // Onboarding (first-steps personalization card, shown until profile has level + field)
   // Title/subtitle are built inline in OnboardingCard.tsx, not here — the

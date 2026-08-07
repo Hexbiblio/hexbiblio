@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Send, UserRound, Loader2, LogIn, MessageSquare, Sparkles, Compass } from "lucide-react";
+import { Send, UserRound, Loader2, LogIn, MessageSquare, Sparkles, Compass, GraduationCap, X } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -45,6 +45,10 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  // Mock-defense mode: a distinct chat persona, only reachable once the
+  // roadmap is fully done (see allQuestsDone below) — a mock jury needs a
+  // real thesis statement/methodology to interrogate.
+  const [mode, setMode] = useState<"mentor" | "defense">("mentor");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { language, t } = useLanguage();
@@ -137,10 +141,17 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
     // the conversation flows inline like ChatGPT/Claude.
   }, [messages]);
 
-  const streamChat = async (allMessages: Msg[]) => {
+  // modeOverride exists only for enterDefenseMode(): it calls setMode()
+  // and streamChat() in the same synchronous tick, and React hasn't
+  // committed the new mode yet when streamChat's own closure reads `mode` —
+  // an explicit override sidesteps that stale-state read. Every other call
+  // site just relies on the (by-then-current) `mode` state.
+  const streamChat = async (allMessages: Msg[], modeOverride?: "mentor" | "defense") => {
+    const activeMode = modeOverride ?? mode;
     // Tell the bot where the student actually stands on the roadmap so it can
     // nudge them back in order instead of following a tangent (e.g. a thesis
-    // stated before a topic is set).
+    // stated before a topic is set). Not meaningful in defense mode, where
+    // there's no roadmap left to track.
     const completedSet = completed ?? new Set<QuestId>();
     const currentQuest = getNextQuest(completedSet);
 
@@ -155,6 +166,7 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
         language,
         currentQuest: currentQuest?.id ?? null,
         completedQuests: [...completedSet],
+        mode: activeMode,
       }),
     });
 
@@ -217,12 +229,41 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
 
     try {
       await streamChat([...messages, userMsg]);
-      onUserMessage?.(messageText);
+      // Quest detection doesn't apply in defense mode — it's only reachable
+      // once every quest is already done (see allQuestsDone below).
+      if (mode === "mentor") onUserMessage?.(messageText);
     } catch (e: any) {
       toast({ title: t("common.error"), description: e.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Starts a fresh sub-conversation in the jury persona. Doesn't reuse
+  // handleSend: it reads `messages`/`mode` from this render's closure, which
+  // would still be stale (the old thread, "mentor") since setMessages/setMode
+  // above haven't committed yet — building the kickoff message directly here
+  // sidesteps that.
+  const enterDefenseMode = async () => {
+    setMode("defense");
+    const kickoff = language === "fr"
+      ? "Je suis prêt à commencer ma simulation de soutenance."
+      : "I'm ready to start my mock defense.";
+    const userMsg: Msg = { role: "user", content: kickoff };
+    setMessages([userMsg]);
+    setIsLoading(true);
+    try {
+      await streamChat([userMsg], "defense");
+    } catch (e: any) {
+      toast({ title: t("common.error"), description: e.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const exitDefenseMode = () => {
+    setMode("mentor");
+    setMessages([]);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -239,6 +280,11 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   // brand-new users (nothing completed yet) keep the default invitation.
   const nextQuest = user && completed && completed.size > 0 ? getNextQuest(completed) : undefined;
   const chatPlaceholder = nextQuest ? nextQuest.placeholder[language] : t("chat.placeholder");
+
+  // Defense mode needs a real thesis statement/methodology to interrogate —
+  // gated on the full roadmap being done, the same moment the mentor prompt
+  // itself already treats as "nothing left to guide, go deeper."
+  const allQuestsDone = Boolean(user && completed && completed.size > 0 && !getNextQuest(completed));
 
   const howItWorks = [
     { icon: MessageSquare, title: t("chat.step1Title"), desc: t("chat.step1Desc") },
@@ -292,6 +338,16 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
                     : `Ready to dig into your next research question in ${profile.field_of_study}?`)
                 : t("chat.subtitle")}
             </p>
+          </div>
+        )}
+
+        {allQuestsDone && (
+          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 p-4 text-center">
+            <GraduationCap className="h-5 w-5 text-primary" />
+            <p className="text-sm font-medium">{t("chat.defenseCta")}</p>
+            <Button size="sm" variant="outline" onClick={enterDefenseMode} disabled={isLoading} className="rounded-full">
+              {t("chat.defenseCtaButton")}
+            </Button>
           </div>
         )}
 
@@ -392,6 +448,23 @@ const ChatInterface = ({ completed, onUserMessage }: ChatInterfaceProps) => {
   // Input becomes a sticky pill at the bottom of the viewport.
   return (
     <div className="w-full">
+      {mode === "defense" && (
+        <div className="sticky top-0 z-20 mx-auto mb-4 flex max-w-3xl items-center justify-between gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 backdrop-blur-md">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-primary-text">
+            <GraduationCap className="h-3.5 w-3.5" />
+            {t("chat.defenseModeLabel")}
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={exitDefenseMode}
+            className="h-7 gap-1 rounded-full px-2.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-3 w-3" />
+            {t("chat.defenseModeExit")}
+          </Button>
+        </div>
+      )}
       <div className="mx-auto max-w-3xl space-y-6 pb-32">
         {messages.map((msg, i) => (
           <div key={i} className={`flex items-start gap-2.5 ${msg.role === "user" ? "justify-end" : ""}`}>
