@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
+import ConfettiBurst from "@/components/ConfettiBurst";
 
 export type QuestId =
   | "discipline"
@@ -85,6 +86,33 @@ export const QUESTS: Quest[] = [
 /** The next open quest, in the fixed roadmap order above — or undefined once all are done. */
 export function getNextQuest(completed: Set<QuestId>): Quest | undefined {
   return QUESTS.find((q) => !completed.has(q.id));
+}
+
+// Gamification: a researcher "title" that levels up with quest progress.
+// Two entry points share this one tier table rather than duplicating it —
+// the student's own profile has the full Set<QuestId> (getResearcherTitleFromCompleted),
+// while comments/notifications only ever get a raw count from profiles_public
+// (GAM-01: a safe aggregate, never the actual quest field values — see that
+// migration), so they call getResearcherTitle directly.
+export const RESEARCHER_TIERS: { minCount: number; title: { en: string; fr: string } }[] = [
+  { minCount: 0, title: { en: "New researcher", fr: "Nouveau chercheur" } },
+  { minCount: 2, title: { en: "Curious mind", fr: "Esprit curieux" } },
+  { minCount: 4, title: { en: "Field researcher", fr: "Chercheur de terrain" } },
+  { minCount: 6, title: { en: "Thesis strategist", fr: "Stratège de mémoire" } },
+  { minCount: 7, title: { en: "Thesis master", fr: "Maître du mémoire" } },
+];
+
+export function getResearcherTitle(completedCount: number): { en: string; fr: string } {
+  const clamped = Math.max(0, Math.min(QUESTS.length, Math.trunc(completedCount || 0)));
+  let tier = RESEARCHER_TIERS[0];
+  for (const t of RESEARCHER_TIERS) {
+    if (clamped >= t.minCount) tier = t;
+  }
+  return tier.title;
+}
+
+export function getResearcherTitleFromCompleted(completed: Set<QuestId>): { en: string; fr: string } {
+  return getResearcherTitle(completed.size);
 }
 
 // Profile column each quest's captured value is persisted to.
@@ -363,7 +391,7 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
                   animate={isNew ? { scale: [1, 1.15, 1] } : {}}
                   transition={{ duration: 0.5 }}
                   title={language === "fr" ? "Validé automatiquement par l'assistant" : "Auto-checked by the assistant"}
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                  className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                     isDone
                       ? "border-primary bg-primary text-primary-foreground"
                       : isCurrent
@@ -372,6 +400,10 @@ const ThesisQuests = ({ completed, justCompleted }: Props) => {
                   }`}
                 >
                   {isDone ? <Check className="h-4 w-4" strokeWidth={3} /> : <Icon className="h-3.5 w-3.5" />}
+                  {/* Bigger burst naturally follows from allDone being true
+                      exactly while the 7th quest is still the "isNew" one —
+                      no extra "is this the last quest" bookkeeping needed. */}
+                  <ConfettiBurst active={isNew} big={allDone} />
                 </motion.div>
                 {!isLast && (
                   <div className={`w-px flex-1 transition-colors ${isDone ? "bg-primary/40" : "bg-border"}`} />

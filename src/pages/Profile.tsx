@@ -24,8 +24,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import ThesisCard from "@/components/ThesisCard";
 import { useToast } from "@/hooks/use-toast";
-import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library, Trash2, NotebookPen } from "lucide-react";
-import { useQuestProgress } from "@/components/ThesisQuests";
+import { User, Upload, X, GraduationCap, MapPin, Building2, BookOpen, Lightbulb, FileSearch, Target, Microscope, Library, Trash2, NotebookPen, Trophy } from "lucide-react";
+import { useQuestProgress, getResearcherTitleFromCompleted } from "@/components/ThesisQuests";
+import QuestBadgeGrid from "@/components/QuestBadgeGrid";
 import { ACADEMIC_LEVELS } from "@/i18n/fields";
 
 const DELETE_OWN_ACCOUNT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-own-account`;
@@ -59,7 +60,7 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const { refetch: refetchQuests } = useQuestProgress();
+  const { completed: completedQuests, refetch: refetchQuests } = useQuestProgress();
 
   useEffect(() => {
     if (!user) return;
@@ -317,6 +318,25 @@ const Profile = () => {
               </div>
             )}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Gamification (GAM-01): the student's own badge collection — private
+          view here, while the same title (derived from the same completed
+          count) also surfaces publicly next to their username in comments/
+          notifications, via profiles_public.completed_quests_count. */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5" />
+            {fr ? "Vos badges" : "Your badges"}
+          </CardTitle>
+          <CardDescription>
+            {getResearcherTitleFromCompleted(completedQuests)[language]} · {completedQuests.size}/7
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <QuestBadgeGrid completed={completedQuests} />
         </CardContent>
       </Card>
 

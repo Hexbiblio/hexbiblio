@@ -4,8 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import ReportButton from "@/components/ReportButton";
+import { getResearcherTitle } from "@/components/ThesisQuests";
 import { MessageSquare, Trash2 } from "lucide-react";
 
 interface Comment {
@@ -13,7 +15,7 @@ interface Comment {
   content: string;
   created_at: string;
   user_id: string;
-  profiles?: { username: string | null } | null;
+  profiles?: { username: string | null; completed_quests_count: number | null } | null;
 }
 
 const CommentSection = ({ thesisId }: { thesisId: string }) => {
@@ -34,7 +36,7 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
     const userIds = [...new Set(data.map(c => c.user_id))];
     const { data: profiles } = await supabase
       .from("profiles_public")
-      .select("user_id, username")
+      .select("user_id, username, completed_quests_count")
       .in("user_id", userIds);
     const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
     setComments(data.map(c => ({ ...c, profiles: profileMap.get(c.user_id) || null })));
@@ -90,6 +92,11 @@ const CommentSection = ({ thesisId }: { thesisId: string }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium">{comment.profiles?.username || t("comments.anonymous")}</span>
+                {comment.profiles && (
+                  <Badge variant="secondary" className="px-1.5 py-0 text-[10px] font-medium">
+                    {getResearcherTitle(comment.profiles.completed_quests_count ?? 0)[language]}
+                  </Badge>
+                )}
                 <span className="text-muted-foreground">·</span>
                 <span className="text-muted-foreground">{new Date(comment.created_at).toLocaleDateString()}</span>
               </div>

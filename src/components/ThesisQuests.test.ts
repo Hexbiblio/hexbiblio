@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { deriveCompleted, detectCompletedQuests, QUEST_PROFILE_FIELD } from "./ThesisQuests";
+import {
+  deriveCompleted,
+  detectCompletedQuests,
+  QUEST_PROFILE_FIELD,
+  getResearcherTitle,
+  getResearcherTitleFromCompleted,
+  QUESTS,
+} from "./ThesisQuests";
 
 describe("deriveCompleted", () => {
   it("returns an empty set for a null profile (e.g. not yet loaded)", () => {
@@ -167,5 +174,47 @@ describe("USER_CUES.discipline: Unicode word-boundary fix for accented-first ter
     const completed = deriveCompleted({});
     expect(detectCompletedQuests("Je suis en économie à l'université", completed)).toEqual(["discipline"]);
     expect(detectCompletedQuests("Je fais des sciences de l'éducation", completed)).toEqual(["discipline"]);
+  });
+});
+
+describe("getResearcherTitle", () => {
+  it("returns the lowest tier at 0 completed quests", () => {
+    expect(getResearcherTitle(0).fr).toBe("Nouveau chercheur");
+  });
+
+  it("steps up exactly at each tier's minCount, not one before", () => {
+    expect(getResearcherTitle(1).fr).toBe("Nouveau chercheur");
+    expect(getResearcherTitle(2).fr).toBe("Esprit curieux");
+    expect(getResearcherTitle(3).fr).toBe("Esprit curieux");
+    expect(getResearcherTitle(4).fr).toBe("Chercheur de terrain");
+    expect(getResearcherTitle(5).fr).toBe("Chercheur de terrain");
+    expect(getResearcherTitle(6).fr).toBe("Stratège de mémoire");
+  });
+
+  it("reaches the top tier only at every quest completed", () => {
+    expect(getResearcherTitle(7).fr).toBe("Maître du mémoire");
+  });
+
+  it("clamps out-of-range counts instead of throwing or returning an undefined tier", () => {
+    expect(getResearcherTitle(-3).fr).toBe("Nouveau chercheur");
+    expect(getResearcherTitle(999).fr).toBe("Maître du mémoire");
+    expect(getResearcherTitle(NaN).fr).toBe("Nouveau chercheur");
+  });
+
+  it("never exceeds the actual number of quests that exist, so a future 8th quest wouldn't silently invalidate the top tier", () => {
+    expect(getResearcherTitle(QUESTS.length).fr).toBe("Maître du mémoire");
+  });
+});
+
+describe("getResearcherTitleFromCompleted", () => {
+  it("derives the title from a completed Set's size, for callers that have the full set rather than a raw count", () => {
+    const completed = deriveCompleted({
+      field_of_study: "Sociologie",
+      research_theme: "Réseaux sociaux",
+      research_question: "Comment ?",
+      thesis_statement: "Je soutiens que...",
+    });
+    expect(completed.size).toBe(4);
+    expect(getResearcherTitleFromCompleted(completed).fr).toBe("Chercheur de terrain");
   });
 });

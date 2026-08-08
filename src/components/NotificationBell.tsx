@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { getResearcherTitle } from "@/components/ThesisQuests";
 
 type NotificationType = "comment" | "rating" | "accuracy_rating";
 
@@ -18,6 +19,7 @@ interface NotificationRow {
   created_at: string;
   theses: { title: string } | null;
   actorName?: string;
+  actorQuestCount?: number;
 }
 
 // A live push (Realtime channel) would be nicer, but this is a low-traffic
@@ -66,10 +68,17 @@ const NotificationBell = () => {
     const rows = (data as unknown as NotificationRow[]) || [];
     const actorIds = [...new Set(rows.map((r) => r.actor_id).filter((id): id is string => !!id))];
     const { data: profiles } = actorIds.length
-      ? await supabase.from("profiles_public").select("user_id, username").in("user_id", actorIds)
-      : { data: [] as { user_id: string; username: string | null }[] };
+      ? await supabase.from("profiles_public").select("user_id, username, completed_quests_count").in("user_id", actorIds)
+      : { data: [] as { user_id: string; username: string | null; completed_quests_count: number | null }[] };
     const nameMap = new Map(profiles?.map((p) => [p.user_id, p.username]) || []);
-    setNotifications(rows.map((r) => ({ ...r, actorName: (r.actor_id && nameMap.get(r.actor_id)) || undefined })));
+    const questCountMap = new Map(profiles?.map((p) => [p.user_id, p.completed_quests_count]) || []);
+    setNotifications(
+      rows.map((r) => ({
+        ...r,
+        actorName: (r.actor_id && nameMap.get(r.actor_id)) || undefined,
+        actorQuestCount: (r.actor_id && questCountMap.get(r.actor_id)) ?? undefined,
+      }))
+    );
   };
 
   const handleOpenChange = async (next: boolean) => {
@@ -131,7 +140,10 @@ const NotificationBell = () => {
                   <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <p className="leading-snug">{notificationText(n)}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{new Date(n.created_at).toLocaleDateString()}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {new Date(n.created_at).toLocaleDateString()}
+                      {n.actorQuestCount !== undefined && ` · ${getResearcherTitle(n.actorQuestCount)[language]}`}
+                    </p>
                   </div>
                 </Link>
               );

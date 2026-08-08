@@ -493,14 +493,17 @@ export type Database = {
     Views: {
       profiles_public: {
         Row: {
+          completed_quests_count: number | null
           user_id: string | null
           username: string | null
         }
         Insert: {
+          completed_quests_count?: never
           user_id?: string | null
           username?: string | null
         }
         Update: {
+          completed_quests_count?: never
           user_id?: string | null
           username?: string | null
         }
